@@ -10,6 +10,7 @@
     "fs:default",
     "fs:allow-read",
     "fs:allow-write",
-    "dialog:default"
+    "dialog:default",
+    "shell:allow-open"
   ]
 }
