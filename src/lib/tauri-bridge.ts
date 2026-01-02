@@ -7,6 +7,7 @@
 
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile, exists, readFile, writeFile } from '@tauri-apps/plugin-fs';
+import { open as openUrl } from '@tauri-apps/plugin-shell';
 
 // ============================================================
 // ENVIRONMENT DETECTION
@@ -156,4 +157,40 @@ export async function openFolderDialog(): Promise<string | null> {
   });
 
   return folder ?? null;
+}
+
+// ============================================================
+// EXTERNAL URLS
+// ============================================================
+
+/**
+ * Open a URL in the default browser
+ * @param url URL to open
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  await openUrl(url);
+}
+
+/**
+ * Setup global click handler for external links in Tauri
+ * Call this once in your app initialization
+ */
+export function setupExternalLinkHandler(): void {
+  if (!isTauri()) return;
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest('a');
+
+    if (anchor && anchor.href) {
+      const url = anchor.href;
+      // Check if it's an external URL (starts with http/https and not localhost)
+      if ((url.startsWith('http://') || url.startsWith('https://')) &&
+          !url.includes('localhost') &&
+          !url.includes('127.0.0.1')) {
+        e.preventDefault();
+        openUrl(url).catch(console.error);
+      }
+    }
+  });
 }
