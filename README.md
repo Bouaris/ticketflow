@@ -23,7 +23,7 @@ Application de gestion de backlog produit avec génération IA.
 
 ```bash
 # Cloner le repo
-git clone https://github.com/USERNAME/ticketflow.git
+git clone https://github.com/Bouaris/ticketflow.git
 cd ticketflow
 
 # Installer les dépendances
