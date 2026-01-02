@@ -1,0 +1,339 @@
+/**
+ * Hook for managing the screenshots folder handle.
+ *
+ * - Stores folder handle in IndexedDB for persistence
+ * - Requests permission on first use or page reload
+ * - Provides functions to save, read, and delete screenshots
+ */
+
+import { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  getScreenshotsFolder,
+  saveScreenshot,
+  readScreenshot,
+  deleteScreenshot,
+  deleteScreenshotsForTicket,
+  generateScreenshotFilename,
+  convertToPng,
+  isDirectoryPickerSupported,
+} from '../lib/screenshots';
+
+// ============================================================
+// INDEXEDDB PERSISTENCE
+// ============================================================
+
+const DB_NAME = 'backlog-manager';
+const STORE_NAME = 'file-handles';
+const FOLDER_HANDLE_KEY = 'screenshots-folder-parent';
+
+async function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 2);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+  });
+}
+
+async function storeParentHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.put(handle, FOLDER_HANDLE_KEY);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function getStoredParentHandle(): Promise<FileSystemDirectoryHandle | null> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(FOLDER_HANDLE_KEY);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result || null);
+      tx.oncomplete = () => db.close();
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function clearStoredParentHandle(): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(FOLDER_HANDLE_KEY);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+      tx.oncomplete = () => db.close();
+    });
+  } catch {
+    // Ignore
+  }
+}
+
+// ============================================================
+// HOOK TYPES
+// ============================================================
+
+export interface UseScreenshotFolderReturn {
+  /** Is the folder handle available and ready */
+  isReady: boolean;
+  /** Is currently processing an operation */
+  isProcessing: boolean;
+  /** Error message if any */
+  error: string | null;
+  /** Folder access needs user permission */
+  needsPermission: boolean;
+  /** Is the feature supported */
+  isSupported: boolean;
+
+  /** Request user to select/grant folder access */
+  requestFolderAccess: () => Promise<boolean>;
+
+  /** Save a screenshot from blob */
+  saveScreenshotBlob: (ticketId: string, blob: Blob) => Promise<string | null>;
+
+  /** Import a screenshot from file (converts to PNG if needed) */
+  importScreenshotFile: (ticketId: string, file: File) => Promise<string | null>;
+
+  /** Read a screenshot and return as object URL */
+  getScreenshotUrl: (filename: string) => Promise<string | null>;
+
+  /** Delete a single screenshot */
+  deleteScreenshotFile: (filename: string) => Promise<boolean>;
+
+  /** Delete all screenshots for a ticket */
+  deleteTicketScreenshots: (ticketId: string) => Promise<number>;
+
+  /** Cleanup object URL to free memory */
+  revokeObjectUrl: (url: string) => void;
+}
+
+// ============================================================
+// HOOK IMPLEMENTATION
+// ============================================================
+
+export function useScreenshotFolder(): UseScreenshotFolderReturn {
+  const [, setParentHandle] = useState<FileSystemDirectoryHandle | null>(null);
+  const [screenshotsHandle, setScreenshotsHandle] = useState<FileSystemDirectoryHandle | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [needsPermission, setNeedsPermission] = useState(false);
+
+  const isSupported = isDirectoryPickerSupported();
+
+  // Track object URLs for cleanup
+  const objectUrlsRef = useRef<Set<string>>(new Set());
+
+  // Try to restore folder handle on mount
+  useEffect(() => {
+    if (!isSupported) return;
+
+    async function restoreHandle() {
+      const stored = await getStoredParentHandle();
+      if (stored) {
+        try {
+          // Verify permission
+          // @ts-expect-error - queryPermission not in types
+          const permission = await stored.queryPermission({ mode: 'readwrite' });
+          if (permission === 'granted') {
+            const handle = await getScreenshotsFolder(stored);
+            if (handle) {
+              setParentHandle(stored);
+              setScreenshotsHandle(handle);
+              setIsReady(true);
+              return;
+            }
+          }
+        } catch {
+          // Handle invalid or permission denied
+          await clearStoredParentHandle();
+        }
+      }
+      setNeedsPermission(true);
+    }
+
+    restoreHandle();
+
+    // Cleanup object URLs on unmount
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [isSupported]);
+
+  // Request folder access from user
+  const requestFolderAccess = useCallback(async (): Promise<boolean> => {
+    if (!isSupported) {
+      setError('File System Access API non supporté. Utilisez Chrome ou Edge.');
+      return false;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // Ask user to select the folder containing the backlog
+      // @ts-expect-error - showDirectoryPicker not in types
+      const selected = await window.showDirectoryPicker({
+        id: 'backlog-assets-parent',
+        mode: 'readwrite',
+        startIn: 'documents',
+      });
+
+      // Store for persistence
+      await storeParentHandle(selected);
+
+      // Get or create screenshots folder
+      const handle = await getScreenshotsFolder(selected);
+      if (handle) {
+        setParentHandle(selected);
+        setScreenshotsHandle(handle);
+        setIsReady(true);
+        setNeedsPermission(false);
+        setIsProcessing(false);
+        return true;
+      }
+
+      throw new Error('Impossible de créer le dossier screenshots');
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        setError(err.message);
+      }
+      setIsProcessing(false);
+      return false;
+    }
+  }, [isSupported]);
+
+  // Save a blob as screenshot
+  const saveScreenshotBlob = useCallback(
+    async (ticketId: string, blob: Blob): Promise<string | null> => {
+      if (!screenshotsHandle) {
+        setError('Dossier screenshots non disponible');
+        return null;
+      }
+
+      setIsProcessing(true);
+      setError(null);
+
+      try {
+        const filename = generateScreenshotFilename(ticketId);
+        const success = await saveScreenshot(screenshotsHandle, filename, blob);
+
+        setIsProcessing(false);
+        return success ? filename : null;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Échec de la sauvegarde');
+        setIsProcessing(false);
+        return null;
+      }
+    },
+    [screenshotsHandle]
+  );
+
+  // Import a file (convert to PNG if needed)
+  const importScreenshotFile = useCallback(
+    async (ticketId: string, file: File): Promise<string | null> => {
+      if (!screenshotsHandle) {
+        setError('Dossier screenshots non disponible');
+        return null;
+      }
+
+      setIsProcessing(true);
+      setError(null);
+
+      try {
+        // Convert to PNG if needed
+        const blob = file.type === 'image/png' ? file : await convertToPng(file);
+
+        const filename = generateScreenshotFilename(ticketId);
+        const success = await saveScreenshot(screenshotsHandle, filename, blob);
+
+        setIsProcessing(false);
+        return success ? filename : null;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Échec de l\'import');
+        setIsProcessing(false);
+        return null;
+      }
+    },
+    [screenshotsHandle]
+  );
+
+  // Get screenshot as object URL
+  const getScreenshotUrl = useCallback(
+    async (filename: string): Promise<string | null> => {
+      if (!screenshotsHandle) return null;
+
+      try {
+        const blob = await readScreenshot(screenshotsHandle, filename);
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          objectUrlsRef.current.add(url);
+          return url;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    [screenshotsHandle]
+  );
+
+  // Delete a single screenshot
+  const deleteScreenshotFile = useCallback(
+    async (filename: string): Promise<boolean> => {
+      if (!screenshotsHandle) return false;
+      return deleteScreenshot(screenshotsHandle, filename);
+    },
+    [screenshotsHandle]
+  );
+
+  // Delete all screenshots for a ticket
+  const deleteTicketScreenshots = useCallback(
+    async (ticketId: string): Promise<number> => {
+      if (!screenshotsHandle) return 0;
+      return deleteScreenshotsForTicket(screenshotsHandle, ticketId);
+    },
+    [screenshotsHandle]
+  );
+
+  // Revoke object URL
+  const revokeObjectUrl = useCallback((url: string) => {
+    URL.revokeObjectURL(url);
+    objectUrlsRef.current.delete(url);
+  }, []);
+
+  return {
+    isReady,
+    isProcessing,
+    error,
+    needsPermission,
+    isSupported,
+    requestFolderAccess,
+    saveScreenshotBlob,
+    importScreenshotFile,
+    getScreenshotUrl,
+    deleteScreenshotFile,
+    deleteTicketScreenshots,
+    revokeObjectUrl,
+  };
+}
