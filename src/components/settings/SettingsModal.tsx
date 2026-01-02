@@ -12,6 +12,7 @@ import {
   resetClient,
   type AIProvider,
 } from '../../lib/ai';
+import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -154,7 +155,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   href={currentProvider.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline cursor-pointer"
+                  onClick={(e) => {
+                    if (isTauri()) {
+                      e.preventDefault();
+                      openExternalUrl(currentProvider.url);
+                    }
+                  }}
                 >
                   {selectedProvider === 'groq' ? 'Groq Console' : 'Google AI Studio'}
                 </a>
