@@ -13,6 +13,7 @@ import { VISIBLE_PROJECTS_COUNT, BACKLOG_FILE_NAME } from '../../types/project';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { useProjects } from '../../hooks/useProjects';
 import { getFolderName } from '../../lib/tauri-bridge';
+import { APP_VERSION } from '../../lib/version';
 
 interface WelcomePageProps {
   onProjectSelect: (projectPath: string, backlogFile: string, types?: TypeDefinition[]) => void;
@@ -239,7 +240,7 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
 
         {/* Version footer */}
         <div className="mt-12 text-center text-xs text-gray-400">
-          Ticketflow v1.0.0
+          Ticketflow v{APP_VERSION}
         </div>
       </div>
 
