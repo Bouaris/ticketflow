@@ -4,6 +4,8 @@
 
 import { useState } from 'react';
 import type { TypeDefinition } from '../../types/typeConfig';
+import { PRESET_COLORS } from '../../constants/colors';
+import { ChevronUpIcon, ChevronDownIcon, TrashIcon } from '../ui/Icons';
 
 interface TypeConfigEditorProps {
   types: TypeDefinition[];
@@ -11,26 +13,6 @@ interface TypeConfigEditorProps {
   /** Compact mode for dialogs */
   compact?: boolean;
 }
-
-const PRESET_COLORS = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#f59e0b', // amber
-  '#eab308', // yellow
-  '#84cc16', // lime
-  '#22c55e', // green
-  '#10b981', // emerald
-  '#14b8a6', // teal
-  '#06b6d4', // cyan
-  '#0ea5e9', // sky
-  '#3b82f6', // blue
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#a855f7', // purple
-  '#d946ef', // fuchsia
-  '#ec4899', // pink
-  '#6b7280', // gray
-];
 
 export function TypeConfigEditor({ types, onChange, compact = false }: TypeConfigEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -212,31 +194,5 @@ export function TypeConfigEditor({ types, onChange, compact = false }: TypeConfi
         ))}
       </div>
     </div>
-  );
-}
-
-// Icons
-function ChevronUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
-
-function TrashIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
   );
 }

@@ -14,10 +14,14 @@ import type {
   Criterion,
   Screenshot,
 } from '../../types/backlog';
-import { TYPE_LABELS, SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from '../../types/backlog';
+import type { TypeDefinition } from '../../types/typeConfig';
+import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from '../../constants/labels';
 import { refineItem, hasApiKey, generateItemFromDescription } from '../../lib/ai';
-import { ScreenshotEditor } from './ScreenshotEditor';
 import { extractImageFromClipboard } from '../../lib/screenshots';
+import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } from '../ui/Icons';
+import { ListEditor } from '../ui/ListEditor';
+import { Spinner } from '../ui/Spinner';
+import { ScreenshotEditor } from './ScreenshotEditor';
 
 // ============================================================
 // TYPES
@@ -62,13 +66,14 @@ interface ItemEditorModalProps {
   onSave: (data: ItemFormData, isNew: boolean) => void;
   existingIds: string[];
   screenshotOps?: ScreenshotOperations;
+  types: TypeDefinition[];
 }
 
 // ============================================================
 // DEFAULT VALUES
 // ============================================================
 
-const createEmptyForm = (type: ItemType = 'EXT'): ItemFormData => ({
+const createEmptyForm = (type: ItemType = 'BUG'): ItemFormData => ({
   id: '',
   type,
   title: '',
@@ -111,6 +116,7 @@ export function ItemEditorModal({
   onSave,
   existingIds,
   screenshotOps,
+  types,
 }: ItemEditorModalProps) {
   const isNew = !item;
   const [form, setForm] = useState<ItemFormData>(createEmptyForm());
@@ -131,7 +137,9 @@ export function ItemEditorModal({
         setForm(itemToFormData(item));
         setAiMode(false);
       } else {
-        setForm(createEmptyForm());
+        // Use first available type or fallback to 'BUG'
+        const defaultType = types?.[0]?.id as ItemType || 'BUG';
+        setForm(createEmptyForm(defaultType));
         setAiMode(true); // Start in AI mode for new items
       }
       setActiveTab('general');
@@ -140,7 +148,7 @@ export function ItemEditorModal({
       setAiPrompt('');
       setIsGenerating(false);
     }
-  }, [isOpen, item]);
+  }, [isOpen, item, types]);
 
   // Generate next ID
   const generateNextId = useCallback((type: ItemType): string => {
@@ -215,7 +223,7 @@ export function ItemEditorModal({
       // Reset type-specific fields
       severity: type === 'BUG' ? f.severity : undefined,
       component: type === 'BUG' ? f.component : undefined,
-      module: ['EXT', 'ADM'].includes(type) ? f.module : undefined,
+      module: type !== 'BUG' ? f.module : undefined,
     }));
   };
 
@@ -237,11 +245,15 @@ export function ItemEditorModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Save handler
+  // Save handler - delay close to let React batch updates settle
   const handleSave = () => {
     if (validate()) {
       onSave(form, isNew);
-      onClose();
+      // Delay close to allow state update to propagate before modal unmounts
+      // This fixes the race condition where UI doesn't refresh after creation
+      requestAnimationFrame(() => {
+        onClose();
+      });
     }
   };
 
@@ -428,7 +440,7 @@ export function ItemEditorModal({
                 >
                   {isRefining ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <Spinner size="sm" color="white" />
                       Analyse...
                     </>
                   ) : (
@@ -546,7 +558,7 @@ export function ItemEditorModal({
                   >
                     {isGenerating ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <Spinner size="sm" color="white" />
                         Génération en cours...
                       </>
                     ) : (
@@ -602,7 +614,7 @@ export function ItemEditorModal({
                   {[
                     'Bug: Le bouton de sauvegarde ne fonctionne pas sur Safari',
                     'Feature: Ajouter un mode sombre à l\'interface',
-                    'API: Intégrer l\'endpoint de synchronisation Cosium',
+                    'API: Intégrer l\'endpoint de synchronisation externe',
                   ].map((example, i) => (
                     <button
                       key={i}
@@ -630,8 +642,8 @@ export function ItemEditorModal({
                     disabled={!isNew}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    {(['BUG', 'EXT', 'ADM', 'COS', 'LT'] as ItemType[]).map(type => (
-                      <option key={type} value={type}>{TYPE_LABELS[type]}</option>
+                    {types.map(t => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
                     ))}
                   </select>
                 </div>
@@ -733,7 +745,7 @@ export function ItemEditorModal({
                       ...f,
                       [form.type === 'BUG' ? 'component' : 'module']: e.target.value || undefined,
                     }))}
-                    placeholder={form.type === 'BUG' ? 'Extension Chrome...' : 'Appareillage...'}
+                    placeholder={form.type === 'BUG' ? 'Composant affecté...' : 'Module concerné...'}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -949,125 +961,6 @@ export function ItemEditorModal({
   );
 }
 
-// ============================================================
-// LIST EDITOR COMPONENT
-// ============================================================
-
-interface ListEditorProps {
-  label: string;
-  items: string[];
-  onAdd: () => void;
-  onUpdate: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
-  placeholder?: string;
-  numbered?: boolean;
-}
-
-function ListEditor({ label, items, onAdd, onUpdate, onRemove, placeholder, numbered }: ListEditorProps) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-        <button
-          onClick={onAdd}
-          className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-1"
-        >
-          <PlusIcon />
-          Ajouter
-        </button>
-      </div>
-
-      {items.length === 0 ? (
-        <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-          <p className="text-sm text-gray-400">Aucun élément</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {items.map((item, index) => (
-            <div key={index} className="flex items-center gap-2 group">
-              {numbered && (
-                <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs flex items-center justify-center font-medium">
-                  {index + 1}
-                </span>
-              )}
-              <input
-                type="text"
-                value={item}
-                onChange={e => onUpdate(index, e.target.value)}
-                placeholder={placeholder}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <button
-                onClick={() => onRemove(index)}
-                className="p-2 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
-// ICONS
-// ============================================================
-
-function CloseIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function SparklesIcon({ className }: { className?: string }) {
-  return (
-    <svg className={`w-5 h-5 ${className || ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-  );
-}
-
-function SaveIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-
-function CameraIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className || "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-}
 
 // ============================================================
 // AI MODE SCREENSHOT THUMBNAIL

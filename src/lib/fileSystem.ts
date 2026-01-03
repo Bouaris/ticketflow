@@ -153,24 +153,22 @@ export function getFileName(handle: FileSystemFileHandle): string {
 // HANDLE PERSISTENCE (IndexedDB)
 // ============================================================
 
-const DB_NAME = 'backlog-manager';
-const STORE_NAME = 'file-handles';
-const HANDLE_KEY = 'last-file';
+import { INDEXED_DB } from '../constants/storage';
 
 /**
  * Ouvre la base IndexedDB
  */
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
+    const request = indexedDB.open(INDEXED_DB.DB_NAME, INDEXED_DB.VERSION);
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
+      if (!db.objectStoreNames.contains(INDEXED_DB.FILE_HANDLES_STORE)) {
+        db.createObjectStore(INDEXED_DB.FILE_HANDLES_STORE);
       }
     };
   });
@@ -182,9 +180,9 @@ function openDB(): Promise<IDBDatabase> {
 export async function storeHandle(handle: FileSystemFileHandle): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, HANDLE_KEY);
+    const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readwrite');
+    const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+    const request = store.put(handle, INDEXED_DB.LAST_FILE_KEY);
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
@@ -200,9 +198,9 @@ export async function getStoredHandle(): Promise<FileSystemFileHandle | null> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.get(HANDLE_KEY);
+      const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readonly');
+      const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+      const request = store.get(INDEXED_DB.LAST_FILE_KEY);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result || null);
@@ -221,9 +219,9 @@ export async function clearStoredHandle(): Promise<void> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.delete(HANDLE_KEY);
+      const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readwrite');
+      const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+      const request = store.delete(INDEXED_DB.LAST_FILE_KEY);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
@@ -254,11 +252,3 @@ export async function verifyPermission(handle: FileSystemFileHandle): Promise<bo
   return false;
 }
 
-// Legacy functions for compatibility
-export function storeHandleInfo(handle: FileSystemFileHandle): void {
-  storeHandle(handle).catch(console.error);
-}
-
-export function getStoredHandleName(): string | null {
-  return sessionStorage.getItem('backlog-file-name');
-}

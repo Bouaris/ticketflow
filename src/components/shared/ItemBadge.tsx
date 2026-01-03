@@ -1,35 +1,59 @@
 /**
  * Shared badge components for item types, priorities, efforts, etc.
+ *
+ * Supports dynamic colors from TypeConfig.
  */
 
 import type { ItemType, Severity, Priority, Effort } from '../../types/backlog';
-import { TYPE_LABELS } from '../../types/backlog';
+import type { TypeDefinition } from '../../types/typeConfig';
+import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_SHORT_LABELS } from '../../constants/labels';
 
 // ============================================================
 // TYPE BADGE
 // ============================================================
 
 interface ItemBadgeProps {
+  /** Item type ID */
   type: ItemType;
+  /** Type definition (for dynamic color) */
+  typeConfig?: TypeDefinition;
+  /** Size variant */
   size?: 'sm' | 'md';
 }
 
-export function ItemBadge({ type, size = 'md' }: ItemBadgeProps) {
-  const colors: Record<ItemType, string> = {
-    BUG: 'bg-red-100 text-red-700 border-red-200',
-    EXT: 'bg-blue-100 text-blue-700 border-blue-200',
-    ADM: 'bg-purple-100 text-purple-700 border-purple-200',
-    COS: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-    LT: 'bg-gray-100 text-gray-700 border-gray-200',
-  };
+/**
+ * Legacy color mapping for backward compatibility.
+ * Used when no TypeConfig is provided.
+ */
+const LEGACY_TYPE_COLORS: Record<string, string> = {
+  BUG: '#ef4444',
+  CT: '#3b82f6',
+  LT: '#8b5cf6',
+  AUTRE: '#6b7280',
+};
 
+export function ItemBadge({ type, typeConfig, size = 'md' }: ItemBadgeProps) {
   const sizeClasses = size === 'sm'
     ? 'text-xs px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
+  // Use dynamic color from typeConfig, fallback to legacy
+  const color = typeConfig?.color || LEGACY_TYPE_COLORS[type] || '#6b7280';
+  const label = typeConfig?.label || type;
+
+  // Calculate rgba background from hex
+  const bgColor = hexToRgba(color, 0.15);
+
   return (
-    <span className={`font-medium rounded border ${colors[type]} ${sizeClasses}`}>
-      {TYPE_LABELS[type]}
+    <span
+      className={`font-medium rounded border ${sizeClasses}`}
+      style={{
+        backgroundColor: bgColor,
+        color: color,
+        borderColor: hexToRgba(color, 0.3),
+      }}
+    >
+      {label}
     </span>
   );
 }
@@ -41,24 +65,29 @@ export function ItemBadge({ type, size = 'md' }: ItemBadgeProps) {
 interface SeverityBadgeProps {
   severity: Severity;
   size?: 'sm' | 'md';
+  showLabel?: boolean;
 }
 
-export function SeverityBadge({ severity, size = 'md' }: SeverityBadgeProps) {
-  const colors: Record<Severity, string> = {
-    P0: 'bg-red-600 text-white',
-    P1: 'bg-orange-500 text-white',
-    P2: 'bg-amber-500 text-white',
-    P3: 'bg-lime-500 text-white',
-    P4: 'bg-gray-400 text-white',
-  };
+const SEVERITY_COLORS: Record<Severity, string> = {
+  P0: 'bg-red-600 text-white',
+  P1: 'bg-orange-500 text-white',
+  P2: 'bg-amber-500 text-white',
+  P3: 'bg-lime-500 text-white',
+  P4: 'bg-gray-400 text-white',
+};
 
+export function SeverityBadge({ severity, size = 'md', showLabel = false }: SeverityBadgeProps) {
   const sizeClasses = size === 'sm'
     ? 'text-xs px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
+  const label = showLabel
+    ? `${severity} - ${SEVERITY_LABELS[severity]}`
+    : severity;
+
   return (
-    <span className={`font-bold rounded ${colors[severity]} ${sizeClasses}`}>
-      {severity}
+    <span className={`font-bold rounded ${SEVERITY_COLORS[severity]} ${sizeClasses}`}>
+      {label}
     </span>
   );
 }
@@ -72,20 +101,20 @@ interface PriorityBadgeProps {
   size?: 'sm' | 'md';
 }
 
-export function PriorityBadge({ priority, size = 'md' }: PriorityBadgeProps) {
-  const colors: Record<Priority, string> = {
-    Haute: 'bg-red-100 text-red-700',
-    Moyenne: 'bg-amber-100 text-amber-700',
-    Faible: 'bg-gray-100 text-gray-600',
-  };
+const PRIORITY_COLORS: Record<Priority, string> = {
+  Haute: 'bg-red-100 text-red-700',
+  Moyenne: 'bg-amber-100 text-amber-700',
+  Faible: 'bg-gray-100 text-gray-600',
+};
 
+export function PriorityBadge({ priority, size = 'md' }: PriorityBadgeProps) {
   const sizeClasses = size === 'sm'
     ? 'text-xs px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
   return (
-    <span className={`font-medium rounded ${colors[priority]} ${sizeClasses}`}>
-      {priority}
+    <span className={`font-medium rounded ${PRIORITY_COLORS[priority]} ${sizeClasses}`}>
+      {PRIORITY_LABELS[priority]}
     </span>
   );
 }
@@ -97,24 +126,47 @@ export function PriorityBadge({ priority, size = 'md' }: PriorityBadgeProps) {
 interface EffortBadgeProps {
   effort: Effort;
   size?: 'sm' | 'md';
+  showLabel?: boolean;
 }
 
-export function EffortBadge({ effort, size = 'md' }: EffortBadgeProps) {
-  const colors: Record<Effort, string> = {
-    XS: 'bg-green-100 text-green-700',
-    S: 'bg-lime-100 text-lime-700',
-    M: 'bg-amber-100 text-amber-700',
-    L: 'bg-orange-100 text-orange-700',
-    XL: 'bg-red-100 text-red-700',
-  };
+const EFFORT_COLORS: Record<Effort, string> = {
+  XS: 'bg-green-100 text-green-700',
+  S: 'bg-lime-100 text-lime-700',
+  M: 'bg-amber-100 text-amber-700',
+  L: 'bg-orange-100 text-orange-700',
+  XL: 'bg-red-100 text-red-700',
+};
 
+export function EffortBadge({ effort, size = 'md', showLabel = false }: EffortBadgeProps) {
   const sizeClasses = size === 'sm'
     ? 'text-xs px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
+  const label = showLabel ? EFFORT_SHORT_LABELS[effort] : effort;
+
   return (
-    <span className={`font-bold rounded ${colors[effort]} ${sizeClasses}`}>
-      {effort}
+    <span className={`font-bold rounded ${EFFORT_COLORS[effort]} ${sizeClasses}`}>
+      {label}
     </span>
   );
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function hexToRgba(hex: string, alpha: number): string {
+  let r = 0, g = 0, b = 0;
+
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.slice(1, 3), 16);
+    g = parseInt(hex.slice(3, 5), 16);
+    b = parseInt(hex.slice(5, 7), 16);
+  }
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

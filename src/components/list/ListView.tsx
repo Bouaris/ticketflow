@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import type { BacklogItem } from '../../types/backlog';
-import { PRIORITY_LABELS } from '../../types/backlog';
+import { PRIORITY_LABELS } from '../../constants/labels';
 import { ItemBadge } from '../shared/ItemBadge';
 
 interface ListViewProps {

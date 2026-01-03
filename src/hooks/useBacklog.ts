@@ -5,27 +5,15 @@
 import { useState, useCallback, useMemo } from 'react';
 import { parseBacklog, getAllItems } from '../lib/parser';
 import { serializeBacklog, toggleCriterion, updateItem } from '../lib/serializer';
+import { isBacklogItem } from '../types/guards';
 import type {
   Backlog,
   BacklogItem,
-  TableGroup,
-  RawSection,
   ItemType,
   Priority,
   Effort,
   Severity,
 } from '../types/backlog';
-
-// Type guard to check if item is a BacklogItem (not TableGroup or RawSection)
-function isBacklogItem(item: BacklogItem | TableGroup | RawSection): item is BacklogItem {
-  // TableGroup has 'items' array, RawSection has type 'raw-section'
-  // BacklogItem has 'id' but no 'items' array
-  if (!('id' in item)) return false;
-  if ('items' in item) return false; // TableGroup
-  // Check if type is one of the BacklogItem types
-  const validTypes = ['BUG', 'EXT', 'ADM', 'COS', 'LT'];
-  return validTypes.includes(item.type as string);
-}
 
 // ============================================================
 // FILTER STATE
@@ -280,16 +268,31 @@ export function useBacklog(): UseBacklogReturn {
     setBacklog(prev => {
       if (!prev) return prev;
 
-      // Find the right section based on item type
-      const sectionMap: Record<ItemType, number> = {
-        'BUG': 0,
-        'EXT': 1,
-        'ADM': 2,
-        'COS': 3,
-        'LT': 4,
-      };
+      // If no sections exist, create a default one
+      if (prev.sections.length === 0) {
+        const defaultSection = {
+          id: '1',
+          title: 'Backlog',
+          rawHeader: '## 1. Backlog',
+          items: [newItem],
+        };
+        return { ...prev, sections: [defaultSection] };
+      }
 
-      const targetSectionIndex = sectionMap[newItem.type] ?? 0;
+      // Find the right section based on item type
+      // Look for a section that already contains items of this type, or use section 0
+      let targetSectionIndex = 0;
+
+      for (let i = 0; i < prev.sections.length; i++) {
+        const section = prev.sections[i];
+        const hasMatchingType = section.items.some(item =>
+          isBacklogItem(item) && item.type === newItem.type
+        );
+        if (hasMatchingType) {
+          targetSectionIndex = i;
+          break;
+        }
+      }
 
       const newSections = prev.sections.map((section, index) => {
         if (index === targetSectionIndex) {

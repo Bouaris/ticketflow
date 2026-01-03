@@ -7,6 +7,8 @@
 import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { BacklogItem } from '../types/backlog';
+import { STORAGE_KEYS } from '../constants/storage';
+import { AI_CONFIG } from '../constants/config';
 
 // ============================================================
 // TYPES
@@ -14,51 +16,43 @@ import type { BacklogItem } from '../types/backlog';
 
 export type AIProvider = 'groq' | 'gemini';
 
-interface AIConfig {
+interface AIClientConfig {
   provider: AIProvider;
   apiKey: string;
 }
-
-// ============================================================
-// STORAGE KEYS
-// ============================================================
-
-const PROVIDER_KEY = 'ai-provider';
-const GROQ_KEY = 'groq-api-key';
-const GEMINI_KEY = 'gemini-api-key';
 
 // ============================================================
 // CONFIG MANAGEMENT
 // ============================================================
 
 export function getProvider(): AIProvider {
-  return (localStorage.getItem(PROVIDER_KEY) as AIProvider) || 'groq';
+  return (localStorage.getItem(STORAGE_KEYS.AI_PROVIDER) as AIProvider) || 'groq';
 }
 
 export function setProvider(provider: AIProvider): void {
-  localStorage.setItem(PROVIDER_KEY, provider);
+  localStorage.setItem(STORAGE_KEYS.AI_PROVIDER, provider);
 }
 
 export function getApiKey(provider?: AIProvider): string | null {
   const p = provider || getProvider();
-  return localStorage.getItem(p === 'groq' ? GROQ_KEY : GEMINI_KEY);
+  return localStorage.getItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
 }
 
 export function setApiKey(key: string, provider?: AIProvider): void {
   const p = provider || getProvider();
-  localStorage.setItem(p === 'groq' ? GROQ_KEY : GEMINI_KEY, key);
+  localStorage.setItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY, key);
 }
 
 export function clearApiKey(provider?: AIProvider): void {
   const p = provider || getProvider();
-  localStorage.removeItem(p === 'groq' ? GROQ_KEY : GEMINI_KEY);
+  localStorage.removeItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
 }
 
 export function hasApiKey(provider?: AIProvider): boolean {
   return !!getApiKey(provider);
 }
 
-export function getConfig(): AIConfig | null {
+export function getClientConfig(): AIClientConfig | null {
   const provider = getProvider();
   const apiKey = getApiKey(provider);
   if (!apiKey) return null;
@@ -68,6 +62,7 @@ export function getConfig(): AIConfig | null {
 // Legacy exports for compatibility
 export const getStoredApiKey = () => getApiKey();
 export const storeApiKey = (key: string) => setApiKey(key);
+export const getConfig = getClientConfig;
 
 // ============================================================
 // AI CLIENTS
@@ -100,7 +95,7 @@ export function resetClient(): void {
 // ============================================================
 
 async function generateCompletion(prompt: string): Promise<string> {
-  const config = getConfig();
+  const config = getClientConfig();
   if (!config) {
     throw new Error('API key non configurée');
   }
@@ -108,15 +103,15 @@ async function generateCompletion(prompt: string): Promise<string> {
   if (config.provider === 'groq') {
     const client = getGroqClient(config.apiKey);
     const response = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: AI_CONFIG.GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 2048,
+      temperature: AI_CONFIG.TEMPERATURE,
+      max_tokens: AI_CONFIG.MAX_TOKENS,
     });
     return response.choices[0]?.message?.content || '';
   } else {
     const client = getGeminiClient(config.apiKey);
-    const model = client.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    const model = client.getGenerativeModel({ model: AI_CONFIG.GEMINI_MODEL });
     const result = await model.generateContent(prompt);
     return result.response.text();
   }
@@ -226,7 +221,7 @@ export interface GenerateItemResult {
     userStory?: string;
     specs: string[];
     criteria: { text: string; checked: boolean }[];
-    suggestedType: 'BUG' | 'EXT' | 'ADM' | 'COS' | 'LT';
+    suggestedType: string;
     suggestedPriority?: 'Haute' | 'Moyenne' | 'Faible';
     suggestedSeverity?: 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
     suggestedEffort?: 'XS' | 'S' | 'M' | 'L' | 'XL';
@@ -236,49 +231,76 @@ export interface GenerateItemResult {
   error?: string;
 }
 
-const GENERATE_ITEM_PROMPT = `Tu es un Product Owner expert en méthodologie Agile. À partir de la description suivante, génère un item de backlog complet et structuré.
+const GENERATE_ITEM_PROMPT = `Tu es un Staff Engineer d'élite, architecte de systèmes distribués et expert en ingénierie produit. Tu combines une vision technologique avant-gardiste avec une rigueur d'exécution absolue. Tu penses en termes de systèmes, d'impacts de second ordre, et de dette technique anticipée.
+
+Ta mission: transformer une idée brute en un item de backlog de qualité production - précis, actionnable, et aligné avec les standards d'excellence des équipes d'ingénierie de classe mondiale.
+
+---
 
 DESCRIPTION DE L'UTILISATEUR:
 {user_description}
 
-CONTEXTE DU PROJET:
-C'est un backlog pour une extension Chrome d'aide aux audioprothésistes (AudioPilot).
-Les types d'items sont:
-- BUG: Bug à corriger (utilise P0-P4 pour la sévérité, PAS de user story)
-- EXT: Feature pour l'extension Chrome
-- ADM: Feature pour le panel admin
-- COS: Intégration API Cosium (logiciel métier)
-- LT: Feature long terme (vision produit)
+---
 
-INSTRUCTIONS:
-1. Analyse la description et détermine le type d'item le plus approprié
-2. Génère un titre clair et actionnable (max 60 caractères)
-3. Rédige une description technique du problème ou de la feature
-4. User Story: SEULEMENT si elle apporte de la valeur. Pour un bug d'affichage simple → null. Pour une feature ou un bug impactant l'UX → "En tant que... je veux... afin de...". Ne génère PAS de user story générique/cheesy juste pour remplir le champ.
-5. Liste 2-4 spécifications techniques ou étapes de reproduction (pour bugs)
-6. Définis 3-5 critères d'acceptation/vérification
-7. Suggère une priorité (features) OU sévérité (bugs) et un effort estimé
-8. Propose un emoji représentatif (🐛 pour bug, 🚀 pour feature, etc.)
+ANALYSE SYSTÉMIQUE:
+Avant de générer, pose-toi ces questions:
+- Quel est le VRAI problème sous-jacent (pas juste le symptôme)?
+- Quels systèmes/modules sont impactés directement ET indirectement?
+- Quels sont les risques de régression ou d'effets de bord?
+- Cette solution est-elle la plus simple qui fonctionne (KISS)?
 
-RÉPONDS EN JSON avec ce format exact:
+CLASSIFICATION DES ITEMS:
+- BUG: Anomalie technique. Sévérité P0-P4. PAS de user story (le bug EST le problème).
+- CT: Court Terme - Livrable dans le sprint. Impact immédiat mesurable.
+- LT: Long Terme - Vision stratégique. Investissement architectural.
+- AUTRE: Innovation, exploration, amélioration continue.
+
+STANDARDS DE QUALITÉ:
+1. TITRE: Verbe d'action + contexte + impact. Maximum 60 caractères.
+   - ✅ "Corriger le crash au chargement des images > 5MB"
+   - ❌ "Bug images" (trop vague)
+
+2. DESCRIPTION: Technique, factuelle, sans fluff. Contexte + comportement actuel + comportement attendu.
+
+3. USER STORY: Uniquement si elle apporte de la VALEUR MÉTIER RÉELLE.
+   - Bug d'affichage mineur → null (la correction EST la valeur)
+   - Feature UX significative → "En tant que [persona précis], je veux [action concrète] afin de [bénéfice mesurable et vérifiable]"
+   - Évite les user stories génériques type "en tant qu'utilisateur je veux que ça marche"
+
+4. SPECS: 2-4 points techniques précis.
+   - Pour un bug: étapes de reproduction exactes
+   - Pour une feature: contraintes techniques, intégrations, edge cases
+
+5. CRITÈRES D'ACCEPTATION: 3-5 conditions VÉRIFIABLES.
+   - Chaque critère doit être testable (oui/non, pas "fonctionne bien")
+   - Inclure les cas limites et états d'erreur
+
+6. EFFORT: Estimation réaliste basée sur la complexité technique réelle.
+   - XS: < 2h (fix trivial, typo, config)
+   - S: 2-4h (changement localisé, bien compris)
+   - M: 1-2 jours (feature moyenne, tests inclus)
+   - L: 3-5 jours (feature complexe, refactoring)
+   - XL: 1-2 semaines (système nouveau, investigation requise)
+
+---
+
+RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
 {
-  "title": "Titre clair et actionnable",
-  "description": "Description technique détaillée",
-  "userStory": null ou "En tant que [persona], je veux [action] afin de [bénéfice]" si pertinent,
-  "specs": ["Spec technique 1", "Spec technique 2"],
+  "title": "Titre actionnable et précis",
+  "description": "Description technique du problème ou de la solution",
+  "userStory": null ou "En tant que [X], je veux [Y] afin de [Z mesurable]",
+  "specs": ["Spécification technique 1", "Spécification technique 2"],
   "criteria": [
-    {"text": "Critère d'acceptation 1", "checked": false},
-    {"text": "Critère d'acceptation 2", "checked": false}
+    {"text": "Critère d'acceptation vérifiable 1", "checked": false},
+    {"text": "Critère d'acceptation vérifiable 2", "checked": false}
   ],
-  "suggestedType": "BUG ou EXT ou ADM ou COS ou LT",
-  "suggestedPriority": "Haute/Moyenne/Faible ou null si BUG",
-  "suggestedSeverity": "P0/P1/P2/P3/P4 ou null si pas BUG",
-  "suggestedEffort": "XS/S/M/L/XL",
-  "suggestedModule": "Module concerné ou null",
-  "emoji": "🐛 ou autre emoji pertinent"
-}
-
-Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
+  "suggestedType": "BUG|CT|LT|AUTRE",
+  "suggestedPriority": "Haute|Moyenne|Faible" ou null,
+  "suggestedSeverity": "P0|P1|P2|P3|P4" ou null,
+  "suggestedEffort": "XS|S|M|L|XL",
+  "suggestedModule": "Module ou composant concerné" ou null,
+  "emoji": "🐛|🚀|⚡|🔒|🎨|📦|🔧"
+}`;
 
 export async function generateItemFromDescription(description: string): Promise<GenerateItemResult> {
   try {
@@ -300,7 +322,7 @@ export async function generateItemFromDescription(description: string): Promise<
         userStory: parsed.userStory || undefined,
         specs: parsed.specs || [],
         criteria: parsed.criteria || [],
-        suggestedType: parsed.suggestedType || 'EXT',
+        suggestedType: parsed.suggestedType || 'CT',
         suggestedPriority: parsed.suggestedPriority || undefined,
         suggestedSeverity: parsed.suggestedSeverity || undefined,
         suggestedEffort: parsed.suggestedEffort || undefined,

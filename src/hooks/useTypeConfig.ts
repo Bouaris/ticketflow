@@ -53,7 +53,7 @@ export function useTypeConfig(): UseTypeConfigReturn {
 
   // Save config when it changes
   useEffect(() => {
-    if (projectPath) {
+    if (projectPath && config.types.length > 0) {
       saveTypeConfig(projectPath, config);
     }
   }, [config, projectPath]);
@@ -96,12 +96,16 @@ export function useTypeConfig(): UseTypeConfigReturn {
    * This clears any existing localStorage config and uses the provided types
    */
   const initializeWithTypes = useCallback((path: string, types: TypeDefinition[]) => {
-    setProjectPath(path);
     const newConfig: TypeConfig = {
       types: types.map((t, i) => ({ ...t, order: i })),
       version: 1,
     };
+
+    setProjectPath(path);
     setConfig(newConfig);
+
+    // Immediately save to localStorage to avoid race conditions
+    saveTypeConfig(path, newConfig);
   }, []);
 
   /**

@@ -463,6 +463,7 @@ function App() {
         onClose={() => setIsEditorOpen(false)}
         onSave={handleSaveItem}
         existingIds={backlog.existingIds}
+        types={typeConfig.sortedTypes}
         screenshotOps={{
           isReady: screenshotFolder.isReady,
           needsPermission: screenshotFolder.needsPermission,

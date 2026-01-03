@@ -10,9 +10,10 @@ import type {
   BacklogItem,
   Section,
   TableGroup,
-  RawSection,
   Criterion,
 } from '../types/backlog';
+import { isTableGroup, isRawSection } from '../types/guards';
+import { SEVERITY_FULL_LABELS, EFFORT_SHORT_LABELS } from '../constants/labels';
 import { getScreenshotMarkdownRef } from './screenshots';
 
 // ============================================================
@@ -117,27 +118,13 @@ function rebuildItemMarkdown(item: BacklogItem): string {
     lines.push(`**Module:** ${item.module}`);
   }
   if (item.severity) {
-    const severityLabels: Record<string, string> = {
-      P0: 'P0 - Bloquant',
-      P1: 'P1 - Critique',
-      P2: 'P2 - Moyenne',
-      P3: 'P3 - Faible',
-      P4: 'P4 - Mineure',
-    };
-    lines.push(`**Sévérité:** ${severityLabels[item.severity] || item.severity}`);
+    lines.push(`**Sévérité:** ${SEVERITY_FULL_LABELS[item.severity] || item.severity}`);
   }
   if (item.priority) {
     lines.push(`**Priorité:** ${item.priority}`);
   }
   if (item.effort) {
-    const effortLabels: Record<string, string> = {
-      XS: 'XS (Extra Small)',
-      S: 'S (Small)',
-      M: 'M (Medium)',
-      L: 'L (Large)',
-      XL: 'XL (Extra Large)',
-    };
-    lines.push(`**Effort:** ${effortLabels[item.effort] || item.effort}`);
+    lines.push(`**Effort:** ${EFFORT_SHORT_LABELS[item.effort] || item.effort}`);
   }
 
   // Description
@@ -233,17 +220,6 @@ function serializeTableGroup(group: TableGroup): string {
   return group.rawMarkdown;
 }
 
-// ============================================================
-// TYPE GUARDS
-// ============================================================
-
-function isRawSection(item: BacklogItem | TableGroup | RawSection): item is RawSection {
-  return 'type' in item && item.type === 'raw-section';
-}
-
-function isTableGroup(item: BacklogItem | TableGroup | RawSection): item is TableGroup {
-  return 'type' in item && item.type === 'table-group';
-}
 
 // ============================================================
 // ITEM UPDATE HELPERS

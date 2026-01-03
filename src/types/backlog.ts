@@ -42,7 +42,7 @@ export const ScreenshotSchema = z.object({
 export type Screenshot = z.infer<typeof ScreenshotSchema>;
 
 // ============================================================
-// BACKLOG ITEM - Item individuel (BUG, EXT, ADM, COS, LT)
+// BACKLOG ITEM - Item individuel du backlog
 // ============================================================
 
 export const BacklogItemSchema = z.object({
@@ -53,10 +53,10 @@ export const BacklogItemSchema = z.object({
   emoji: z.string().optional(),             // ⚠️ CRITIQUE, etc.
 
   // Metadata variable par type
-  component: z.string().optional(),         // BUG: "Extension Chrome - Content Script"
-  module: z.string().optional(),            // EXT/ADM: "Appareillage / Devis"
-  severity: SeveritySchema.optional(),      // BUG: P0-P4
-  priority: PrioritySchema.optional(),      // EXT/ADM/COS: Haute, Moyenne, Faible
+  component: z.string().optional(),         // Composant ou module affecté
+  module: z.string().optional(),            // Module ou domaine fonctionnel
+  severity: SeveritySchema.optional(),      // Sévérité bug: P0-P4
+  priority: PrioritySchema.optional(),      // Priorité business: Haute, Moyenne, Faible
   effort: EffortSchema.optional(),          // Tous sauf BUG: XS, S, M, L, XL
 
   // Contenu textuel
@@ -146,19 +146,15 @@ export function getTypeFromId(id: string): ItemType | null {
   return result.success ? result.data : null;
 }
 
-/** Récupère la couleur CSS pour un type (fallback pour types legacy) */
+/** Récupère la couleur CSS pour un type (fallback pour types courants) */
 export function getTypeColor(type: ItemType): string {
-  // Legacy color mapping - for new types, use TypeConfig
-  const legacyColors: Record<string, string> = {
+  const defaultColors: Record<string, string> = {
     BUG: '#ef4444',
-    EXT: '#3b82f6',
-    ADM: '#10b981',
-    COS: '#f59e0b',
-    LT: '#8b5cf6',
     CT: '#3b82f6',
+    LT: '#8b5cf6',
     AUTRE: '#6b7280',
   };
-  return legacyColors[type] || '#6b7280';
+  return defaultColors[type] || '#6b7280';
 }
 
 /** Récupère la couleur CSS pour une sévérité */
@@ -185,14 +181,11 @@ export function getEffortColor(effort: Effort): string {
   return colors[effort];
 }
 
-/** Labels lisibles pour les types (legacy fallback) */
+/** Labels lisibles pour les types courants */
 export const TYPE_LABELS: Record<string, string> = {
   BUG: 'Bugs',
-  EXT: 'Extension',
-  ADM: 'Admin',
-  COS: 'Cosium API',
-  LT: 'Long Terme',
   CT: 'Court Terme',
+  LT: 'Long Terme',
   AUTRE: 'Autres Idées',
 };
 

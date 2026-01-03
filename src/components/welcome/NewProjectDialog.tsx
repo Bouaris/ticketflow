@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { BACKLOG_FILE_NAME } from '../../types/project';
 import { DEFAULT_TYPES, type TypeDefinition } from '../../types/typeConfig';
 import { TypeConfigEditor } from '../settings/TypeConfigEditor';
+import { FileIcon, InfoIcon, ChevronRightIcon } from '../ui/Icons';
 
 interface NewProjectDialogProps {
   isOpen: boolean;
@@ -36,9 +37,34 @@ export function NewProjectDialog({
     }
   };
 
-  // Generate template preview based on types
+  // Generate template preview based on types (matches useProjects.createNewBacklog)
   const sortedTypes = [...types].sort((a, b) => a.order - b.order);
-  const templatePreview = `# TICKETFLOW Backlog\n\n${sortedTypes.map(t => `## ${t.label}`).join('\n\n')}\n`;
+  const tocEntries = sortedTypes.map((t, i) =>
+    `${i + 1}. [${t.label}](#${i + 1}-${t.label.toLowerCase().replace(/\s+/g, '-')})`
+  ).join('\n');
+  const sections = sortedTypes.map((t, i) =>
+    `## ${i + 1}. ${t.label.toUpperCase()}`
+  ).join('\n\n---\n\n');
+  const templatePreview = `# ${folderName} - Product Backlog
+
+> Document de référence pour le développement
+> Dernière mise à jour : ${new Date().toISOString().split('T')[0]}
+
+---
+
+## Table des matières
+${tocEntries}
+${sortedTypes.length + 1}. [Légende](#${sortedTypes.length + 1}-legende)
+
+---
+
+${sections}
+
+---
+
+## ${sortedTypes.length + 1}. Légende
+(Effort, Conventions, Sévérité, Priorité...)
+`;
 
   return (
     <>
@@ -88,7 +114,7 @@ export function NewProjectDialog({
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
               >
-                <ChevronIcon className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
+                <ChevronRightIcon className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
                 Personnaliser les types ({types.length})
               </button>
 
@@ -140,32 +166,5 @@ export function NewProjectDialog({
         </div>
       </div>
     </>
-  );
-}
-
-// Icons
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  );
-}
-
-function InfoIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
-
-function ChevronIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
   );
 }

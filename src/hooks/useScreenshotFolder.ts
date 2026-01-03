@@ -17,26 +17,23 @@ import {
   convertToPng,
   isDirectoryPickerSupported,
 } from '../lib/screenshots';
+import { INDEXED_DB } from '../constants/storage';
 
 // ============================================================
 // INDEXEDDB PERSISTENCE
 // ============================================================
 
-const DB_NAME = 'backlog-manager';
-const STORE_NAME = 'file-handles';
-const FOLDER_HANDLE_KEY = 'screenshots-folder-parent';
-
 async function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
+    const request = indexedDB.open(INDEXED_DB.DB_NAME, INDEXED_DB.VERSION);
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
+      if (!db.objectStoreNames.contains(INDEXED_DB.FILE_HANDLES_STORE)) {
+        db.createObjectStore(INDEXED_DB.FILE_HANDLES_STORE);
       }
     };
   });
@@ -45,9 +42,9 @@ async function openDB(): Promise<IDBDatabase> {
 async function storeParentHandle(handle: FileSystemDirectoryHandle): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, FOLDER_HANDLE_KEY);
+    const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readwrite');
+    const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+    const request = store.put(handle, INDEXED_DB.SCREENSHOTS_FOLDER_KEY);
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
@@ -59,9 +56,9 @@ async function getStoredParentHandle(): Promise<FileSystemDirectoryHandle | null
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.get(FOLDER_HANDLE_KEY);
+      const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readonly');
+      const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+      const request = store.get(INDEXED_DB.SCREENSHOTS_FOLDER_KEY);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result || null);
@@ -76,9 +73,9 @@ async function clearStoredParentHandle(): Promise<void> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.delete(FOLDER_HANDLE_KEY);
+      const tx = db.transaction(INDEXED_DB.FILE_HANDLES_STORE, 'readwrite');
+      const store = tx.objectStore(INDEXED_DB.FILE_HANDLES_STORE);
+      const request = store.delete(INDEXED_DB.SCREENSHOTS_FOLDER_KEY);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
@@ -132,7 +129,6 @@ export interface UseScreenshotFolderReturn {
 // ============================================================
 
 export function useScreenshotFolder(): UseScreenshotFolderReturn {
-  const [, setParentHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [screenshotsHandle, setScreenshotsHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -158,7 +154,6 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
           if (permission === 'granted') {
             const handle = await getScreenshotsFolder(stored);
             if (handle) {
-              setParentHandle(stored);
               setScreenshotsHandle(handle);
               setIsReady(true);
               return;
@@ -205,7 +200,6 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
       // Get or create screenshots folder
       const handle = await getScreenshotsFolder(selected);
       if (handle) {
-        setParentHandle(selected);
         setScreenshotsHandle(handle);
         setIsReady(true);
         setNeedsPermission(false);

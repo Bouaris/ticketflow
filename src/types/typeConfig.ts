@@ -4,6 +4,8 @@
  * Allows users to create custom item types instead of hardcoded ones.
  */
 
+import { TYPE_COLORS, getAutoColor } from '../constants/colors';
+
 // ============================================================
 // TYPE DEFINITION
 // ============================================================
@@ -31,10 +33,10 @@ export interface TypeConfig {
 // ============================================================
 
 export const DEFAULT_TYPES: TypeDefinition[] = [
-  { id: 'BUG', label: 'Bugs', color: '#ef4444', order: 0 },
-  { id: 'CT', label: 'Court Terme', color: '#3b82f6', order: 1 },
-  { id: 'LT', label: 'Long Terme', color: '#8b5cf6', order: 2 },
-  { id: 'AUTRE', label: 'Autres Idées', color: '#6b7280', order: 3 },
+  { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0 },
+  { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1 },
+  { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2 },
+  { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3 },
 ];
 
 export const DEFAULT_TYPE_CONFIG: TypeConfig = {
@@ -47,11 +49,10 @@ export const DEFAULT_TYPE_CONFIG: TypeConfig = {
 // ============================================================
 
 export const LEGACY_TYPE_MAP: Record<string, TypeDefinition> = {
-  BUG: { id: 'BUG', label: 'Bugs', color: '#ef4444', order: 0 },
-  EXT: { id: 'EXT', label: 'Extension', color: '#3b82f6', order: 1 },
-  ADM: { id: 'ADM', label: 'Admin', color: '#10b981', order: 2 },
-  COS: { id: 'COS', label: 'Cosium API', color: '#f59e0b', order: 3 },
-  LT: { id: 'LT', label: 'Long Terme', color: '#8b5cf6', order: 4 },
+  BUG: { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0 },
+  CT: { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1 },
+  LT: { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2 },
+  AUTRE: { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3 },
 };
 
 // ============================================================
@@ -106,15 +107,36 @@ function hashPath(path: string): string {
 // ============================================================
 
 /**
- * Detect types from markdown content by scanning for item IDs
+ * Detect types from markdown content by scanning:
+ * 1. Item IDs (### BUG-001 | Title)
+ * 2. Section headers (## 1. BUGS, ## 2. COURT TERME)
  */
 export function detectTypesFromMarkdown(markdown: string): string[] {
-  const typePattern = /###\s*([A-Z]+)-\d+/g;
   const types = new Set<string>();
 
+  // 1. Detect from item IDs (### BUG-001 | Title)
+  const itemPattern = /###\s*([A-Z]+)-\d+/g;
   let match;
-  while ((match = typePattern.exec(markdown)) !== null) {
+  while ((match = itemPattern.exec(markdown)) !== null) {
     types.add(match[1]);
+  }
+
+  // 2. Detect from section headers (## 1. BUGS, ## 2. COURT TERME)
+  // Map section labels to their type IDs
+  const sectionToType: Record<string, string> = {
+    'BUGS': 'BUG',
+    'COURT TERME': 'CT',
+    'LONG TERME': 'LT',
+    'AUTRES IDÉES': 'AUTRE',
+    'AUTRES IDEES': 'AUTRE', // Without accent
+  };
+
+  const sectionPattern = /^##\s*\d+\.\s*(.+)$/gm;
+  while ((match = sectionPattern.exec(markdown)) !== null) {
+    const sectionLabel = match[1].trim().toUpperCase();
+    if (sectionToType[sectionLabel]) {
+      types.add(sectionToType[sectionLabel]);
+    }
   }
 
   return Array.from(types);
@@ -175,22 +197,7 @@ export function mergeTypesWithDetected(
   return { types: result, version: 1 };
 }
 
-/**
- * Generate a color based on index
- */
-function getAutoColor(index: number): string {
-  const colors = [
-    '#ef4444', // red
-    '#3b82f6', // blue
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#84cc16', // lime
-  ];
-  return colors[index % colors.length];
-}
+// getAutoColor is imported from colors.ts
 
 /**
  * Get type definition by ID
