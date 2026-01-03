@@ -8,6 +8,8 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile, exists, readFile, writeFile, readDir } from '@tauri-apps/plugin-fs';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
+import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 // ============================================================
 // ENVIRONMENT DETECTION
@@ -265,4 +267,26 @@ export function joinPath(...parts: string[]): string {
 
   // For Unix-like: use forward slashes
   return parts.join('/').replace(/\\/g, '/');
+}
+
+// ============================================================
+// APPLICATION LIFECYCLE
+// ============================================================
+
+/**
+ * Force quit the application
+ * Bypasses the tray minimize behavior
+ */
+export async function forceQuit(): Promise<void> {
+  await invoke('force_quit');
+}
+
+/**
+ * Listen for tray quit request
+ * Called when user clicks "Quitter" in tray menu
+ * @param callback Function to call when quit is requested
+ * @returns Unlisten function
+ */
+export async function listenTrayQuitRequested(callback: () => void): Promise<UnlistenFn> {
+  return listen('tray:quit-requested', callback);
 }
