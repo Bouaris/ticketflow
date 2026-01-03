@@ -35,6 +35,8 @@ Application de gestion de backlog produit avec génération IA.
 - **Application native** - Exécutable Windows autonome via Tauri
 - **Gestionnaire de projets** - Créez et gérez plusieurs backlogs
 - **Accès fichiers natif** - Performance optimale sans limitations navigateur
+- **System tray** - Minimisation dans la barre des tâches
+- **Mise à jour automatique** - Notification et installation des nouvelles versions
 
 ## Installation
 
@@ -183,8 +185,10 @@ Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
 ### Dernière version: v1.1.0
 - System tray avec minimisation dans la barre des tâches
-- Protection single-instance
+- Protection single-instance (une seule fenêtre)
 - Mise à jour automatique via GitHub Releases
+- Badge notification quand une mise à jour est disponible
+- Smart dismiss: le modal de mise à jour respecte le choix "Plus tard"
 
 ## Roadmap
 

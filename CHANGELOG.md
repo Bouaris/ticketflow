@@ -4,7 +4,7 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
-## [1.1.0] - 2026-01-03
+## [1.1.0] - 2026-01-04
 
 ### Ajouté
 - System tray avec minimisation dans la barre des tâches
@@ -12,11 +12,14 @@ Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 - Système de mise à jour automatique via GitHub Releases
 - Modal de confirmation pour quitter sans sauvegarder
 - Bouton "Vérifier les mises à jour" dans Paramètres
-- Workflow GitHub Actions pour releases automatiques
+- Badge notification rouge sur Settings quand une mise à jour est disponible mais reportée
+- Smart dismiss: le modal de mise à jour ne réapparaît pas après "Plus tard" (sauf vérification manuelle)
+- Persistance du dismiss entre les sessions (localStorage)
 
 ### Corrigé
 - Bug du logo violet géant dans les suggestions IA
 - Nom de l'action Rust dans le workflow CI
+- Bug du modal de mise à jour qui ne réapparaissait pas après clic sur "Vérifier"
 
 ## [1.0.0] - 2026-01-02
 

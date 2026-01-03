@@ -1,8 +1,11 @@
 /**
  * useUpdater - Hook for automatic app updates via Tauri updater plugin.
  *
- * Checks for updates at startup, periodically (every 4h), and on demand.
- * Downloads and installs updates with progress tracking.
+ * Features:
+ * - Checks for updates at startup, periodically (every 4h), and on demand
+ * - Downloads and installs updates with progress tracking
+ * - Smart dismiss: remembers when user clicks "Plus tard" and shows badge instead of modal
+ * - Persistence: dismiss state survives app restarts
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -30,6 +33,8 @@ interface UpdaterState {
   downloading: boolean;
   progress: number;
   error: string | null;
+  dismissed: boolean;
+  dismissedVersion: string | null;
 }
 
 const INITIAL_STATE: UpdaterState = {
@@ -38,13 +43,36 @@ const INITIAL_STATE: UpdaterState = {
   downloading: false,
   progress: 0,
   error: null,
+  dismissed: false,
+  dismissedVersion: null,
 };
 
 // Check interval: 4 hours
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
 
+// localStorage key for dismiss persistence
+const STORAGE_KEY = 'ticketflow-update-dismissed';
+
 export function useUpdater() {
-  const [state, setState] = useState<UpdaterState>(INITIAL_STATE);
+  const [state, setState] = useState<UpdaterState>(() => {
+    // Load dismiss state from localStorage on init
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { version } = JSON.parse(stored);
+          return {
+            ...INITIAL_STATE,
+            dismissed: true,
+            dismissedVersion: version,
+          };
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+    return INITIAL_STATE;
+  });
   const updateRef = useRef<unknown>(null);
   const totalBytesRef = useRef<number>(0);
   const downloadedBytesRef = useRef<number>(0);
@@ -58,10 +86,15 @@ export function useUpdater() {
     }
 
     try {
+      console.log('[Updater] Starting update check...');
       const { check } = await import('@tauri-apps/plugin-updater');
+      console.log('[Updater] Plugin imported, calling check()...');
+
       const update = await check();
+      console.log('[Updater] Check result:', update);
 
       if (update) {
+        console.log('[Updater] Update available:', update.version);
         updateRef.current = update;
         const info: UpdateInfo = {
           version: update.version,
@@ -69,14 +102,30 @@ export function useUpdater() {
           body: update.body || undefined,
           date: update.date || undefined,
         };
-        setState(prev => ({ ...prev, checking: false, available: info }));
+
+        // Smart dismiss: check if this version was already dismissed
+        setState(prev => {
+          const isDismissedVersion = prev.dismissedVersion === info.version;
+          return {
+            ...prev,
+            checking: false,
+            available: info,
+            // Keep dismissed state only if same version was dismissed
+            dismissed: isDismissedVersion ? prev.dismissed : false,
+            dismissedVersion: isDismissedVersion ? prev.dismissedVersion : null,
+          };
+        });
+
         return info;
       } else {
+        console.log('[Updater] No update available, current version is latest');
         setState(prev => ({ ...prev, checking: false, available: null }));
         return null;
       }
     } catch (err) {
+      console.error('[Updater] Error during check:', err);
       const errorMsg = err instanceof Error ? err.message : 'Erreur lors de la vérification';
+      console.error('[Updater] Error message:', errorMsg);
       if (!silent) {
         setState(prev => ({ ...prev, checking: false, error: errorMsg }));
       }
@@ -115,15 +164,44 @@ export function useUpdater() {
       const { relaunch } = await import('@tauri-apps/plugin-process');
       await relaunch();
     } catch (err) {
+      console.error('[Updater] Install error:', err);
       const errorMsg = err instanceof Error ? err.message : 'Erreur lors de l\'installation';
       setState(prev => ({ ...prev, downloading: false, error: errorMsg }));
     }
   }, []);
 
-  // Dismiss update notification
+  // Dismiss update notification (smart dismiss: keep available, just hide modal)
   const dismissUpdate = useCallback(() => {
-    setState(prev => ({ ...prev, available: null }));
-    updateRef.current = null;
+    setState(prev => {
+      if (prev.available) {
+        // Persist dismiss for this version
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: prev.available.version }));
+        } catch {
+          // Ignore storage errors
+        }
+        return {
+          ...prev,
+          dismissed: true,
+          dismissedVersion: prev.available.version,
+        };
+      }
+      return prev;
+    });
+  }, []);
+
+  // Clear dismiss state (for manual "Vérifier" to force show modal)
+  const clearDismiss = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore storage errors
+    }
+    setState(prev => ({
+      ...prev,
+      dismissed: false,
+      dismissedVersion: null,
+    }));
   }, []);
 
   // Clear error
@@ -151,11 +229,16 @@ export function useUpdater() {
     };
   }, [checkForUpdates]);
 
+  // Computed: show modal only if update available AND not dismissed
+  const showModal = state.available !== null && !state.dismissed;
+
   return {
     ...state,
+    showModal,
     checkForUpdates,
     installUpdate,
     dismissUpdate,
+    clearDismiss,
     clearError,
   };
 }

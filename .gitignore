@@ -40,3 +40,8 @@ coverage/
 # Cache
 .cache/
 .eslintcache
+
+# Signing keys
+~/.tauri/
+*.key
+*.pem

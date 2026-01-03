@@ -578,10 +578,14 @@ ${item.description ? `**Description:** ${item.description}` : ''}
           {/* Settings button */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
+            className="relative p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
             title="Paramètres"
           >
             <SettingsIcon />
+            {/* Badge notification: update dismissed but available */}
+            {updater.dismissed && updater.available && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+            )}
           </button>
         </div>
       )}
@@ -654,6 +658,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        updater={updater}
       />
 
       {/* Type Config modal */}
@@ -715,9 +720,9 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onCancel={() => setShowHomeConfirmModal(false)}
       />
 
-      {/* Update modal (Tauri only) */}
+      {/* Update modal (Tauri only) - uses showModal for smart dismiss */}
       <UpdateModal
-        isOpen={!!updater.available}
+        isOpen={updater.showModal}
         updateInfo={updater.available}
         downloading={updater.downloading}
         progress={updater.progress}

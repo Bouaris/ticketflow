@@ -14,13 +14,14 @@ import {
   type AIProvider,
 } from '../../lib/ai';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
-import { useUpdater } from '../../hooks/useUpdater';
+import type { useUpdater } from '../../hooks/useUpdater';
 import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  updater: ReturnType<typeof useUpdater>;
 }
 
 const PROVIDERS: { id: AIProvider; name: string; description: string; url: string; placeholder: string }[] = [
@@ -40,12 +41,11 @@ const PROVIDERS: { id: AIProvider; name: string; description: string; url: strin
   },
 ];
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, updater }: SettingsModalProps) {
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('groq');
   const [apiKey, setApiKeyState] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
-  const updater = useUpdater();
   const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,7 +85,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setUpdateCheckMessage(null);
     const result = await updater.checkForUpdates(false);
     if (result) {
-      // Update found - the modal will show automatically via App.tsx
+      // Update found - clear dismiss to force show modal, then close settings
+      updater.clearDismiss();
       onClose();
     } else if (!updater.error) {
       // Only show "up to date" if there was no error
