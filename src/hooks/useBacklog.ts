@@ -75,7 +75,7 @@ export interface UseBacklogReturn {
   // Items
   allItems: BacklogItem[];
   filteredItems: BacklogItem[];
-  itemsByType: Record<ItemType, BacklogItem[]>;
+  itemsByType: Record<string, BacklogItem[]>;
 
   // Selected item
   selectedItem: BacklogItem | null;
@@ -89,6 +89,7 @@ export interface UseBacklogReturn {
   addItem: (item: BacklogItem) => void;
   deleteItem: (id: string) => void;
   existingIds: string[];
+  reset: () => void;
 }
 
 // ============================================================
@@ -174,15 +175,13 @@ export function useBacklog(): UseBacklogReturn {
   }, [allItems, filters]);
 
   const itemsByType = useMemo(() => {
-    const grouped: Record<ItemType, BacklogItem[]> = {
-      BUG: [],
-      EXT: [],
-      ADM: [],
-      COS: [],
-      LT: [],
-    };
+    // Dynamic grouping - group by whatever types exist in the items
+    const grouped: Record<string, BacklogItem[]> = {};
 
     for (const item of filteredItems) {
+      if (!grouped[item.type]) {
+        grouped[item.type] = [];
+      }
       grouped[item.type].push(item);
     }
 
@@ -343,6 +342,17 @@ export function useBacklog(): UseBacklogReturn {
     return allItems.map(item => item.id);
   }, [allItems]);
 
+  // ============================================================
+  // RESET
+  // ============================================================
+
+  const reset = useCallback(() => {
+    setBacklog(null);
+    setSelectedItem(null);
+    setFiltersState(DEFAULT_FILTERS);
+    setError(null);
+  }, []);
+
   return {
     // State
     backlog,
@@ -375,5 +385,6 @@ export function useBacklog(): UseBacklogReturn {
     addItem,
     deleteItem,
     existingIds,
+    reset,
   };
 }

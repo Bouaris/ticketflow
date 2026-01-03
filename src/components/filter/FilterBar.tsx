@@ -4,21 +4,21 @@
 
 import type { BacklogFilters } from '../../hooks/useBacklog';
 import type {
-  ItemType,
   Priority,
   Effort,
   Severity,
 } from '../../types/backlog';
 import {
-  TYPE_LABELS,
   PRIORITY_LABELS,
   SEVERITY_LABELS,
 } from '../../types/backlog';
+import type { TypeDefinition } from '../../types/typeConfig';
 
 interface FilterBarProps {
   filters: BacklogFilters;
   totalCount: number;
   filteredCount: number;
+  types: TypeDefinition[];
   onFiltersChange: (filters: Partial<BacklogFilters>) => void;
   onReset: () => void;
 }
@@ -27,6 +27,7 @@ export function FilterBar({
   filters,
   totalCount,
   filteredCount,
+  types,
   onFiltersChange,
   onReset,
 }: FilterBarProps) {
@@ -55,12 +56,12 @@ export function FilterBar({
         {/* Type Filter */}
         <FilterDropdown
           label="Type"
-          options={(['BUG', 'EXT', 'ADM', 'COS', 'LT'] as ItemType[]).map(t => ({
-            value: t,
-            label: TYPE_LABELS[t],
+          options={types.map(t => ({
+            value: t.id,
+            label: t.label,
           }))}
           selected={filters.types}
-          onChange={(types) => onFiltersChange({ types: types as ItemType[] })}
+          onChange={(selectedTypes) => onFiltersChange({ types: selectedTypes })}
         />
 
         {/* Priority Filter */}

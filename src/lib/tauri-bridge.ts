@@ -6,7 +6,7 @@
  */
 
 import { open, save } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile, exists, readFile, writeFile } from '@tauri-apps/plugin-fs';
+import { readTextFile, writeTextFile, exists, readFile, writeFile, readDir } from '@tauri-apps/plugin-fs';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 
 // ============================================================
@@ -15,9 +15,10 @@ import { open as openUrl } from '@tauri-apps/plugin-shell';
 
 /**
  * Check if running in Tauri environment
+ * Tauri v2 uses __TAURI_INTERNALS__ instead of __TAURI__
  */
 export function isTauri(): boolean {
-  return '__TAURI__' in window;
+  return '__TAURI_INTERNALS__' in window;
 }
 
 // ============================================================
@@ -81,11 +82,26 @@ export async function writeTextFileContents(path: string, content: string): Prom
 
 /**
  * Check if a file exists
+ * Uses readTextFile as fallback since exists() can be unreliable on Windows
  * @param path Absolute file path
  * @returns True if file exists
  */
 export async function fileExists(path: string): Promise<boolean> {
-  return exists(path);
+  // Try exists() first
+  try {
+    const result = await exists(path);
+    if (result) return true;
+  } catch {
+    // Ignore, try fallback
+  }
+
+  // Fallback: try to read the file
+  try {
+    await readTextFile(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -193,4 +209,60 @@ export function setupExternalLinkHandler(): void {
       }
     }
   });
+}
+
+// ============================================================
+// PROJECT/DIRECTORY OPERATIONS
+// ============================================================
+
+/**
+ * List markdown files in a directory
+ * @param dirPath Directory path
+ * @returns Array of markdown file names (not full paths)
+ */
+export async function listMarkdownFiles(dirPath: string): Promise<string[]> {
+  try {
+    const entries = await readDir(dirPath);
+    return entries
+      .filter(entry => {
+        const name = entry.name?.toLowerCase() || '';
+        return !entry.isDirectory && (name.endsWith('.md') || name.endsWith('.markdown'));
+      })
+      .map(entry => entry.name || '')
+      .filter(Boolean);
+  } catch (error) {
+    console.error('Failed to list markdown files:', error);
+    return [];
+  }
+}
+
+/**
+ * Get folder name from a path
+ * @param path Full path
+ * @returns Folder name (last segment)
+ */
+export function getFolderName(path: string): string {
+  const parts = path.split(/[/\\]/).filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+/**
+ * Join path segments
+ * @param parts Path parts to join
+ * @returns Joined path (preserves Windows backslashes)
+ */
+export function joinPath(...parts: string[]): string {
+  // Detect if first part is a Windows path (e.g., D:\)
+  const isWindows = parts[0]?.match(/^[A-Za-z]:\\/);
+
+  if (isWindows) {
+    // For Windows: normalize to backslashes
+    return parts
+      .map(p => p.replace(/\//g, '\\'))
+      .join('\\')
+      .replace(/\\+/g, '\\');
+  }
+
+  // For Unix-like: use forward slashes
+  return parts.join('/').replace(/\\/g, '/');
 }

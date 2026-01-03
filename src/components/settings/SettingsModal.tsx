@@ -151,20 +151,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </label>
               <p className="text-xs text-gray-500 mb-3">
                 Obtenez votre clé sur{' '}
-                <a
-                  href={currentProvider.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
                   className="text-blue-600 hover:underline cursor-pointer"
-                  onClick={(e) => {
+                  onClick={() => {
+                    const url = currentProvider.url;
+                    console.log('Button clicked, isTauri:', isTauri(), 'url:', url);
                     if (isTauri()) {
-                      e.preventDefault();
-                      openExternalUrl(currentProvider.url);
+                      openExternalUrl(url)
+                        .then(() => console.log('URL opened successfully'))
+                        .catch((err) => console.error('Failed to open URL:', err));
+                    } else {
+                      window.open(url, '_blank');
                     }
                   }}
                 >
                   {selectedProvider === 'groq' ? 'Groq Console' : 'Google AI Studio'}
-                </a>
+                </button>
               </p>
               <div className="relative">
                 <input
