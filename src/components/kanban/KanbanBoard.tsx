@@ -1,30 +1,67 @@
 /**
- * KanbanBoard component with columns per item type.
+ * KanbanBoard component with dynamic columns per item type.
+ * Supports drag & drop for reordering columns.
  */
 
-import type { BacklogItem, ItemType } from '../../types/backlog';
-import { TYPE_LABELS } from '../../types/backlog';
+import { useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { BacklogItem } from '../../types/backlog';
+import type { TypeDefinition } from '../../types/typeConfig';
 import { KanbanCard } from './KanbanCard';
 
 interface KanbanBoardProps {
-  itemsByType: Record<ItemType, BacklogItem[]>;
+  itemsByType: Record<string, BacklogItem[]>;
+  types: TypeDefinition[];
   onItemClick: (item: BacklogItem) => void;
+  onTypesReorder?: (fromIndex: number, toIndex: number) => void;
 }
 
-const COLUMN_ORDER: ItemType[] = ['BUG', 'EXT', 'ADM', 'COS', 'LT'];
-
-const COLUMN_COLORS: Record<ItemType, { bg: string; border: string; header: string }> = {
-  BUG: { bg: 'bg-red-50', border: 'border-red-200', header: 'bg-red-100 text-red-800' },
-  EXT: { bg: 'bg-blue-50', border: 'border-blue-200', header: 'bg-blue-100 text-blue-800' },
-  ADM: { bg: 'bg-purple-50', border: 'border-purple-200', header: 'bg-purple-100 text-purple-800' },
-  COS: { bg: 'bg-cyan-50', border: 'border-cyan-200', header: 'bg-cyan-100 text-cyan-800' },
-  LT: { bg: 'bg-gray-50', border: 'border-gray-200', header: 'bg-gray-100 text-gray-800' },
-};
-
-export function KanbanBoard({ itemsByType, onItemClick }: KanbanBoardProps) {
+export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }: KanbanBoardProps) {
   const totalItems = Object.values(itemsByType).reduce((sum, items) => sum + items.length, 0);
 
-  if (totalItems === 0) {
+  // Filter types to only show columns with items
+  const visibleTypes = useMemo(() => {
+    return types.filter(type => (itemsByType[type.id]?.length ?? 0) > 0);
+  }, [types, itemsByType]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && onTypesReorder) {
+      // Use original types array for reordering to preserve correct indices
+      const oldIndex = types.findIndex(t => t.id === active.id);
+      const newIndex = types.findIndex(t => t.id === over.id);
+      onTypesReorder(oldIndex, newIndex);
+    }
+  };
+
+  if (totalItems === 0 && visibleTypes.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
         Aucun item à afficher
@@ -34,40 +71,84 @@ export function KanbanBoard({ itemsByType, onItemClick }: KanbanBoardProps) {
 
   return (
     <div className="flex-1 overflow-x-auto p-6">
-      <div className="flex gap-4 min-w-max h-full">
-        {COLUMN_ORDER.map(type => (
-          <KanbanColumn
-            key={type}
-            type={type}
-            items={itemsByType[type]}
-            onItemClick={onItemClick}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={visibleTypes.map(t => t.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="flex gap-4 min-w-max h-full">
+            {visibleTypes.map(type => (
+              <SortableKanbanColumnWithStyles
+                key={type.id}
+                type={type}
+                items={itemsByType[type.id] || []}
+                onItemClick={onItemClick}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
 
 // ============================================================
-// KANBAN COLUMN
+// SORTABLE KANBAN COLUMN (with dynamic colors)
 // ============================================================
 
-interface KanbanColumnProps {
-  type: ItemType;
+interface SortableKanbanColumnProps {
+  type: TypeDefinition;
   items: BacklogItem[];
   onItemClick: (item: BacklogItem) => void;
 }
+function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKanbanColumnProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: type.id });
 
-function KanbanColumn({ type, items, onItemClick }: KanbanColumnProps) {
-  const colors = COLUMN_COLORS[type];
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Generate background with opacity
+  const bgColor = hexToRgba(type.color, 0.05);
+  const borderColor = hexToRgba(type.color, 0.3);
+  const headerBgColor = hexToRgba(type.color, 0.15);
 
   return (
-    <div className={`flex flex-col w-80 rounded-lg border ${colors.border} ${colors.bg}`}>
-      {/* Header */}
-      <div className={`px-4 py-3 rounded-t-lg ${colors.header}`}>
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+      }}
+      className="flex flex-col w-80 rounded-lg border"
+    >
+      {/* Header - Draggable */}
+      <div
+        {...attributes}
+        {...listeners}
+        style={{ backgroundColor: headerBgColor }}
+        className="px-4 py-3 rounded-t-lg cursor-grab active:cursor-grabbing"
+      >
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{TYPE_LABELS[type]}</h3>
-          <span className="text-sm opacity-75">{items.length}</span>
+          <div className="flex items-center gap-2">
+            <GripIcon className="w-4 h-4 opacity-50" />
+            <h3 className="font-semibold" style={{ color: type.color }}>{type.label}</h3>
+          </div>
+          <span className="text-sm" style={{ color: type.color, opacity: 0.75 }}>{items.length}</span>
         </div>
       </div>
 
@@ -90,3 +171,20 @@ function KanbanColumn({ type, items, onItemClick }: KanbanColumnProps) {
     </div>
   );
 }
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function GripIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 8h16M4 16h16" />
+    </svg>
+  );
+}
+

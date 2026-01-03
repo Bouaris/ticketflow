@@ -62,6 +62,8 @@ export interface UseFileAccessReturn {
   openFile: () => Promise<string | null>;
   /** Charger le fichier stocké */
   loadStoredFile: () => Promise<string | null>;
+  /** Charger depuis un chemin spécifique (Tauri only) */
+  loadFromPath: (path: string) => Promise<string | null>;
   /** Sauvegarder dans le fichier actuel */
   save: (content: string) => Promise<boolean>;
   /** Sauvegarder sous un nouveau nom */
@@ -225,6 +227,37 @@ export function useFileAccess(): UseFileAccessReturn {
     }
   }, [isTauriMode]);
 
+  // Load from a specific path (Tauri mode only, used by WelcomePage)
+  const loadFromPath = useCallback(async (path: string): Promise<string | null> => {
+    if (!isTauriMode) {
+      setError('Cette fonctionnalité nécessite la version desktop.');
+      return null;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const fileContent = await readTextFileContents(path);
+      setFilePath(path);
+      setFileName(getFileNameFromPath(path));
+      setContent(fileContent);
+      setIsDirty(false);
+      setHasStoredHandle(false);
+
+      // Store path for next session
+      localStorage.setItem(TAURI_LAST_FILE_KEY, path);
+
+      setIsLoading(false);
+      return fileContent;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load file';
+      setError(message);
+      setIsLoading(false);
+      return null;
+    }
+  }, [isTauriMode]);
+
   const save = useCallback(async (newContent: string): Promise<boolean> => {
     if (isTauriMode) {
       if (!filePath) {
@@ -343,6 +376,7 @@ export function useFileAccess(): UseFileAccessReturn {
     isTauriMode,
     openFile,
     loadStoredFile,
+    loadFromPath,
     save,
     saveAs,
     closeFile,

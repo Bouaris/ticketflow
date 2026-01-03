@@ -4,8 +4,12 @@ import { z } from 'zod';
 // ENUMS - Types primitifs du backlog
 // ============================================================
 
-export const ItemTypeSchema = z.enum(['BUG', 'EXT', 'ADM', 'COS', 'LT']);
-export type ItemType = z.infer<typeof ItemTypeSchema>;
+// ItemType is now dynamic - any uppercase string is valid
+export const ItemTypeSchema = z.string().refine(
+  (val) => /^[A-Z]+$/.test(val),
+  { message: 'Item type must be uppercase letters only' }
+);
+export type ItemType = string;
 
 export const SeveritySchema = z.enum(['P0', 'P1', 'P2', 'P3', 'P4']);
 export type Severity = z.infer<typeof SeveritySchema>;
@@ -142,16 +146,19 @@ export function getTypeFromId(id: string): ItemType | null {
   return result.success ? result.data : null;
 }
 
-/** Récupère la couleur CSS pour un type */
+/** Récupère la couleur CSS pour un type (fallback pour types legacy) */
 export function getTypeColor(type: ItemType): string {
-  const colors: Record<ItemType, string> = {
-    BUG: 'var(--color-type-bug)',
-    EXT: 'var(--color-type-ext)',
-    ADM: 'var(--color-type-adm)',
-    COS: 'var(--color-type-cos)',
-    LT: 'var(--color-type-lt)',
+  // Legacy color mapping - for new types, use TypeConfig
+  const legacyColors: Record<string, string> = {
+    BUG: '#ef4444',
+    EXT: '#3b82f6',
+    ADM: '#10b981',
+    COS: '#f59e0b',
+    LT: '#8b5cf6',
+    CT: '#3b82f6',
+    AUTRE: '#6b7280',
   };
-  return colors[type];
+  return legacyColors[type] || '#6b7280';
 }
 
 /** Récupère la couleur CSS pour une sévérité */
@@ -178,14 +185,21 @@ export function getEffortColor(effort: Effort): string {
   return colors[effort];
 }
 
-/** Labels lisibles pour les types */
-export const TYPE_LABELS: Record<ItemType, string> = {
+/** Labels lisibles pour les types (legacy fallback) */
+export const TYPE_LABELS: Record<string, string> = {
   BUG: 'Bugs',
   EXT: 'Extension',
   ADM: 'Admin',
   COS: 'Cosium API',
   LT: 'Long Terme',
+  CT: 'Court Terme',
+  AUTRE: 'Autres Idées',
 };
+
+/** Get label for a type (with fallback) */
+export function getTypeLabel(type: ItemType): string {
+  return TYPE_LABELS[type] || type;
+}
 
 /** Labels lisibles pour les sévérités */
 export const SEVERITY_LABELS: Record<Severity, string> = {

@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenFile: () => void;
   onSave: () => void;
   onViewModeChange: (mode: ViewMode) => void;
+  onGoHome?: () => void;
 }
 
 export function Header({
@@ -22,14 +23,25 @@ export function Header({
   onOpenFile,
   onSave,
   onViewModeChange,
+  onGoHome,
 }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left: Logo & File info */}
         <div className="flex items-center gap-4">
+          {/* Home button (only in Tauri mode) */}
+          {onGoHome && (
+            <button
+              onClick={onGoHome}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Retour à l'accueil"
+            >
+              <HomeIcon />
+            </button>
+          )}
           <h1 className="text-xl font-bold text-gray-900">
-            Backlog Manager
+            Ticketflow
           </h1>
 
           {fileName && (
@@ -146,6 +158,15 @@ function SaveIcon() {
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   );
 }

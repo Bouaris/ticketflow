@@ -8,17 +8,22 @@ import { useState, useCallback } from 'react';
 import { useBacklog } from './hooks/useBacklog';
 import { useFileAccess } from './hooks/useFileAccess';
 import { useScreenshotFolder } from './hooks/useScreenshotFolder';
+import { useTypeConfig } from './hooks/useTypeConfig';
 import { Header } from './components/layout/Header';
 import { FilterBar } from './components/filter/FilterBar';
 import { ListView } from './components/list/ListView';
 import { KanbanBoard } from './components/kanban/KanbanBoard';
 import { ItemDetailPanel } from './components/detail/ItemDetailPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { TypeConfigModal } from './components/settings/TypeConfigModal';
 import { ItemEditorModal, type ItemFormData } from './components/editor/ItemEditorModal';
+import { WelcomePage } from './components/welcome/WelcomePage';
 import { hasApiKey, refineItem } from './lib/ai';
 import type { BacklogItem } from './types/backlog';
+import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
 import { getScreenshotMarkdownRef } from './lib/screenshots';
+import { joinPath, isTauri, getDirFromPath } from './lib/tauri-bridge';
 
 // Helper to generate rawMarkdown from form data
 function generateRawMarkdown(data: ItemFormData): string {
@@ -144,19 +149,61 @@ function App() {
   // Backlog state
   const backlog = useBacklog();
 
+  // Type configuration (dynamic types)
+  const typeConfig = useTypeConfig();
+
   // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTypeConfigOpen, setIsTypeConfigOpen] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   const [isRefining, setIsRefining] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   // Handle file open
   const handleOpenFile = useCallback(async () => {
     const content = await fileAccess.openFile();
     if (content) {
       backlog.loadFromMarkdown(content);
+      // Initialize type config from file content
+      if (fileAccess.filePath) {
+        const projectDir = getDirFromPath(fileAccess.filePath);
+        typeConfig.initializeForProject(projectDir, content);
+      }
+      setShowWelcome(false);
     }
-  }, [fileAccess, backlog]);
+  }, [fileAccess, backlog, typeConfig]);
+
+  // Handle project selection from WelcomePage
+  const handleProjectSelect = useCallback(async (projectPath: string, backlogFile: string, types?: TypeDefinition[]) => {
+    const fullPath = joinPath(projectPath, backlogFile);
+    const content = await fileAccess.loadFromPath(fullPath);
+    if (content) {
+      backlog.loadFromMarkdown(content);
+      // Initialize type config - use provided types for new projects, otherwise detect from content
+      if (types && types.length > 0) {
+        // New project with custom types - initialize with those types
+        typeConfig.initializeWithTypes(projectPath, types);
+      } else {
+        // Existing project - detect types from content
+        typeConfig.initializeForProject(projectPath, content);
+      }
+      setShowWelcome(false);
+    }
+  }, [fileAccess, backlog, typeConfig]);
+
+  // Handle go home (return to welcome page)
+  const handleGoHome = useCallback(() => {
+    // Ask confirmation if there are unsaved changes
+    if (fileAccess.isDirty) {
+      if (!window.confirm('Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?')) {
+        return;
+      }
+    }
+    backlog.reset();
+    fileAccess.closeFile();
+    setShowWelcome(true);
+  }, [backlog, fileAccess]);
 
   // Handle save
   const handleSave = useCallback(async () => {
@@ -209,8 +256,14 @@ function App() {
     const content = await fileAccess.loadStoredFile();
     if (content) {
       backlog.loadFromMarkdown(content);
+      // Initialize type config from file content
+      if (fileAccess.filePath) {
+        const projectDir = getDirFromPath(fileAccess.filePath);
+        typeConfig.initializeForProject(projectDir, content);
+      }
+      setShowWelcome(false);
     }
-  }, [fileAccess, backlog]);
+  }, [fileAccess, backlog, typeConfig]);
 
   // Handle create new item
   const handleCreateItem = useCallback(() => {
@@ -296,49 +349,73 @@ function App() {
     );
   }
 
+  // Determine if we should show welcome page
+  const shouldShowWelcome = showWelcome || !backlog.backlog;
+  const shouldShowTauriWelcome = shouldShowWelcome && isTauri();
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <Header
-        fileName={fileAccess.fileName}
-        isDirty={fileAccess.isDirty}
-        isLoading={fileAccess.isLoading || backlog.isLoading}
-        viewMode={backlog.viewMode}
-        onOpenFile={handleOpenFile}
-        onSave={handleSave}
-        onViewModeChange={backlog.setViewMode}
-      />
+      {/* Header - Hidden on Tauri welcome page */}
+      {!shouldShowTauriWelcome && (
+        <Header
+          fileName={fileAccess.fileName}
+          isDirty={fileAccess.isDirty}
+          isLoading={fileAccess.isLoading || backlog.isLoading}
+          viewMode={backlog.viewMode}
+          onOpenFile={handleOpenFile}
+          onSave={handleSave}
+          onViewModeChange={backlog.setViewMode}
+          onGoHome={isTauri() ? handleGoHome : undefined}
+        />
+      )}
 
-      {/* FAB Buttons */}
-      <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-30">
-        {/* Create new item button - only show when backlog is loaded */}
-        {backlog.backlog && (
+      {/* FAB Buttons - Hide on Tauri welcome page */}
+      {!shouldShowTauriWelcome && (
+        <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-30">
+          {/* Create new item button - only show when backlog is loaded */}
+          {backlog.backlog && (
+            <button
+              onClick={handleCreateItem}
+              className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              title="Créer un nouvel item"
+            >
+              <PlusIcon />
+            </button>
+          )}
+
+          {/* Type config button - only show when backlog is loaded */}
+          {backlog.backlog && (
+            <button
+              onClick={() => setIsTypeConfigOpen(true)}
+              className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
+              title="Configurer les types"
+            >
+              <TagIcon />
+            </button>
+          )}
+
+          {/* Settings button */}
           <button
-            onClick={handleCreateItem}
-            className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-            title="Créer un nouvel item"
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
+            title="Paramètres"
           >
-            <PlusIcon />
+            <SettingsIcon />
           </button>
-        )}
-
-        {/* Settings button */}
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
-          title="Paramètres"
-        >
-          <SettingsIcon />
-        </button>
-      </div>
+        </div>
+      )}
 
       {/* Main content */}
-      {!backlog.backlog ? (
-        <WelcomeScreen
-          onOpenFile={handleOpenFile}
-          onLoadStored={handleLoadStoredFile}
-          hasStoredHandle={fileAccess.hasStoredHandle}
-        />
+      {shouldShowWelcome ? (
+        shouldShowTauriWelcome ? (
+          <WelcomePage onProjectSelect={handleProjectSelect} />
+        ) : (
+          <WelcomeScreen
+            onOpenFile={handleOpenFile}
+            onLoadStored={handleLoadStoredFile}
+            hasStoredHandle={fileAccess.hasStoredHandle}
+          />
+        )
       ) : (
         <>
           {/* Filter bar */}
@@ -346,6 +423,7 @@ function App() {
             filters={backlog.filters}
             totalCount={backlog.allItems.length}
             filteredCount={backlog.filteredItems.length}
+            types={typeConfig.sortedTypes}
             onFiltersChange={backlog.setFilters}
             onReset={backlog.resetFilters}
           />
@@ -354,7 +432,9 @@ function App() {
           {backlog.viewMode === 'kanban' ? (
             <KanbanBoard
               itemsByType={backlog.itemsByType}
+              types={typeConfig.sortedTypes}
               onItemClick={handleItemClick}
+              onTypesReorder={typeConfig.reorderTypesAtIndex}
             />
           ) : (
             <ListView
@@ -399,6 +479,14 @@ function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Type Config modal */}
+      <TypeConfigModal
+        isOpen={isTypeConfigOpen}
+        types={typeConfig.sortedTypes}
+        onSave={typeConfig.setTypes}
+        onCancel={() => setIsTypeConfigOpen(false)}
       />
 
       {/* Loading overlay for AI */}
@@ -506,6 +594,15 @@ function SettingsIcon() {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
     </svg>
   );
 }
