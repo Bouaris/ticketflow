@@ -186,9 +186,10 @@ export function useProjects(): UseProjectsReturn {
       `${i + 1}. [${t.label}](#${i + 1}-${t.label.toLowerCase().replace(/\s+/g, '-')})`
     ).join('\n');
 
-    // Generate Section Headers
+    // Generate Section Headers with type ID comments for detection
+    // The <!-- Type: X --> comment allows detectTypesFromMarkdown to find types even without items
     const sections = sortedTypes.map((t, i) =>
-      `## ${i + 1}. ${t.label.toUpperCase()}\n\n`
+      `## ${i + 1}. ${t.label.toUpperCase()}\n\n<!-- Type: ${t.id} -->\n`
     ).join('\n---\n\n');
 
     const template = `# ${projectName} - Product Backlog
@@ -204,7 +205,8 @@ ${sortedTypes.length + 1}. [Légende](#${sortedTypes.length + 1}-legende)
 
 ---
 
-${sections}---
+${sections}
+---
 
 ## ${sortedTypes.length + 1}. Légende
 

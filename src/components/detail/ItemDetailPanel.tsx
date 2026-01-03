@@ -13,7 +13,9 @@ interface ItemDetailPanelProps {
   onToggleCriterion: (itemId: string, criterionIndex: number) => void;
   onRefineWithAI?: (item: BacklogItem) => void;
   onEdit?: (item: BacklogItem) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (item: BacklogItem) => void;
+  onArchive?: (item: BacklogItem) => void;
+  onExport?: (item: BacklogItem) => void;
   getScreenshotUrl?: (filename: string) => Promise<string | null>;
 }
 
@@ -24,6 +26,8 @@ export function ItemDetailPanel({
   onRefineWithAI,
   onEdit,
   onDelete,
+  onArchive,
+  onExport,
   getScreenshotUrl,
 }: ItemDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -207,6 +211,16 @@ export function ItemDetailPanel({
 
         {/* Footer with action buttons */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 space-y-3">
+          {/* Completion indicator */}
+          {item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked) && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircleIcon />
+              <span className="text-sm font-medium text-green-700">
+                Item complété à 100%
+              </span>
+            </div>
+          )}
+
           {/* Edit & Delete row */}
           <div className="flex gap-3">
             {onEdit && (
@@ -218,10 +232,24 @@ export function ItemDetailPanel({
                 Éditer
               </button>
             )}
+            {onArchive && (
+              <button
+                onClick={() => onArchive(item)}
+                className="py-2.5 px-4 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-all flex items-center justify-center gap-2"
+                title="Archiver cet item"
+              >
+                <ArchiveIcon />
+              </button>
+            )}
             {onDelete && (
               <button
-                onClick={() => onDelete(item.id)}
+                onClick={() => {
+                  if (window.confirm(`Supprimer définitivement ${item.id} ?`)) {
+                    onDelete(item);
+                  }
+                }}
                 className="py-2.5 px-4 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-all flex items-center justify-center gap-2"
+                title="Supprimer cet item"
               >
                 <TrashIcon />
               </button>
@@ -236,6 +264,17 @@ export function ItemDetailPanel({
             >
               <SparklesIcon />
               Affiner avec Gemini
+            </button>
+          )}
+
+          {/* Export button */}
+          {onExport && (
+            <button
+              onClick={() => onExport(item)}
+              className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 font-medium rounded-lg hover:bg-teal-200 transition-all flex items-center justify-center gap-2"
+            >
+              <ExportIcon />
+              Exporter le ticket
             </button>
           )}
         </div>
@@ -336,6 +375,33 @@ function TrashIcon() {
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+}
+
+function ArchiveIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon() {
+  return (
+    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
     </svg>
   );
 }
