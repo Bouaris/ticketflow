@@ -4,7 +4,7 @@
  * Application principale pour gérer le Product Backlog.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useBacklog } from './hooks/useBacklog';
 import { useFileAccess } from './hooks/useFileAccess';
 import { useScreenshotFolder } from './hooks/useScreenshotFolder';
@@ -25,7 +25,8 @@ import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
 import { getScreenshotMarkdownRef } from './lib/screenshots';
-import { joinPath, isTauri, getDirFromPath } from './lib/tauri-bridge';
+import { joinPath, isTauri, getDirFromPath, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
+import { ConfirmModal } from './components/ui/ConfirmModal';
 
 // Helper to generate rawMarkdown from form data
 function generateRawMarkdown(data: ItemFormData): string {
@@ -166,6 +167,25 @@ function App() {
     content: string;
     itemId: string;
   } | null>(null);
+  const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
+  const [showHomeConfirmModal, setShowHomeConfirmModal] = useState(false);
+
+  // Tray quit listener (Tauri only)
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    let unlisten: (() => void) | undefined;
+
+    listenTrayQuitRequested(() => {
+      if (fileAccess.isDirty) {
+        setShowQuitConfirmModal(true);
+      } else {
+        forceQuit();
+      }
+    }).then(fn => { unlisten = fn; });
+
+    return () => { unlisten?.(); };
+  }, [fileAccess.isDirty]);
 
   // Handle file open
   const handleOpenFile = useCallback(async () => {
@@ -205,12 +225,19 @@ function App() {
 
   // Handle go home (return to welcome page)
   const handleGoHome = useCallback(() => {
-    // Ask confirmation if there are unsaved changes
+    // Show confirmation modal if there are unsaved changes
     if (fileAccess.isDirty) {
-      if (!window.confirm('Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?')) {
-        return;
-      }
+      setShowHomeConfirmModal(true);
+      return;
     }
+    backlog.reset();
+    fileAccess.closeFile();
+    setShowWelcome(true);
+  }, [backlog, fileAccess]);
+
+  // Confirm go home (after user confirms in modal)
+  const confirmGoHome = useCallback(() => {
+    setShowHomeConfirmModal(false);
     backlog.reset();
     fileAccess.closeFile();
     setShowWelcome(true);
@@ -658,6 +685,30 @@ ${item.description ? `**Description:** ${item.description}` : ''}
           {fileAccess.error || backlog.error}
         </div>
       )}
+
+      {/* Quit confirmation modal (Tauri tray) */}
+      <ConfirmModal
+        isOpen={showQuitConfirmModal}
+        title="Quitter sans sauvegarder ?"
+        message="Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?"
+        confirmLabel="Quitter"
+        cancelLabel="Annuler"
+        variant="warning"
+        onConfirm={() => forceQuit()}
+        onCancel={() => setShowQuitConfirmModal(false)}
+      />
+
+      {/* Home confirmation modal */}
+      <ConfirmModal
+        isOpen={showHomeConfirmModal}
+        title="Quitter sans sauvegarder ?"
+        message="Vous avez des modifications non sauvegardées. Voulez-vous vraiment retourner à l'accueil ?"
+        confirmLabel="Quitter"
+        cancelLabel="Annuler"
+        variant="warning"
+        onConfirm={confirmGoHome}
+        onCancel={() => setShowHomeConfirmModal(false)}
+      />
     </div>
   );
 }
