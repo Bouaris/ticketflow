@@ -75,6 +75,8 @@ export interface UseBacklogReturn {
   updateItemById: (id: string, updates: Partial<BacklogItem>) => void;
   toggleItemCriterion: (id: string, criterionIndex: number) => void;
   addItem: (item: BacklogItem) => void;
+  addSection: (typeId: string, label: string) => void;
+  syncToc: () => void;
   deleteItem: (id: string) => void;
   existingIds: string[];
   reset: () => void;
@@ -228,6 +230,7 @@ export function useBacklog(): UseBacklogReturn {
   const toggleItemCriterion = useCallback((id: string, criterionIndex: number) => {
     if (!backlog) return;
 
+    // Update backlog sections
     setBacklog(prev => {
       if (!prev) return prev;
 
@@ -244,19 +247,13 @@ export function useBacklog(): UseBacklogReturn {
       return { ...prev, sections: newSections };
     });
 
-    // Update selected item
-    if (selectedItem?.id === id && selectedItem.criteria) {
-      setSelectedItem(prev => {
-        if (!prev || !prev.criteria) return prev;
-        const newCriteria = [...prev.criteria];
-        newCriteria[criterionIndex] = {
-          ...newCriteria[criterionIndex],
-          checked: !newCriteria[criterionIndex].checked,
-        };
-        return { ...prev, criteria: newCriteria };
-      });
-    }
-  }, [backlog, selectedItem]);
+    // CRITICAL: Use functional update to avoid stale closure issues
+    // This ensures the UI reflects the change immediately
+    setSelectedItem(prev => {
+      if (!prev || prev.id !== id) return prev;
+      return toggleCriterion(prev, criterionIndex);
+    });
+  }, [backlog]);
 
   // ============================================================
   // ADD ITEM
@@ -279,10 +276,10 @@ export function useBacklog(): UseBacklogReturn {
         return { ...prev, sections: [defaultSection] };
       }
 
-      // Find the right section based on item type
-      // Look for a section that already contains items of this type, or use section 0
-      let targetSectionIndex = 0;
+      // Find the right section using multi-strategy approach
+      let targetSectionIndex = -1;
 
+      // Strategy 1: Find section with existing items of same type
       for (let i = 0; i < prev.sections.length; i++) {
         const section = prev.sections[i];
         const hasMatchingType = section.items.some(item =>
@@ -292,6 +289,67 @@ export function useBacklog(): UseBacklogReturn {
           targetSectionIndex = i;
           break;
         }
+      }
+
+      // Strategy 2: Match section by title/label (for NEW types with no existing items)
+      if (targetSectionIndex === -1) {
+        const TYPE_LABEL_MAP: Record<string, string[]> = {
+          'BUG': ['BUGS', 'BUG'],
+          'CT': ['COURT TERME', 'CT', 'COURT-TERME'],
+          'LT': ['LONG TERME', 'LT', 'LONG-TERME'],
+          'AUTRE': ['AUTRES', 'AUTRE', 'IDÉES', 'IDEES', 'AUTRES IDÉES'],
+          'TEST': ['TESTS', 'TEST'],
+          'DFA': ['DADA', 'DFA'],
+        };
+        const matchLabels = TYPE_LABEL_MAP[newItem.type] || [newItem.type];
+
+        for (let i = 0; i < prev.sections.length; i++) {
+          const section = prev.sections[i];
+          const titleUpper = section.title.toUpperCase();
+          if (matchLabels.some(label => titleUpper.includes(label))) {
+            targetSectionIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Strategy 3: Check for HTML comment marker <!-- Type: X -->
+      if (targetSectionIndex === -1) {
+        for (let i = 0; i < prev.sections.length; i++) {
+          const section = prev.sections[i];
+          // Check if any item in section has type marker in rawMarkdown
+          const hasTypeMarker = section.items.some(item => {
+            if ('rawMarkdown' in item) {
+              const marker = `<!-- Type: ${newItem.type} -->`;
+              return item.rawMarkdown.includes(marker);
+            }
+            return false;
+          });
+          if (hasTypeMarker) {
+            targetSectionIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Strategy 4: Fallback to first non-raw section
+      if (targetSectionIndex === -1) {
+        for (let i = 0; i < prev.sections.length; i++) {
+          const section = prev.sections[i];
+          const isRawSection = section.items.length > 0 &&
+            section.items[0] &&
+            'type' in section.items[0] &&
+            section.items[0].type === 'raw-section';
+          if (!isRawSection) {
+            targetSectionIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Ultimate fallback: section 0
+      if (targetSectionIndex === -1) {
+        targetSectionIndex = 0;
       }
 
       const newSections = prev.sections.map((section, index) => {
@@ -336,6 +394,211 @@ export function useBacklog(): UseBacklogReturn {
       setSelectedItem(null);
     }
   }, [backlog, selectedItem]);
+
+  // ============================================================
+  // ADD SECTION (for new types)
+  // ============================================================
+
+  const addSection = useCallback((typeId: string, label: string) => {
+    if (!backlog) return;
+
+    setBacklog(prev => {
+      if (!prev) return prev;
+
+      const displayLabel = label.toUpperCase();
+      const tocAnchorLabel = label.toLowerCase().replace(/\s+/g, '-');
+
+      // Check if section already exists
+      const existingSectionIndex = prev.sections.findIndex(s => {
+        const titleUpper = s.title.toUpperCase();
+        return titleUpper.includes(typeId.toUpperCase()) ||
+               titleUpper.includes(displayLabel);
+      });
+
+      // Check if TOC entry already exists for this type
+      const tocHasEntry = prev.tableOfContents.toLowerCase().includes(tocAnchorLabel) ||
+                          prev.tableOfContents.toUpperCase().includes(displayLabel);
+
+      // If section exists AND TOC entry exists, nothing to do
+      if (existingSectionIndex !== -1 && tocHasEntry) {
+        return prev;
+      }
+
+      let newSections = [...prev.sections];
+      let sectionNumber: number;
+
+      // Create section if it doesn't exist
+      if (existingSectionIndex === -1) {
+        // Find the Légende section index (insert before it)
+        let insertIndex = prev.sections.length;
+        for (let i = 0; i < prev.sections.length; i++) {
+          const section = prev.sections[i];
+          if (section.title.toLowerCase().includes('légende') ||
+              section.title.toLowerCase().includes('legende')) {
+            insertIndex = i;
+            break;
+          }
+        }
+
+        sectionNumber = insertIndex + 1;
+        const newSection = {
+          id: String(sectionNumber),
+          title: displayLabel,
+          rawHeader: `## ${sectionNumber}. ${displayLabel}`,
+          items: [{
+            type: 'raw-section' as const,
+            title: displayLabel,
+            rawMarkdown: `\n<!-- Type: ${typeId} -->\n`,
+            sectionIndex: 0,
+          }],
+        };
+
+        newSections.splice(insertIndex, 0, newSection);
+
+        // Renumber sections after insertion
+        newSections = newSections.map((section, index) => {
+          const newId = String(index + 1);
+          const newRawHeader = section.rawHeader.replace(/^## \d+\./, `## ${newId}.`);
+          return {
+            ...section,
+            id: newId,
+            rawHeader: newRawHeader,
+          };
+        });
+      } else {
+        // Section exists, use its number
+        sectionNumber = existingSectionIndex + 1;
+      }
+
+      // Update TOC if entry doesn't exist
+      let newToc = prev.tableOfContents;
+      if (!tocHasEntry) {
+        const tocLines = newToc.split('\n');
+        const newTocLines: string[] = [];
+        let insertedInToc = false;
+
+        for (const line of tocLines) {
+          // Check if this line is the Légende entry
+          if (!insertedInToc && (
+            line.toLowerCase().includes('légende') ||
+            line.toLowerCase().includes('legende')
+          )) {
+            // Insert new entry before Légende
+            const anchor = `${sectionNumber}-${tocAnchorLabel}`;
+            newTocLines.push(`${sectionNumber}. [${displayLabel}](#${anchor})`);
+            insertedInToc = true;
+          }
+
+          // Update numbering if this is a numbered entry after the insertion point
+          const numMatch = line.match(/^(\d+)\.\s*\[(.+?)\]\(#(.+?)\)$/);
+          if (numMatch && insertedInToc) {
+            const oldNum = parseInt(numMatch[1]);
+            if (oldNum >= sectionNumber) {
+              const newNum = oldNum + 1;
+              const newAnchor = numMatch[3].replace(/^\d+-/, `${newNum}-`);
+              newTocLines.push(`${newNum}. [${numMatch[2]}](#${newAnchor})`);
+              continue;
+            }
+          }
+
+          newTocLines.push(line);
+        }
+
+        // If we didn't find Légende, add at the end (before the last ---)
+        if (!insertedInToc) {
+          let lastDashIndex = -1;
+          for (let i = newTocLines.length - 1; i >= 0; i--) {
+            if (newTocLines[i].trim() === '---') {
+              lastDashIndex = i;
+              break;
+            }
+          }
+          const newEntryNumber = newSections.length;
+          const anchor = `${newEntryNumber}-${tocAnchorLabel}`;
+          if (lastDashIndex > 0) {
+            newTocLines.splice(lastDashIndex, 0, `${newEntryNumber}. [${displayLabel}](#${anchor})`);
+          } else {
+            newTocLines.push(`${newEntryNumber}. [${displayLabel}](#${anchor})`);
+          }
+        }
+
+        newToc = newTocLines.join('\n');
+      }
+
+      return { ...prev, sections: newSections, tableOfContents: newToc };
+    });
+  }, [backlog]);
+
+  // ============================================================
+  // SYNC TOC - Synchronize TOC with existing sections
+  // ============================================================
+
+  const syncToc = useCallback(() => {
+    if (!backlog) return;
+
+    setBacklog(prev => {
+      if (!prev) return prev;
+
+      const tocLines = prev.tableOfContents.split('\n');
+      const newTocLines: string[] = [];
+
+      // Build list of sections (excluding Légende)
+      const sectionsToInclude = prev.sections.filter(s =>
+        !s.title.toLowerCase().includes('légende') &&
+        !s.title.toLowerCase().includes('legende')
+      );
+
+      // Build new TOC
+      let inEntries = false;
+      let entriesAdded = false;
+
+      for (let i = 0; i < tocLines.length; i++) {
+        const line = tocLines[i];
+        const isEntry = /^\d+\.\s*\[/.test(line);
+
+        if (isEntry && !entriesAdded) {
+          // Add all section entries
+          sectionsToInclude.forEach((section, idx) => {
+            const num = idx + 1;
+            const anchor = `${num}-${section.title.toLowerCase().replace(/\s+/g, '-')}`;
+            newTocLines.push(`${num}. [${section.title}](#${anchor})`);
+          });
+
+          // Add Légende entry
+          const legendeSection = prev.sections.find(s =>
+            s.title.toLowerCase().includes('légende') ||
+            s.title.toLowerCase().includes('legende')
+          );
+          if (legendeSection) {
+            const num = prev.sections.indexOf(legendeSection) + 1;
+            newTocLines.push(`${num}. [Légende](#${num}-legende)`);
+          }
+
+          entriesAdded = true;
+          inEntries = true;
+        }
+
+        if (inEntries && isEntry) {
+          continue; // Skip old entries
+        }
+
+        if (inEntries && !isEntry) {
+          inEntries = false;
+        }
+
+        if (!inEntries || !isEntry) {
+          newTocLines.push(line);
+        }
+      }
+
+      const newToc = newTocLines.join('\n');
+      if (newToc === prev.tableOfContents) {
+        return prev; // No changes needed
+      }
+
+      return { ...prev, tableOfContents: newToc };
+    });
+  }, [backlog]);
 
   // ============================================================
   // EXISTING IDS
@@ -386,6 +649,8 @@ export function useBacklog(): UseBacklogReturn {
     updateItemById,
     toggleItemCriterion,
     addItem,
+    addSection,
+    syncToc,
     deleteItem,
     existingIds,
     reset,

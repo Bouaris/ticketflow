@@ -109,7 +109,8 @@ function hashPath(path: string): string {
 /**
  * Detect types from markdown content by scanning:
  * 1. Item IDs (### BUG-001 | Title)
- * 2. Section headers (## 1. BUGS, ## 2. COURT TERME)
+ * 2. HTML comments (<!-- Type: CT -->)
+ * 3. Section headers (## 1. BUGS, ## 2. COURT TERME)
  */
 export function detectTypesFromMarkdown(markdown: string): string[] {
   const types = new Set<string>();
@@ -121,21 +122,46 @@ export function detectTypesFromMarkdown(markdown: string): string[] {
     types.add(match[1]);
   }
 
-  // 2. Detect from section headers (## 1. BUGS, ## 2. COURT TERME)
+  // 2. Detect from HTML comments (<!-- Type: CT -->)
+  // These are embedded in section headers by template generator
+  const commentPattern = /<!--\s*Type:\s*([A-Z]+)\s*-->/gi;
+  while ((match = commentPattern.exec(markdown)) !== null) {
+    types.add(match[1].toUpperCase());
+  }
+
+  // 3. Detect from section headers (## 1. BUGS, ## 2. COURT TERME)
   // Map section labels to their type IDs
   const sectionToType: Record<string, string> = {
     'BUGS': 'BUG',
+    'BUG': 'BUG',
     'COURT TERME': 'CT',
+    'COURT-TERME': 'CT',
+    'CT': 'CT',
     'LONG TERME': 'LT',
+    'LONG-TERME': 'LT',
+    'LT': 'LT',
     'AUTRES IDÉES': 'AUTRE',
-    'AUTRES IDEES': 'AUTRE', // Without accent
+    'AUTRES IDEES': 'AUTRE',
+    'AUTRES': 'AUTRE',
+    'AUTRE': 'AUTRE',
+    'TESTS': 'TEST',
+    'TEST': 'TEST',
   };
 
   const sectionPattern = /^##\s*\d+\.\s*(.+)$/gm;
   while ((match = sectionPattern.exec(markdown)) !== null) {
     const sectionLabel = match[1].trim().toUpperCase();
+    // Try direct mapping
     if (sectionToType[sectionLabel]) {
       types.add(sectionToType[sectionLabel]);
+    } else {
+      // Try partial match for labels like "BUGS (Hotfix)"
+      for (const [key, value] of Object.entries(sectionToType)) {
+        if (sectionLabel.startsWith(key)) {
+          types.add(value);
+          break;
+        }
+      }
     }
   }
 

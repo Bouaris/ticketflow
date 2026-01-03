@@ -27,23 +27,53 @@ import { getScreenshotMarkdownRef } from './screenshots';
 export function serializeBacklog(backlog: Backlog): string {
   const parts: string[] = [];
 
-  // 1. Header
-  parts.push(backlog.header);
+  // 1. Header - ensure it ends with newlines
+  const header = backlog.header.trimEnd();
+  parts.push(header);
+  parts.push('\n\n');
 
-  // 2. Table of Contents
-  parts.push(backlog.tableOfContents);
+  // 2. Table of Contents - ensure proper separation
+  if (backlog.tableOfContents.trim()) {
+    let toc = backlog.tableOfContents.trimEnd();
+    // Remove trailing --- from TOC (we'll add proper separator ourselves)
+    if (toc.endsWith('---')) {
+      toc = toc.slice(0, -3).trimEnd();
+    }
+    parts.push(toc);
+    // Always add proper separator after TOC
+    parts.push('\n\n---\n\n');
+  }
 
-  // 3. Sections
-  for (const section of backlog.sections) {
-    parts.push(serializeSection(section));
+  // 3. Sections with proper separators
+  for (let i = 0; i < backlog.sections.length; i++) {
+    const serialized = serializeSection(backlog.sections[i]);
+    parts.push(serialized);
+
+    // Add separator between sections (not after the last one)
+    if (i < backlog.sections.length - 1) {
+      // Only add --- if the section doesn't already end with it
+      const trimmed = serialized.trimEnd();
+      if (!trimmed.endsWith('---')) {
+        parts.push('---\n\n');
+      } else {
+        parts.push('\n');
+      }
+    }
   }
 
   // 4. Footer
   if (backlog.footer) {
+    parts.push('\n');
     parts.push(backlog.footer);
   }
 
-  return parts.join('');
+  // Ensure final newline
+  let result = parts.join('');
+  if (!result.endsWith('\n')) {
+    result += '\n';
+  }
+
+  return result;
 }
 
 // ============================================================
@@ -63,16 +93,15 @@ function serializeSection(section: Section): string {
 
     if (isRawSection(item)) {
       // Section raw (Roadmap, etc.) - utiliser le rawMarkdown
-      parts.push(item.rawMarkdown);
+      const content = item.rawMarkdown.trim();
+      if (content) {
+        parts.push(content);
+        parts.push('\n');
+      }
     } else if (isTableGroup(item)) {
       parts.push(serializeTableGroup(item));
     } else {
       parts.push(serializeItem(item as BacklogItem));
-    }
-
-    // Séparateur entre items (sauf le dernier)
-    if (i < section.items.length - 1) {
-      // Le séparateur est déjà dans rawMarkdown normalement
     }
   }
 
@@ -242,6 +271,7 @@ export function updateItem(
 
 /**
  * Toggle un critère d'acceptation.
+ * IMPORTANT: Marque l'item comme modifié pour forcer la re-sérialisation.
  */
 export function toggleCriterion(item: BacklogItem, criterionIndex: number): BacklogItem {
   if (!item.criteria || !item.criteria[criterionIndex]) {
@@ -254,16 +284,16 @@ export function toggleCriterion(item: BacklogItem, criterionIndex: number): Back
     checked: !newCriteria[criterionIndex].checked,
   };
 
-  // Mettre à jour rawMarkdown pour le toggle
-  const updatedItem = {
+  // Mettre à jour le rawMarkdown avec les nouvelles checkboxes
+  const newRawMarkdown = updateCheckboxesInRaw(item.rawMarkdown, newCriteria);
+
+  // Retourner un nouvel item avec le flag _modified
+  return {
     ...item,
     criteria: newCriteria,
-  };
-
-  // Mettre à jour le rawMarkdown avec les nouvelles checkboxes
-  updatedItem.rawMarkdown = updateCheckboxesInRaw(item.rawMarkdown, newCriteria);
-
-  return updatedItem;
+    rawMarkdown: newRawMarkdown,
+    _modified: true,  // CRITICAL: Force re-serialization
+  } as BacklogItem & { _modified: boolean };
 }
 
 /**
