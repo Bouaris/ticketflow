@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { BacklogItem } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { KanbanCard } from './KanbanCard';
+import { GripIcon } from '../ui/Icons';
 
 interface KanbanBoardProps {
   itemsByType: Record<string, BacklogItem[]>;
@@ -134,7 +135,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
         backgroundColor: bgColor,
         borderColor: borderColor,
       }}
-      className="flex flex-col w-80 rounded-lg border"
+      className="flex flex-col w-full sm:w-72 md:w-80 rounded-lg border"
     >
       {/* Header - Draggable */}
       <div
@@ -177,14 +178,5 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function GripIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4 8h16M4 16h16" />
-    </svg>
-  );
 }
 

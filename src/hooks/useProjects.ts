@@ -160,7 +160,7 @@ export function useProjects(): UseProjectsReturn {
       setIsLoading(false);
 
       return { path, scanResult };
-    } catch (err) {
+    } catch {
       setError('Erreur lors de l\'ouverture du dossier.');
       setIsLoading(false);
       return null;
@@ -169,16 +169,83 @@ export function useProjects(): UseProjectsReturn {
 
   /**
    * Create a new TICKETFLOW_Backlog.md file in directory
+   * Generates a complete template with ToC, Legend, and Conventions
    */
   const createNewBacklog = useCallback(async (dirPath: string, types?: TypeDefinition[]): Promise<string> => {
     if (!isTauriMode) {
       throw new Error('Cette fonctionnalité nécessite la version desktop.');
     }
 
-    // Generate template from types
     const typesToUse = types || DEFAULT_TYPES;
     const sortedTypes = [...typesToUse].sort((a, b) => a.order - b.order);
-    const template = `# TICKETFLOW Backlog\n\n${sortedTypes.map(t => `## ${t.label}`).join('\n\n')}\n`;
+    const projectName = dirPath.split(/[/\\]/).pop() || 'Project';
+    const today = new Date().toISOString().split('T')[0];
+
+    // Generate Table of Contents
+    const tocEntries = sortedTypes.map((t, i) =>
+      `${i + 1}. [${t.label}](#${i + 1}-${t.label.toLowerCase().replace(/\s+/g, '-')})`
+    ).join('\n');
+
+    // Generate Section Headers
+    const sections = sortedTypes.map((t, i) =>
+      `## ${i + 1}. ${t.label.toUpperCase()}\n\n`
+    ).join('\n---\n\n');
+
+    const template = `# ${projectName} - Product Backlog
+
+> Document de référence pour le développement
+> Dernière mise à jour : ${today}
+
+---
+
+## Table des matières
+${tocEntries}
+${sortedTypes.length + 1}. [Légende](#${sortedTypes.length + 1}-legende)
+
+---
+
+${sections}---
+
+## ${sortedTypes.length + 1}. Légende
+
+### Légende Effort
+
+| Code | Signification | Estimation |
+|------|---------------|------------|
+| XS | Extra Small | < 2h |
+| S | Small | 2-4h |
+| M | Medium | 1-2 jours |
+| L | Large | 3-5 jours |
+| XL | Extra Large | 1-2 semaines |
+
+---
+
+### Conventions
+
+${sortedTypes.map(t => `- **${t.id}-XXX** : ${t.label}`).join('\n')}
+
+---
+
+### Sévérité (Bugs)
+
+| Code | Signification |
+|------|---------------|
+| P0 | Bloquant - Production down |
+| P1 | Critique - Impact majeur |
+| P2 | Moyenne - Contournable |
+| P3 | Faible - Mineur |
+| P4 | Cosmétique |
+
+---
+
+### Priorité (Features)
+
+| Niveau | Signification |
+|--------|---------------|
+| Haute | Sprint actuel |
+| Moyenne | Prochain sprint |
+| Faible | Backlog |
+`;
 
     const filePath = joinPath(dirPath, BACKLOG_FILE_NAME);
     await writeTextFileContents(filePath, template);
@@ -276,14 +343,8 @@ export function useProjects(): UseProjectsReturn {
 
     try {
       const filePath = joinPath(project.path, project.backlogFile);
-      console.log('[validateProject] Checking path:', filePath);
-      console.log('[validateProject] project.path:', project.path);
-      console.log('[validateProject] project.backlogFile:', project.backlogFile);
-      const result = await fileExists(filePath);
-      console.log('[validateProject] fileExists result:', result);
-      return result;
-    } catch (err) {
-      console.error('[validateProject] Error:', err);
+      return await fileExists(filePath);
+    } catch {
       return false;
     }
   }, [isTauriMode]);

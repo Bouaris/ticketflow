@@ -3,15 +3,8 @@
  */
 
 import type { BacklogFilters } from '../../hooks/useBacklog';
-import type {
-  Priority,
-  Effort,
-  Severity,
-} from '../../types/backlog';
-import {
-  PRIORITY_LABELS,
-  SEVERITY_LABELS,
-} from '../../types/backlog';
+import type { Priority, Effort, Severity } from '../../types/backlog';
+import { PRIORITY_LABELS, SEVERITY_LABELS } from '../../constants/labels';
 import type { TypeDefinition } from '../../types/typeConfig';
 
 interface FilterBarProps {

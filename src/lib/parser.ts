@@ -21,31 +21,26 @@ import {
   EffortSchema,
   getTypeFromId,
 } from '../types/backlog';
+import { isBacklogItem } from '../types/guards';
+import { PARSER_PATTERNS, isRawSectionTitle } from '../constants/patterns';
 import { parseScreenshotFilename } from './screenshots';
-
-// ============================================================
-// REGEX PATTERNS
-// ============================================================
-
-const SECTION_HEADER_REGEX = /^## (\d+)\. (.+)$/;
-const ITEM_HEADER_REGEX = /^### ([A-Z]+-\d+(?:\s*à\s*\d+)?)\s*\|\s*(.+)$/;
-const METADATA_REGEX = /^\*\*([^:*]+):\*\*\s*(.+)$/;
-const BLOCKQUOTE_REGEX = /^>\s*(.+)$/;
-const CHECKBOX_REGEX = /^- \[([ xX])\]\s*(.+)$/;
-const LIST_ITEM_REGEX = /^- (.+)$/;
-const NUMBERED_LIST_REGEX = /^\d+\.\s+(.+)$/;
-const TABLE_ROW_REGEX = /^\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|$/;
-const CODE_BLOCK_START = /^```/;
-// Screenshot markdown reference: ![alt](.backlog-assets/screenshots/filename.png)
-const SCREENSHOT_REGEX = /!\[([^\]]*)\]\(\.?\.?backlog-assets\/screenshots\/([^)]+)\)/g;
 
 // ============================================================
 // MAIN PARSER
 // ============================================================
 
 export function parseBacklog(markdown: string): Backlog {
-  // Normaliser les fins de lignes (CRLF → LF) pour Windows
-  const normalizedMarkdown = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Normaliser les fins de lignes ET corriger les fusions courantes
+  const normalizedMarkdown = markdown
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    // Fix lignes fusionnées: "## Title### Item" → "## Title\n\n### Item"
+    .replace(/(##[^#\n]+)(###)/g, '$1\n\n$2')
+    // Fix separateur fusionné: "---### Item" → "---\n\n### Item"
+    .replace(/---(\s*###)/g, '---\n\n$1')
+    // Fix titre fusionné: "# Title## Section" → "# Title\n\n## Section"
+    .replace(/(#[^#\n]+)(##)/g, '$1\n\n$2');
+
   const lines = normalizedMarkdown.split('\n');
 
   // 1. Trouver les limites des sections
@@ -85,13 +80,14 @@ interface SectionBoundary {
 
 function findSectionBoundaries(lines: string[]): SectionBoundary[] {
   const boundaries: SectionBoundary[] = [];
+  let autoId = 1;
 
   for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(SECTION_HEADER_REGEX);
+    const match = lines[i].match(PARSER_PATTERNS.SECTION_HEADER);
     if (match) {
       boundaries.push({
         start: i,
-        id: match[1],
+        id: match[1] || String(autoId++), // Use auto-increment if no number
         title: match[2],
       });
     }
@@ -128,19 +124,19 @@ function parseHeader(lines: string[]): { header: string; tableOfContents: string
 // SECTION PARSER
 // ============================================================
 
-function parseSection(lines: string[], _sectionIndex: number): Section {
+function parseSection(lines: string[], sectionIndex: number): Section {
   const headerLine = lines[0];
-  const match = headerLine.match(SECTION_HEADER_REGEX);
+  const match = headerLine.match(PARSER_PATTERNS.SECTION_HEADER);
 
   if (!match) {
     throw new Error(`Invalid section header: ${headerLine}`);
   }
 
-  const sectionId = match[1];
+  const sectionId = match[1] || String(sectionIndex + 1); // Use index+1 if no number
   const sectionTitle = match[2];
 
   // Sections spéciales (Roadmap, Légende) - ne pas parser
-  if (isRawSection(sectionTitle)) {
+  if (isRawSectionTitle(sectionTitle)) {
     return {
       id: sectionId,
       title: sectionTitle,
@@ -182,16 +178,11 @@ function parseSection(lines: string[], _sectionIndex: number): Section {
   };
 }
 
-function isRawSection(title: string): boolean {
-  const rawSections = ['ROADMAP', 'Roadmap', 'Légende', 'Conventions'];
-  return rawSections.some(s => title.toUpperCase().includes(s.toUpperCase()));
-}
-
 function findItemBoundaries(lines: string[]): { start: number; id: string; title: string }[] {
   const boundaries: { start: number; id: string; title: string }[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(ITEM_HEADER_REGEX);
+    const match = lines[i].match(PARSER_PATTERNS.ITEM_HEADER);
     if (match) {
       boundaries.push({
         start: i,
@@ -209,7 +200,7 @@ function findItemBoundaries(lines: string[]): { start: number; id: string; title
 // ============================================================
 
 function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): BacklogItem {
-  const headerMatch = lines[0].match(ITEM_HEADER_REGEX);
+  const headerMatch = lines[0].match(PARSER_PATTERNS.ITEM_HEADER);
   if (!headerMatch) {
     throw new Error(`Invalid item header: ${lines[0]}`);
   }
@@ -219,7 +210,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
   let emoji: string | undefined;
 
   // Extraire emoji du titre (ex: "⚠️ CRITIQUE")
-  const emojiMatch = title.match(/^([\u{1F300}-\u{1F9FF}]|⚠️|✅|❌|🔥|💡|🚀|📝|🐛|⚡)/u);
+  const emojiMatch = title.match(PARSER_PATTERNS.EMOJI);
   if (emojiMatch) {
     emoji = emojiMatch[0];
     title = title.slice(emoji.length).trim();
@@ -248,7 +239,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     const line = lines[i];
 
     // Gestion des code blocks
-    if (CODE_BLOCK_START.test(line)) {
+    if (PARSER_PATTERNS.CODE_BLOCK.test(line)) {
       inCodeBlock = !inCodeBlock;
       i++;
       continue;
@@ -260,7 +251,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     }
 
     // Metadata (ex: **Composant:** Extension Chrome)
-    const metadataMatch = line.match(METADATA_REGEX);
+    const metadataMatch = line.match(PARSER_PATTERNS.METADATA);
     if (metadataMatch) {
       const key = metadataMatch[1].trim();
       const value = metadataMatch[2].trim();
@@ -271,7 +262,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     }
 
     // User Story (blockquote)
-    const blockquoteMatch = line.match(BLOCKQUOTE_REGEX);
+    const blockquoteMatch = line.match(PARSER_PATTERNS.BLOCKQUOTE);
     if (blockquoteMatch) {
       item.userStory = (item.userStory || '') + blockquoteMatch[1] + ' ';
       i++;
@@ -279,7 +270,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     }
 
     // Checkbox (critères d'acceptation)
-    const checkboxMatch = line.match(CHECKBOX_REGEX);
+    const checkboxMatch = line.match(PARSER_PATTERNS.CHECKBOX);
     if (checkboxMatch) {
       if (!item.criteria) item.criteria = [];
       item.criteria.push({
@@ -291,7 +282,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     }
 
     // Liste numérotée
-    const numberedMatch = line.match(NUMBERED_LIST_REGEX);
+    const numberedMatch = line.match(PARSER_PATTERNS.NUMBERED_LIST);
     if (numberedMatch) {
       addToList(item, currentListType, numberedMatch[1]);
       i++;
@@ -299,7 +290,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
     }
 
     // Liste à puces
-    const listMatch = line.match(LIST_ITEM_REGEX);
+    const listMatch = line.match(PARSER_PATTERNS.LIST_ITEM);
     if (listMatch) {
       addToList(item, currentListType, listMatch[1]);
       i++;
@@ -329,7 +320,7 @@ function parseItem(lines: string[], rawMarkdown: string, sectionIndex: number): 
 
 function extractScreenshots(rawMarkdown: string): Screenshot[] {
   const screenshots: Screenshot[] = [];
-  const regex = new RegExp(SCREENSHOT_REGEX.source, 'g');
+  const regex = new RegExp(PARSER_PATTERNS.SCREENSHOT.source, 'g');
   let match;
 
   while ((match = regex.exec(rawMarkdown)) !== null) {
@@ -431,7 +422,7 @@ function addToList(
 // ============================================================
 
 function parseTableGroup(lines: string[], rawMarkdown: string, sectionIndex: number): TableGroup {
-  const headerMatch = lines[0].match(ITEM_HEADER_REGEX);
+  const headerMatch = lines[0].match(PARSER_PATTERNS.ITEM_HEADER);
   if (!headerMatch) {
     throw new Error(`Invalid table group header: ${lines[0]}`);
   }
@@ -441,7 +432,7 @@ function parseTableGroup(lines: string[], rawMarkdown: string, sectionIndex: num
 
   // Chercher la sévérité
   for (const line of lines) {
-    const metadataMatch = line.match(METADATA_REGEX);
+    const metadataMatch = line.match(PARSER_PATTERNS.METADATA);
     if (metadataMatch && metadataMatch[1].toLowerCase().includes('sévérité')) {
       const severityMatch = metadataMatch[2].match(/^(P\d)/);
       if (severityMatch) {
@@ -465,7 +456,7 @@ function parseTableGroup(lines: string[], rawMarkdown: string, sectionIndex: num
     }
 
     if (inTable && line.startsWith('|')) {
-      const rowMatch = line.match(TABLE_ROW_REGEX);
+      const rowMatch = line.match(PARSER_PATTERNS.TABLE_ROW);
       if (rowMatch) {
         tableItems.push({
           id: rowMatch[1].trim(),
@@ -489,17 +480,6 @@ function parseTableGroup(lines: string[], rawMarkdown: string, sectionIndex: num
 // ============================================================
 // UTILITY: Get all items as flat array
 // ============================================================
-
-// Type guard to check if item is a BacklogItem (not TableGroup or RawSection)
-function isBacklogItem(item: BacklogItem | TableGroup | RawSection): item is BacklogItem {
-  // TableGroup has 'items' array, RawSection has type 'raw-section'
-  // BacklogItem has 'id' but no 'items' array
-  if (!('id' in item)) return false;
-  if ('items' in item) return false; // TableGroup
-  // Check if type is one of the BacklogItem types
-  const validTypes = ['BUG', 'EXT', 'ADM', 'COS', 'LT'];
-  return validTypes.includes(item.type as string);
-}
 
 export function getAllItems(backlog: Backlog): BacklogItem[] {
   const items: BacklogItem[] = [];
