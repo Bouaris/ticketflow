@@ -9,6 +9,7 @@ import { useBacklog } from './hooks/useBacklog';
 import { useFileAccess } from './hooks/useFileAccess';
 import { useScreenshotFolder } from './hooks/useScreenshotFolder';
 import { useTypeConfig } from './hooks/useTypeConfig';
+import { useUpdater } from './hooks/useUpdater';
 import { Header } from './components/layout/Header';
 import { FilterBar } from './components/filter/FilterBar';
 import { ListView } from './components/list/ListView';
@@ -27,6 +28,7 @@ import { isFileSystemAccessSupported } from './lib/fileSystem';
 import { getScreenshotMarkdownRef } from './lib/screenshots';
 import { joinPath, isTauri, getDirFromPath, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
 import { ConfirmModal } from './components/ui/ConfirmModal';
+import { UpdateModal } from './components/ui/UpdateModal';
 
 // Helper to generate rawMarkdown from form data
 function generateRawMarkdown(data: ItemFormData): string {
@@ -154,6 +156,9 @@ function App() {
 
   // Type configuration (dynamic types)
   const typeConfig = useTypeConfig();
+
+  // Auto-updater (Tauri only)
+  const updater = useUpdater();
 
   // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -708,6 +713,18 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         variant="warning"
         onConfirm={confirmGoHome}
         onCancel={() => setShowHomeConfirmModal(false)}
+      />
+
+      {/* Update modal (Tauri only) */}
+      <UpdateModal
+        isOpen={!!updater.available}
+        updateInfo={updater.available}
+        downloading={updater.downloading}
+        progress={updater.progress}
+        error={updater.error}
+        onInstall={updater.installUpdate}
+        onDismiss={updater.dismissUpdate}
+        onClearError={updater.clearError}
       />
     </div>
   );
