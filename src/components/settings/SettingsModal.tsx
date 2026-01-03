@@ -9,6 +9,7 @@ import {
   getApiKey,
   setApiKey,
   clearApiKey,
+  hasApiKey,
   resetClient,
   type AIProvider,
 } from '../../lib/ai';
@@ -119,36 +120,59 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* Provider Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Fournisseur IA
+                Fournisseur IA par défaut
               </label>
               <div className="grid grid-cols-2 gap-3">
-                {PROVIDERS.map(provider => (
-                  <button
-                    key={provider.id}
-                    onClick={() => handleProviderChange(provider.id)}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      selectedProvider === provider.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      {provider.id === 'groq' ? (
-                        <GroqIcon className={`w-5 h-5 ${selectedProvider === provider.id ? 'text-blue-600' : 'text-gray-500'}`} />
-                      ) : (
-                        <GeminiIcon className={`w-5 h-5 ${selectedProvider === provider.id ? 'text-blue-600' : 'text-gray-500'}`} />
-                      )}
-                      <span className={`font-medium ${
-                        selectedProvider === provider.id ? 'text-blue-700' : 'text-gray-700'
+                {PROVIDERS.map(provider => {
+                  const isConfigured = hasApiKey(provider.id);
+                  const isActive = selectedProvider === provider.id;
+
+                  return (
+                    <button
+                      key={provider.id}
+                      onClick={() => handleProviderChange(provider.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all relative ${
+                        isActive
+                          ? provider.id === 'groq'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {/* Status badge */}
+                      <div className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-medium rounded-full ${
+                        isConfigured
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {provider.name}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-tight">
-                      {provider.description}
-                    </p>
-                  </button>
-                ))}
+                        {isConfigured ? 'Configuré' : 'Non configuré'}
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-1">
+                        {provider.id === 'groq' ? (
+                          <GroqIcon className={`w-5 h-5 ${isActive ? 'text-orange-600' : 'text-gray-500'}`} />
+                        ) : (
+                          <GeminiIcon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
+                        )}
+                        <span className={`font-medium ${
+                          isActive
+                            ? provider.id === 'groq' ? 'text-orange-700' : 'text-blue-700'
+                            : 'text-gray-700'
+                        }`}>
+                          {provider.name}
+                        </span>
+                        {isActive && (
+                          <span className="text-xs bg-white/80 px-1.5 py-0.5 rounded text-gray-600">
+                            Par défaut
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 leading-tight">
+                        {provider.description}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

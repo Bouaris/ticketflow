@@ -52,8 +52,8 @@ export function hasApiKey(provider?: AIProvider): boolean {
   return !!getApiKey(provider);
 }
 
-export function getClientConfig(): AIClientConfig | null {
-  const provider = getProvider();
+export function getClientConfig(overrideProvider?: AIProvider): AIClientConfig | null {
+  const provider = overrideProvider || getProvider();
   const apiKey = getApiKey(provider);
   if (!apiKey) return null;
   return { provider, apiKey };
@@ -94,10 +94,11 @@ export function resetClient(): void {
 // UNIFIED COMPLETION API
 // ============================================================
 
-async function generateCompletion(prompt: string): Promise<string> {
-  const config = getClientConfig();
+async function generateCompletion(prompt: string, provider?: AIProvider): Promise<string> {
+  const config = getClientConfig(provider);
   if (!config) {
-    throw new Error('API key non configurée');
+    const providerName = provider || getProvider();
+    throw new Error(`Clé API ${providerName === 'groq' ? 'Groq' : 'Gemini'} non configurée`);
   }
 
   if (config.provider === 'groq') {
@@ -160,7 +161,7 @@ RÉPONDS EN JSON avec ce format exact:
 
 Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
 
-export async function refineItem(item: BacklogItem): Promise<RefinementResult> {
+export async function refineItem(item: BacklogItem, provider?: AIProvider): Promise<RefinementResult> {
   try {
     let prompt = REFINE_PROMPT
       .replace('{id}', item.id)
@@ -182,7 +183,7 @@ export async function refineItem(item: BacklogItem): Promise<RefinementResult> {
       .replace('{specs_section}', specsSection)
       .replace('{criteria_section}', criteriaSection);
 
-    const text = await generateCompletion(prompt);
+    const text = await generateCompletion(prompt, provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -302,10 +303,10 @@ RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
   "emoji": "🐛|🚀|⚡|🔒|🎨|📦|🔧"
 }`;
 
-export async function generateItemFromDescription(description: string): Promise<GenerateItemResult> {
+export async function generateItemFromDescription(description: string, provider?: AIProvider): Promise<GenerateItemResult> {
   try {
     const prompt = GENERATE_ITEM_PROMPT.replace('{user_description}', description);
-    const text = await generateCompletion(prompt);
+    const text = await generateCompletion(prompt, provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -362,7 +363,7 @@ Réponds en JSON:
   ]
 }`;
 
-export async function suggestImprovements(items: BacklogItem[]): Promise<RefinementResult> {
+export async function suggestImprovements(items: BacklogItem[], provider?: AIProvider): Promise<RefinementResult> {
   try {
     const itemsList = items
       .slice(0, 20)
@@ -370,7 +371,7 @@ export async function suggestImprovements(items: BacklogItem[]): Promise<Refinem
       .join('\n');
 
     const prompt = BULK_SUGGEST_PROMPT.replace('{items_list}', itemsList);
-    const text = await generateCompletion(prompt);
+    const text = await generateCompletion(prompt, provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

@@ -16,7 +16,8 @@ import type {
 } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from '../../constants/labels';
-import { refineItem, hasApiKey, generateItemFromDescription } from '../../lib/ai';
+import { refineItem, hasApiKey, generateItemFromDescription, getProvider, type AIProvider } from '../../lib/ai';
+import { ProviderToggle, getProviderLabel } from '../ui/ProviderToggle';
 import { extractImageFromClipboard } from '../../lib/screenshots';
 import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } from '../ui/Icons';
 import { ListEditor } from '../ui/ListEditor';
@@ -129,6 +130,7 @@ export function ItemEditorModal({
   const [aiMode, setAiMode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => getProvider());
 
   // Initialize form when modal opens
   useEffect(() => {
@@ -257,10 +259,10 @@ export function ItemEditorModal({
     }
   };
 
-  // Gemini refinement
-  const handleRefineWithGemini = async () => {
-    if (!hasApiKey()) {
-      alert('Configurez votre clé API Gemini dans les paramètres');
+  // AI refinement
+  const handleRefineWithAI = async () => {
+    if (!hasApiKey(selectedProvider)) {
+      alert(`Configurez votre clé API ${getProviderLabel(selectedProvider)} dans les paramètres`);
       return;
     }
 
@@ -273,7 +275,7 @@ export function ItemEditorModal({
       sectionIndex: 0,
     };
 
-    const result = await refineItem(tempItem);
+    const result = await refineItem(tempItem, selectedProvider);
     setIsRefining(false);
 
     if (result.success && result.refinedItem) {
@@ -289,14 +291,14 @@ export function ItemEditorModal({
         criteria: result.refinedItem?.criteria || f.criteria,
       }));
     } else {
-      alert(`Erreur Gemini: ${result.error}`);
+      alert(`Erreur ${getProviderLabel(selectedProvider)}: ${result.error}`);
     }
   };
 
   // Generate item from AI description
   const handleGenerateFromAI = async () => {
-    if (!hasApiKey()) {
-      alert('Configurez votre clé API Gemini dans les paramètres');
+    if (!hasApiKey(selectedProvider)) {
+      alert(`Configurez votre clé API ${getProviderLabel(selectedProvider)} dans les paramètres`);
       return;
     }
 
@@ -307,7 +309,7 @@ export function ItemEditorModal({
 
     setIsGenerating(true);
 
-    const result = await generateItemFromDescription(aiPrompt);
+    const result = await generateItemFromDescription(aiPrompt, selectedProvider);
     setIsGenerating(false);
 
     if (result.success && result.item) {
@@ -338,7 +340,7 @@ export function ItemEditorModal({
       setAiMode(false);
       setActiveTab('general');
     } else {
-      alert(`Erreur Gemini: ${result.error}`);
+      alert(`Erreur ${getProviderLabel(selectedProvider)}: ${result.error}`);
     }
   };
 
@@ -431,10 +433,10 @@ export function ItemEditorModal({
                   Mode IA
                 </button>
               )}
-              {/* Gemini Refine Button (only in form mode) */}
+              {/* AI Refine Button (only in form mode) */}
               {!aiMode && (
                 <button
-                  onClick={handleRefineWithGemini}
+                  onClick={handleRefineWithAI}
                   disabled={isRefining || !form.title}
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                 >
@@ -493,13 +495,13 @@ export function ItemEditorModal({
           )}
         </div>
 
-        {/* Gemini Suggestions Banner */}
+        {/* AI Suggestions Banner */}
         {geminiSuggestions.length > 0 && (
           <div className="px-6 py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-100">
             <div className="flex items-start gap-3">
               <SparklesIcon className="text-purple-600 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-purple-900">Suggestions Gemini</p>
+                <p className="text-sm font-medium text-purple-900">Suggestions IA</p>
                 <ul className="mt-1 space-y-1">
                   {geminiSuggestions.map((s, i) => (
                     <li key={i} className="text-sm text-purple-700">• {s}</li>
@@ -529,11 +531,20 @@ export function ItemEditorModal({
                   Décrivez votre idée
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Gemini va analyser votre description et générer un ticket complet avec titre, user story, specs et critères d'acceptation.
+                  L'IA va analyser votre description et générer un ticket complet avec titre, user story, specs et critères d'acceptation.
                 </p>
               </div>
 
               <div className="space-y-4">
+                {/* Provider Toggle */}
+                <div className="flex justify-center">
+                  <ProviderToggle
+                    value={selectedProvider}
+                    onChange={setSelectedProvider}
+                    size="md"
+                  />
+                </div>
+
                 <textarea
                   value={aiPrompt}
                   onChange={e => setAiPrompt(e.target.value)}
@@ -554,7 +565,11 @@ export function ItemEditorModal({
                   <button
                     onClick={handleGenerateFromAI}
                     disabled={isGenerating || !aiPrompt.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-lg shadow-purple-500/25"
+                    className={`px-6 py-3 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-lg ${
+                      selectedProvider === 'groq'
+                        ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-orange-500/25'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/25'
+                    }`}
                   >
                     {isGenerating ? (
                       <>
@@ -564,7 +579,7 @@ export function ItemEditorModal({
                     ) : (
                       <>
                         <SparklesIcon />
-                        Générer le ticket
+                        Générer avec {getProviderLabel(selectedProvider)}
                       </>
                     )}
                   </button>
