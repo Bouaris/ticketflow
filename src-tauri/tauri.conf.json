@@ -45,5 +45,12 @@
       }
     }
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDBBRDBDMUVDQzg0MkVDMjcKUldRbjdFTEk3TUhRQ21TQ1Z4SjJtRDJhM01SWkNqN3BLNlNOK0k1Ulc5VExDU2g1ampRTE5ObjQK",
+      "endpoints": [
+        "https://github.com/Bouaris/ticketflow/releases/latest/download/latest.json"
+      ]
+    }
+  }
 }

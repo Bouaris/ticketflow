@@ -14,7 +14,8 @@ import {
   type AIProvider,
 } from '../../lib/ai';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
-import { CheckIcon, GroqIcon, GeminiIcon } from '../ui/Icons';
+import { useUpdater } from '../../hooks/useUpdater';
+import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 
 interface SettingsModalProps {
@@ -44,6 +45,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [apiKey, setApiKeyState] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const updater = useUpdater();
+  const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -76,6 +79,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     resetClient();
     setApiKeyState('');
     setSaved(false);
+  };
+
+  const handleCheckUpdates = async () => {
+    setUpdateCheckMessage(null);
+    const result = await updater.checkForUpdates(false);
+    if (result) {
+      // Update found - the modal will show automatically via App.tsx
+      onClose();
+    } else {
+      setUpdateCheckMessage('Vous utilisez la dernière version.');
+      setTimeout(() => setUpdateCheckMessage(null), 3000);
+    }
   };
 
   if (!isOpen) return null;
@@ -221,6 +236,36 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="flex items-center gap-2 text-green-600 text-sm bg-green-50 px-3 py-2 rounded-lg">
               <CheckIcon className="w-4 h-4" />
               Configuration sauvegardée !
+            </div>
+          )}
+
+          {/* Update section (Tauri only) */}
+          {isTauri() && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Mises à jour</h4>
+                  <p className="text-xs text-gray-500">Vérifier les nouvelles versions</p>
+                </div>
+                <button
+                  onClick={handleCheckUpdates}
+                  disabled={updater.checking}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <RefreshIcon className={`w-4 h-4 ${updater.checking ? 'animate-spin' : ''}`} />
+                  {updater.checking ? 'Vérification...' : 'Vérifier'}
+                </button>
+              </div>
+              {updateCheckMessage && (
+                <p className="mt-2 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded">
+                  {updateCheckMessage}
+                </p>
+              )}
+              {updater.error && (
+                <p className="mt-2 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded">
+                  {updater.error}
+                </p>
+              )}
             </div>
           )}
       </div>
