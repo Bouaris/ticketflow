@@ -165,6 +165,8 @@ function App() {
     const content = await fileAccess.openFile();
     if (content) {
       backlog.loadFromMarkdown(content);
+      // Sync TOC with sections after loading
+      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config from file content
       if (fileAccess.filePath) {
         const projectDir = getDirFromPath(fileAccess.filePath);
@@ -180,6 +182,8 @@ function App() {
     const content = await fileAccess.loadFromPath(fullPath);
     if (content) {
       backlog.loadFromMarkdown(content);
+      // Sync TOC with sections after loading
+      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config - use provided types for new projects, otherwise detect from content
       if (types && types.length > 0) {
         // New project with custom types - initialize with those types
@@ -256,6 +260,8 @@ function App() {
     const content = await fileAccess.loadStoredFile();
     if (content) {
       backlog.loadFromMarkdown(content);
+      // Sync TOC with sections after loading
+      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config from file content
       if (fileAccess.filePath) {
         const projectDir = getDirFromPath(fileAccess.filePath);
@@ -264,6 +270,26 @@ function App() {
       setShowWelcome(false);
     }
   }, [fileAccess, backlog, typeConfig]);
+
+  // Handle type config save - creates sections for new types
+  const handleTypeConfigSave = useCallback((newTypes: TypeDefinition[]) => {
+    // Find types that were added (exist in newTypes but not in current types)
+    const currentTypeIds = new Set(typeConfig.sortedTypes.map(t => t.id));
+    const addedTypes = newTypes.filter(t => !currentTypeIds.has(t.id));
+
+    // Create sections for new types
+    for (const newType of addedTypes) {
+      backlog.addSection(newType.id, newType.label);
+    }
+
+    // If any sections were added, mark file as dirty
+    if (addedTypes.length > 0) {
+      fileAccess.setDirty(true);
+    }
+
+    // Save the type config
+    typeConfig.setTypes(newTypes);
+  }, [typeConfig, backlog, fileAccess]);
 
   // Handle create new item
   const handleCreateItem = useCallback(() => {
@@ -280,15 +306,81 @@ function App() {
 
   // Handle delete item
   const handleDeleteItem = useCallback(async (id: string) => {
-    if (window.confirm(`Supprimer l'item ${id} ?`)) {
-      // Delete associated screenshots
-      if (screenshotFolder.isReady) {
-        await screenshotFolder.deleteTicketScreenshots(id);
-      }
-      backlog.deleteItem(id);
-      fileAccess.setDirty(true);
+    // Delete associated screenshots
+    if (screenshotFolder.isReady) {
+      await screenshotFolder.deleteTicketScreenshots(id);
     }
+    backlog.deleteItem(id);
+    backlog.selectItem(null);
+    fileAccess.setDirty(true);
   }, [backlog, fileAccess, screenshotFolder]);
+
+  // Handle archive item
+  const handleArchiveItem = useCallback(async (item: BacklogItem) => {
+    if (!window.confirm(`Archiver l'item ${item.id} ? Il sera déplacé vers TICKETFLOW_Archive.md`)) {
+      return;
+    }
+
+    try {
+      // Create archive entry
+      const today = new Date().toISOString().split('T')[0];
+      const archiveEntry = `
+### ${item.id} | ${item.emoji || ''} ${item.title}
+**Archivé le:** ${today}
+**Statut:** Complété
+${item.description ? `**Description:** ${item.description}` : ''}
+
+---
+`;
+
+      // Get archive file path (same directory as backlog)
+      if (fileAccess.filePath) {
+        const archivePath = fileAccess.filePath.replace('TICKETFLOW_Backlog.md', 'TICKETFLOW_Archive.md');
+
+        // Import Tauri bridge functions
+        const { isTauri, fileExists, readTextFileContents, writeTextFileContents } = await import('./lib/tauri-bridge');
+
+        if (isTauri()) {
+          // Read or create archive file
+          let archiveContent = `# ticketflow - Archives
+
+> Items archivés du backlog
+> Dernière mise à jour : ${today}
+
+---
+
+## Archives
+
+`;
+          const exists = await fileExists(archivePath);
+          if (exists) {
+            archiveContent = await readTextFileContents(archivePath);
+          }
+
+          // Append new entry
+          archiveContent += archiveEntry;
+
+          // Update date in header
+          archiveContent = archiveContent.replace(
+            /Dernière mise à jour : \d{4}-\d{2}-\d{2}/,
+            `Dernière mise à jour : ${today}`
+          );
+
+          // Save archive
+          await writeTextFileContents(archivePath, archiveContent);
+        }
+      }
+
+      // Remove from backlog
+      backlog.deleteItem(item.id);
+      backlog.selectItem(null);
+      fileAccess.setDirty(true);
+
+    } catch (error) {
+      console.error('Failed to archive item:', error);
+      alert('Erreur lors de l\'archivage');
+    }
+  }, [backlog, fileAccess]);
 
   // Handle save item (from editor modal)
   const handleSaveItem = useCallback((data: ItemFormData, isNew: boolean) => {
@@ -453,6 +545,7 @@ function App() {
         onRefineWithAI={handleRefineWithAI}
         onEdit={handleEditItem}
         onDelete={handleDeleteItem}
+        onArchive={handleArchiveItem}
         getScreenshotUrl={screenshotFolder.isReady ? screenshotFolder.getScreenshotUrl : undefined}
       />
 
@@ -486,7 +579,7 @@ function App() {
       <TypeConfigModal
         isOpen={isTypeConfigOpen}
         types={typeConfig.sortedTypes}
-        onSave={typeConfig.setTypes}
+        onSave={handleTypeConfigSave}
         onCancel={() => setIsTypeConfigOpen(false)}
       />
 

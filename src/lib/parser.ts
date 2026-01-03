@@ -34,9 +34,11 @@ export function parseBacklog(markdown: string): Backlog {
   const normalizedMarkdown = markdown
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
+    // Fix separateur fusionné avec section: "---## 1. Title" → "---\n\n## 1. Title"
+    .replace(/---(\s*## \d+\.)/g, '---\n\n$1')
     // Fix lignes fusionnées: "## Title### Item" → "## Title\n\n### Item"
     .replace(/(##[^#\n]+)(###)/g, '$1\n\n$2')
-    // Fix separateur fusionné: "---### Item" → "---\n\n### Item"
+    // Fix separateur fusionné avec item: "---### Item" → "---\n\n### Item"
     .replace(/---(\s*###)/g, '---\n\n$1')
     // Fix titre fusionné: "# Title## Section" → "# Title\n\n## Section"
     .replace(/(#[^#\n]+)(##)/g, '$1\n\n$2');
@@ -82,13 +84,26 @@ function findSectionBoundaries(lines: string[]): SectionBoundary[] {
   const boundaries: SectionBoundary[] = [];
   let autoId = 1;
 
+  // Titles to skip as section boundaries (TOC, Sommaire)
+  const SKIP_TITLES = [
+    'table des matières',
+    'table des matieres',
+    'sommaire',
+    'contents',
+  ];
+
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(PARSER_PATTERNS.SECTION_HEADER);
     if (match) {
+      const title = match[2].trim();
+      // Skip TOC-like sections
+      if (SKIP_TITLES.some(skip => title.toLowerCase() === skip)) {
+        continue;
+      }
       boundaries.push({
         start: i,
         id: match[1] || String(autoId++), // Use auto-increment if no number
-        title: match[2],
+        title,
       });
     }
   }
@@ -137,13 +152,16 @@ function parseSection(lines: string[], sectionIndex: number): Section {
 
   // Sections spéciales (Roadmap, Légende) - ne pas parser
   if (isRawSectionTitle(sectionTitle)) {
+    // CRITICAL: Exclude header from rawMarkdown to prevent duplication in serializer
+    // rawMarkdown = content only (lines after header)
+    const contentLines = lines.slice(1);
     return {
       id: sectionId,
       title: sectionTitle,
       items: [{
         type: 'raw-section' as const,
         title: sectionTitle,
-        rawMarkdown: lines.join('\n'),
+        rawMarkdown: contentLines.join('\n'),
         sectionIndex: 0,
       }],
       rawHeader: headerLine,
@@ -481,6 +499,29 @@ function parseTableGroup(lines: string[], rawMarkdown: string, sectionIndex: num
 // UTILITY: Get all items as flat array
 // ============================================================
 
+/**
+ * Déduplique les items par ID.
+ * En cas de doublon, garde le premier item rencontré.
+ */
+function deduplicateItems(items: BacklogItem[]): BacklogItem[] {
+  const seen = new Map<string, BacklogItem>();
+  const duplicates: string[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.id)) {
+      duplicates.push(item.id);
+    } else {
+      seen.set(item.id, item);
+    }
+  }
+
+  if (duplicates.length > 0) {
+    console.warn(`[Parser] Duplicate IDs detected and removed: ${duplicates.join(', ')}`);
+  }
+
+  return Array.from(seen.values());
+}
+
 export function getAllItems(backlog: Backlog): BacklogItem[] {
   const items: BacklogItem[] = [];
 
@@ -492,7 +533,8 @@ export function getAllItems(backlog: Backlog): BacklogItem[] {
     }
   }
 
-  return items;
+  // CRITICAL: Dédupliquer les items pour éviter les doublons
+  return deduplicateItems(items);
 }
 
 export function getItemsByType(backlog: Backlog, type: ItemType): BacklogItem[] {
