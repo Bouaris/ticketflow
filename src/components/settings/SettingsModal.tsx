@@ -87,10 +87,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (result) {
       // Update found - the modal will show automatically via App.tsx
       onClose();
-    } else {
+    } else if (!updater.error) {
+      // Only show "up to date" if there was no error
       setUpdateCheckMessage('Vous utilisez la dernière version.');
       setTimeout(() => setUpdateCheckMessage(null), 3000);
     }
+    // If error, updater.error will be displayed instead
   };
 
   if (!isOpen) return null;
