@@ -393,7 +393,7 @@ export function ItemEditorModal({
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden">
+      <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center justify-between">
@@ -499,7 +499,7 @@ export function ItemEditorModal({
         {geminiSuggestions.length > 0 && (
           <div className="px-6 py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-100">
             <div className="flex items-start gap-3">
-              <SparklesIcon className="text-purple-600 mt-0.5" />
+              <SparklesIcon className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-purple-900">Suggestions IA</p>
                 <ul className="mt-1 space-y-1">
@@ -519,7 +519,7 @@ export function ItemEditorModal({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-white">
           {/* AI Mode */}
           {aiMode && (
             <div className="max-w-2xl mx-auto py-8">

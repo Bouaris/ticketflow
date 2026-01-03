@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import type { BacklogItem } from '../../types/backlog';
 import { ItemBadge, SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 import { ScreenshotGallery } from './ScreenshotGallery';
+import { SparklesIcon } from '../ui/Icons';
 
 interface ItemDetailPanelProps {
   item: BacklogItem | null;
@@ -262,7 +263,7 @@ export function ItemDetailPanel({
               onClick={() => onRefineWithAI(item)}
               className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
             >
-              <SparklesIcon />
+              <SparklesIcon className="w-5 h-5" />
               Affiner avec Gemini
             </button>
           )}
@@ -348,15 +349,6 @@ function CloseIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function SparklesIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
     </svg>
   );
 }
