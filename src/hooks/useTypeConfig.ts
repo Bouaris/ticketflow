@@ -2,7 +2,7 @@
  * useTypeConfig - Hook for managing dynamic item types
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { TypeConfig, TypeDefinition } from '../types/typeConfig';
 import {
   DEFAULT_TYPE_CONFIG,
@@ -48,8 +48,8 @@ export function useTypeConfig(): UseTypeConfigReturn {
   const [config, setConfig] = useState<TypeConfig>(DEFAULT_TYPE_CONFIG);
   const [projectPath, setProjectPath] = useState<string | null>(null);
 
-  // Compute sorted types
-  const sortedTypes = getSortedTypes(config);
+  // Compute sorted types - MEMOIZED to prevent unnecessary re-renders
+  const sortedTypes = useMemo(() => getSortedTypes(config), [config]);
 
   // Save config when it changes
   useEffect(() => {
@@ -110,13 +110,20 @@ export function useTypeConfig(): UseTypeConfigReturn {
 
   /**
    * Set types directly (for modal editing)
+   * IMPORTANT: Sauvegarde immédiatement pour éviter race condition si modal ferme
    */
   const setTypes = useCallback((types: TypeDefinition[]) => {
-    setConfig(prev => ({
-      ...prev,
+    const newConfig: TypeConfig = {
+      ...config,
       types: types.map((t, i) => ({ ...t, order: i })),
-    }));
-  }, []);
+    };
+    setConfig(newConfig);
+
+    // CRITICAL: Sauvegarder IMMÉDIATEMENT, pas dans useEffect
+    if (projectPath) {
+      saveTypeConfig(projectPath, newConfig);
+    }
+  }, [config, projectPath]);
 
   /**
    * Add a new type

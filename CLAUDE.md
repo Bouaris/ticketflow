@@ -56,8 +56,11 @@ pnpm lint                 # Vérifie les erreurs ESLint
 4. BUILD   -> pnpm build DOIT passer
 5. TEST    -> Tester manuellement les scénarios impactés
 6. QA      -> Vérifier qu'aucune fonctionnalité existante n'est cassée
-7. COMMIT  -> Message conventionnel avec scope
+7. TAURI   -> pnpm tauri build pour générer le .exe (AUTOMATIQUE)
+8. COMMIT  -> Message conventionnel avec scope
 ```
+
+**RÈGLE AUTOMATIQUE:** Après chaque feature ou fix validé, lancer `pnpm tauri build` pour mettre à jour l'exécutable Windows.
 
 ### Règles de Fer
 

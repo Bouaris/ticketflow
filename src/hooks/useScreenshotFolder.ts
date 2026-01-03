@@ -140,6 +140,10 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Track object URLs for cleanup
   const objectUrlsRef = useRef<Set<string>>(new Set());
 
+  // CRITICAL: Store handle in ref for immediate access after permission grant
+  // State updates are async/batched, but ref is synchronous
+  const handleRef = useRef<FileSystemDirectoryHandle | null>(null);
+
   // Try to restore folder handle on mount
   useEffect(() => {
     if (!isSupported) return;
@@ -154,6 +158,7 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
           if (permission === 'granted') {
             const handle = await getScreenshotsFolder(stored);
             if (handle) {
+              handleRef.current = handle; // Immediate access
               setScreenshotsHandle(handle);
               setIsReady(true);
               return;
@@ -200,6 +205,7 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
       // Get or create screenshots folder
       const handle = await getScreenshotsFolder(selected);
       if (handle) {
+        handleRef.current = handle; // Immediate access - critical for same-cycle operations
         setScreenshotsHandle(handle);
         setIsReady(true);
         setNeedsPermission(false);
@@ -220,7 +226,9 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Save a blob as screenshot
   const saveScreenshotBlob = useCallback(
     async (ticketId: string, blob: Blob): Promise<string | null> => {
-      if (!screenshotsHandle) {
+      // Use ref for immediate access after permission grant, fallback to state
+      const handle = handleRef.current || screenshotsHandle;
+      if (!handle) {
         setError('Dossier screenshots non disponible');
         return null;
       }
@@ -230,7 +238,7 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
 
       try {
         const filename = generateScreenshotFilename(ticketId);
-        const success = await saveScreenshot(screenshotsHandle, filename, blob);
+        const success = await saveScreenshot(handle, filename, blob);
 
         setIsProcessing(false);
         return success ? filename : null;
@@ -246,7 +254,8 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Import a file (convert to PNG if needed)
   const importScreenshotFile = useCallback(
     async (ticketId: string, file: File): Promise<string | null> => {
-      if (!screenshotsHandle) {
+      const handle = handleRef.current || screenshotsHandle;
+      if (!handle) {
         setError('Dossier screenshots non disponible');
         return null;
       }
@@ -259,7 +268,7 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
         const blob = file.type === 'image/png' ? file : await convertToPng(file);
 
         const filename = generateScreenshotFilename(ticketId);
-        const success = await saveScreenshot(screenshotsHandle, filename, blob);
+        const success = await saveScreenshot(handle, filename, blob);
 
         setIsProcessing(false);
         return success ? filename : null;
@@ -275,10 +284,11 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Get screenshot as object URL
   const getScreenshotUrl = useCallback(
     async (filename: string): Promise<string | null> => {
-      if (!screenshotsHandle) return null;
+      const handle = handleRef.current || screenshotsHandle;
+      if (!handle) return null;
 
       try {
-        const blob = await readScreenshot(screenshotsHandle, filename);
+        const blob = await readScreenshot(handle, filename);
         if (blob) {
           const url = URL.createObjectURL(blob);
           objectUrlsRef.current.add(url);
@@ -295,8 +305,9 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Delete a single screenshot
   const deleteScreenshotFile = useCallback(
     async (filename: string): Promise<boolean> => {
-      if (!screenshotsHandle) return false;
-      return deleteScreenshot(screenshotsHandle, filename);
+      const handle = handleRef.current || screenshotsHandle;
+      if (!handle) return false;
+      return deleteScreenshot(handle, filename);
     },
     [screenshotsHandle]
   );
@@ -304,8 +315,9 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
   // Delete all screenshots for a ticket
   const deleteTicketScreenshots = useCallback(
     async (ticketId: string): Promise<number> => {
-      if (!screenshotsHandle) return 0;
-      return deleteScreenshotsForTicket(screenshotsHandle, ticketId);
+      const handle = handleRef.current || screenshotsHandle;
+      if (!handle) return 0;
+      return deleteScreenshotsForTicket(handle, ticketId);
     },
     [screenshotsHandle]
   );

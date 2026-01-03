@@ -10,14 +10,31 @@
 2. [Court Terme](#2-court-terme)
 3. [Long Terme](#3-long-terme)
 4. [Autres Idées](#4-autres-idées)
-5. [test](#5-test)
-6. [caca](#6-caca)
-7. [PROUT](#7-prout)
-8. [Légende](#8-legende)
+5. [rara](#5-rara)
+6. [Légende](#6-legende)
 
 ---
 
 ## 1. BUGS
+
+### BUG-001 | 🐛 Corriger le problème de chargement d'images
+**Composant:** Module de gestion des images
+**Module:** Module de gestion des images
+**Sévérité:** P1 - Critique
+**Effort:** M (Medium)
+**Description:** Le système échoue à charger les images de plus de 5MB, provoquant un crash de l'application. Le comportement attendu est que les images de toutes tailles soient chargées sans erreur.
+
+**Spécifications:**
+- La taille maximale des images est de 10MB
+- Le chargement des images doit être effectué en arrière-plan pour éviter les blocages de l'interface utilisateur
+
+**Critères d'acceptation:**
+- [ ] Les images de plus de 5MB sont chargées sans erreur
+- [ ] Le système ne plante pas lors du chargement d'images de grandes tailles
+- [ ] Le chargement des images est effectué en arrière-plan sans bloquer l'interface utilisateur
+
+**Screenshots:**
+![BUG-001_1767455693167](..backlog-assets/screenshots/BUG-001_1767455693167.png)
 
 ---
 
@@ -33,38 +50,11 @@
 
 ---
 
-## 5. TEST
+## 5. RARA
 
 ---
 
-## 6. CACA
-
----
-
-## 7. PROUT
-
-<!-- Type: PRT -->
-### PRT-001 | 🎨 Créer un prout personnalisé
-**Module:** Module de génération de contenu
-**Priorité:** Moyenne
-**Effort:** M (Medium)
-**Description:** Le système doit permettre la génération de prouts personnalisés avec différents paramètres tels que la taille, la couleur et la forme
-
-**User Story:**
-> En tant qu'utilisateur, je veux créer des prouts personnalisés afin de les partager sur les réseaux sociaux
-
-**Spécifications:**
-- Développer un algorithme de génération de prouts basé sur les paramètres utilisateur
-- Intégrer une interface utilisateur pour la saisie des paramètres de personnalisation
-
-**Critères d'acceptation:**
-- [ ] Le prout généré correspond aux paramètres sélectionnés par l'utilisateur
-- [ ] L'utilisateur peut partager le prout généré sur les réseaux sociaux
-- [ ] Le système gère les erreurs et les cas limites pour les paramètres de personnalisation
-
----
-
-## 8. Légende
+## 6. Légende
 
 ### Légende Effort
 
@@ -86,8 +76,7 @@
 - **CT-XXX** : Court Terme
 - **LT-XXX** : Long Terme
 - **AUTRE-XXX** : Autres Idées
-- **TEST-XXX** : test
-- **CACA-XXX** : caca
+- **DA-XXX** : rara
 
 ---
 

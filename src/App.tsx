@@ -4,7 +4,7 @@
  * Application principale pour gérer le Product Backlog.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useBacklog } from './hooks/useBacklog';
 import { useFileAccess } from './hooks/useFileAccess';
 import { useScreenshotFolder } from './hooks/useScreenshotFolder';
@@ -18,7 +18,9 @@ import { SettingsModal } from './components/settings/SettingsModal';
 import { TypeConfigModal } from './components/settings/TypeConfigModal';
 import { ItemEditorModal, type ItemFormData } from './components/editor/ItemEditorModal';
 import { WelcomePage } from './components/welcome/WelcomePage';
+import { ExportModal } from './components/export/ExportModal';
 import { hasApiKey, refineItem } from './lib/ai';
+import { exportItemForClipboard } from './lib/serializer';
 import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
@@ -159,6 +161,11 @@ function App() {
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   const [isRefining, setIsRefining] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [exportModal, setExportModal] = useState<{
+    isOpen: boolean;
+    content: string;
+    itemId: string;
+  } | null>(null);
 
   // Handle file open
   const handleOpenFile = useCallback(async () => {
@@ -305,12 +312,14 @@ function App() {
   }, [backlog]);
 
   // Handle delete item
-  const handleDeleteItem = useCallback(async (id: string) => {
-    // Delete associated screenshots
-    if (screenshotFolder.isReady) {
-      await screenshotFolder.deleteTicketScreenshots(id);
+  const handleDeleteItem = useCallback(async (item: BacklogItem) => {
+    // Delete associated screenshots using actual filenames from item
+    if (screenshotFolder.isReady && item.screenshots && item.screenshots.length > 0) {
+      for (const screenshot of item.screenshots) {
+        await screenshotFolder.deleteScreenshotFile(screenshot.filename);
+      }
     }
-    backlog.deleteItem(id);
+    backlog.deleteItem(item.id);
     backlog.selectItem(null);
     fileAccess.setDirty(true);
   }, [backlog, fileAccess, screenshotFolder]);
@@ -371,6 +380,13 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         }
       }
 
+      // Delete associated screenshots using actual filenames from item
+      if (screenshotFolder.isReady && item.screenshots && item.screenshots.length > 0) {
+        for (const screenshot of item.screenshots) {
+          await screenshotFolder.deleteScreenshotFile(screenshot.filename);
+        }
+      }
+
       // Remove from backlog
       backlog.deleteItem(item.id);
       backlog.selectItem(null);
@@ -380,7 +396,27 @@ ${item.description ? `**Description:** ${item.description}` : ''}
       console.error('Failed to archive item:', error);
       alert('Erreur lors de l\'archivage');
     }
-  }, [backlog, fileAccess]);
+  }, [backlog, fileAccess, screenshotFolder]);
+
+  // Handle export item (for clipboard)
+  const handleExportItem = useCallback((item: BacklogItem) => {
+    const sourcePath = fileAccess.filePath || 'Unknown';
+
+    // Calculate absolute screenshot base path from file path
+    let screenshotBasePath: string | undefined;
+    if (fileAccess.filePath) {
+      const dir = getDirFromPath(fileAccess.filePath);
+      screenshotBasePath = `${dir}\\.backlog-assets\\screenshots`;
+    }
+
+    const content = exportItemForClipboard(item, sourcePath, screenshotBasePath);
+
+    setExportModal({
+      isOpen: true,
+      content,
+      itemId: item.id,
+    });
+  }, [fileAccess.filePath]);
 
   // Handle save item (from editor modal)
   const handleSaveItem = useCallback((data: ItemFormData, isNew: boolean) => {
@@ -440,6 +476,27 @@ ${item.description ? `**Description:** ${item.description}` : ''}
       </div>
     );
   }
+
+  // Memoize screenshotOps to prevent unnecessary re-renders
+  const screenshotOps = useMemo(() => ({
+    isReady: screenshotFolder.isReady,
+    needsPermission: screenshotFolder.needsPermission,
+    isProcessing: screenshotFolder.isProcessing,
+    onRequestAccess: screenshotFolder.requestFolderAccess,
+    saveBlob: screenshotFolder.saveScreenshotBlob,
+    importFile: screenshotFolder.importScreenshotFile,
+    getUrl: screenshotFolder.getScreenshotUrl,
+    deleteFile: screenshotFolder.deleteScreenshotFile,
+  }), [
+    screenshotFolder.isReady,
+    screenshotFolder.needsPermission,
+    screenshotFolder.isProcessing,
+    screenshotFolder.requestFolderAccess,
+    screenshotFolder.saveScreenshotBlob,
+    screenshotFolder.importScreenshotFile,
+    screenshotFolder.getScreenshotUrl,
+    screenshotFolder.deleteScreenshotFile,
+  ]);
 
   // Determine if we should show welcome page
   const shouldShowWelcome = showWelcome || !backlog.backlog;
@@ -546,6 +603,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onEdit={handleEditItem}
         onDelete={handleDeleteItem}
         onArchive={handleArchiveItem}
+        onExport={handleExportItem}
         getScreenshotUrl={screenshotFolder.isReady ? screenshotFolder.getScreenshotUrl : undefined}
       />
 
@@ -557,16 +615,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onSave={handleSaveItem}
         existingIds={backlog.existingIds}
         types={typeConfig.sortedTypes}
-        screenshotOps={{
-          isReady: screenshotFolder.isReady,
-          needsPermission: screenshotFolder.needsPermission,
-          isProcessing: screenshotFolder.isProcessing,
-          onRequestAccess: screenshotFolder.requestFolderAccess,
-          saveBlob: screenshotFolder.saveScreenshotBlob,
-          importFile: screenshotFolder.importScreenshotFile,
-          getUrl: screenshotFolder.getScreenshotUrl,
-          deleteFile: screenshotFolder.deleteScreenshotFile,
-        }}
+        screenshotOps={screenshotOps}
       />
 
       {/* Settings modal */}
@@ -582,6 +631,16 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onSave={handleTypeConfigSave}
         onCancel={() => setIsTypeConfigOpen(false)}
       />
+
+      {/* Export modal */}
+      {exportModal && (
+        <ExportModal
+          isOpen={exportModal.isOpen}
+          onClose={() => setExportModal(null)}
+          content={exportModal.content}
+          itemId={exportModal.itemId}
+        />
+      )}
 
       {/* Loading overlay for AI */}
       {isRefining && (

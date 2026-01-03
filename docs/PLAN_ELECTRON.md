@@ -62,8 +62,8 @@ backlog-app/
 ├─────────────────────────────────────┤
 │  Projets récents:                   │
 │  ┌─────────────────────────────┐    │
-│  │ 📁 AudioPilot               │    │
-│  │    C:\Projets\AudioPilot    │    │
+│  │ 📁 MonProjet                │    │
+│  │    C:\Projets\MonProjet     │    │
 │  │    Modifié: il y a 2h       │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
@@ -146,7 +146,7 @@ backlog-app/
 {
   "setupComplete": true,
   "recentProjects": [
-    {"path": "C:/Projets/AudioPilot", "name": "AudioPilot", "lastOpened": 1704153600000}
+    {"path": "C:/Projets/MonProjet", "name": "MonProjet", "lastOpened": 1704153600000}
   ],
   "shortcuts": {"desktop": true, "startMenu": false}
 }

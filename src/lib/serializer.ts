@@ -316,6 +316,154 @@ function updateCheckboxesInRaw(rawMarkdown: string, criteria: Criterion[]): stri
   return updatedLines.join('\n');
 }
 
+// ============================================================
+// EXPORT FOR CLIPBOARD
+// ============================================================
+
+/**
+ * Génère le markdown d'un item pour export/copie vers le presse-papier.
+ * Inclut le chemin source et utilise des chemins absolus pour les screenshots.
+ *
+ * @param item - L'item à exporter
+ * @param sourcePath - Chemin absolu du fichier markdown source
+ * @param screenshotBasePath - Chemin absolu du dossier screenshots (optionnel)
+ */
+export function exportItemForClipboard(
+  item: BacklogItem,
+  sourcePath: string,
+  screenshotBasePath?: string
+): string {
+  const lines: string[] = [];
+
+  // Header avec chemin source
+  lines.push(`From ${sourcePath} :`);
+  lines.push('');
+
+  // Contenu de l'item avec chemins absolus
+  lines.push(rebuildItemMarkdownForExport(item, screenshotBasePath));
+
+  return lines.join('\n');
+}
+
+/**
+ * Reconstruit le markdown d'un item pour l'export.
+ * Similaire à rebuildItemMarkdown mais avec chemins absolus pour screenshots.
+ */
+function rebuildItemMarkdownForExport(item: BacklogItem, screenshotBasePath?: string): string {
+  const lines: string[] = [];
+
+  // Header
+  const emoji = item.emoji ? `${item.emoji} ` : '';
+  lines.push(`### ${item.id} | ${emoji}${item.title}`);
+
+  // Metadata
+  if (item.component) {
+    lines.push(`**Composant:** ${item.component}`);
+  }
+  if (item.module) {
+    lines.push(`**Module:** ${item.module}`);
+  }
+  if (item.severity) {
+    lines.push(`**Sévérité:** ${SEVERITY_FULL_LABELS[item.severity] || item.severity}`);
+  }
+  if (item.priority) {
+    lines.push(`**Priorité:** ${item.priority}`);
+  }
+  if (item.effort) {
+    lines.push(`**Effort:** ${EFFORT_SHORT_LABELS[item.effort] || item.effort}`);
+  }
+
+  // Description
+  if (item.description) {
+    lines.push(`**Description:** ${item.description}`);
+  }
+
+  // User Story
+  if (item.userStory) {
+    lines.push('');
+    lines.push(`**User Story:**`);
+    lines.push(`> ${item.userStory}`);
+  }
+
+  // Reproduction
+  if (item.reproduction && item.reproduction.length > 0) {
+    lines.push('');
+    lines.push('**Reproduction:**');
+    item.reproduction.forEach((step, i) => {
+      lines.push(`${i + 1}. ${step}`);
+    });
+  }
+
+  // Specs
+  if (item.specs && item.specs.length > 0) {
+    lines.push('');
+    lines.push('**Spécifications:**');
+    item.specs.forEach(spec => {
+      lines.push(`- ${spec}`);
+    });
+  }
+
+  // Screens
+  if (item.screens && item.screens.length > 0) {
+    lines.push('');
+    lines.push('**Écrans:**');
+    item.screens.forEach((screen, i) => {
+      lines.push(`${i + 1}. ${screen}`);
+    });
+  }
+
+  // Criteria
+  if (item.criteria && item.criteria.length > 0) {
+    lines.push('');
+    lines.push('**Critères d\'acceptation:**');
+    item.criteria.forEach(criterion => {
+      const check = criterion.checked ? 'x' : ' ';
+      lines.push(`- [${check}] ${criterion.text}`);
+    });
+  }
+
+  // Dependencies
+  if (item.dependencies && item.dependencies.length > 0) {
+    lines.push('');
+    lines.push('**Dépendances:**');
+    item.dependencies.forEach(dep => {
+      lines.push(`- ${dep}`);
+    });
+  }
+
+  // Constraints
+  if (item.constraints && item.constraints.length > 0) {
+    lines.push('');
+    lines.push('**Contraintes:**');
+    item.constraints.forEach(constraint => {
+      lines.push(`- ${constraint}`);
+    });
+  }
+
+  // Screenshots avec chemins absolus
+  if (item.screenshots && item.screenshots.length > 0) {
+    lines.push('');
+    lines.push('**Screenshots:**');
+    item.screenshots.forEach(screenshot => {
+      const altText = screenshot.alt || screenshot.filename.replace('.png', '');
+      if (screenshotBasePath) {
+        // Chemin absolu Windows
+        const absolutePath = `${screenshotBasePath}\\${screenshot.filename}`;
+        lines.push(`![${altText}](${absolutePath})`);
+      } else {
+        // Fallback: chemin relatif
+        lines.push(`![${altText}](.backlog-assets/screenshots/${screenshot.filename})`);
+      }
+    });
+  }
+
+  // Séparateur
+  lines.push('');
+  lines.push('---');
+
+  return lines.join('\n');
+}
+
 // Type for internal modified tracking
 interface ModifiedBacklogItem extends BacklogItem {
   _modified?: boolean;
