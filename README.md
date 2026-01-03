@@ -2,7 +2,7 @@
 
 Application de gestion de backlog produit avec génération IA.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -41,8 +41,8 @@ Application de gestion de backlog produit avec génération IA.
 ### Option 1: Application Desktop (Recommandé)
 
 Téléchargez le dernier installateur depuis les [Releases](https://github.com/Bouaris/ticketflow/releases):
-- `Ticketflow_1.0.0_x64-setup.exe` (Installateur NSIS)
-- `Ticketflow_1.0.0_x64_en-US.msi` (Installateur MSI)
+- `Ticketflow_x.x.x_x64-setup.exe` (Installateur NSIS)
+- `Ticketflow_x.x.x_x64_en-US.msi` (Installateur MSI)
 
 ### Option 2: Version Web
 
@@ -179,15 +179,12 @@ ticketflow/
 
 ## Changelog
 
-### v1.0.0 (2026-01-03)
-- Application desktop Windows via Tauri
-- Gestionnaire de projets avec création de backlogs
-- Système de types dynamiques personnalisables
-- Export de tickets en Markdown avec chemins absolus
-- Indicateur visuel de captures d'écran (icône caméra)
-- Amélioration de la gestion des screenshots (CTRL+V, drag & drop)
-- Synchronisation TOC automatique
-- Corrections de bugs multiples
+Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
+
+### Dernière version: v1.1.0
+- System tray avec minimisation dans la barre des tâches
+- Protection single-instance
+- Mise à jour automatique via GitHub Releases
 
 ## Roadmap
 
