@@ -1,9 +1,10 @@
 /**
  * ItemDetailPanel - Slide-over panel showing item details.
+ * Uses Modal component with variant='panel' for consistent behavior.
  */
 
-import { useEffect, useRef } from 'react';
 import type { BacklogItem } from '../../types/backlog';
+import { Modal } from '../ui/Modal';
 import { ItemBadge, SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 import { ScreenshotGallery } from './ScreenshotGallery';
 import {
@@ -41,42 +42,16 @@ export function ItemDetailPanel({
   onExport,
   getScreenshotUrl,
 }: ItemDetailPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
-
-  // Close on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    if (item) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [item, onClose]);
-
-  if (!item) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30 z-40" />
-
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        className="fixed right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl z-50 overflow-y-auto animate-slide-in"
-      >
+    <Modal
+      isOpen={!!item}
+      onClose={onClose}
+      variant="panel"
+      showCloseButton={false}
+      className="overflow-y-auto"
+    >
+      {item && (
+        <>
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
           <div className="flex items-start justify-between">
@@ -297,9 +272,9 @@ export function ItemDetailPanel({
             </button>
           )}
         </div>
-      </div>
-
-    </>
+        </>
+      )}
+    </Modal>
   );
 }
 

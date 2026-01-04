@@ -1,8 +1,8 @@
 # TODO AUDIT TICKETFLOW
 
 > **Etat au:** 2026-01-04
-> **Issues:** 35/73 corrigees | 38 restantes
-> **Build:** PASS
+> **Issues:** 38/73 corrigees | 35 restantes
+> **Build:** PASS | **Tests:** 45/45 PASS
 
 ---
 
@@ -33,32 +33,21 @@
   - [x] ScreenshotEditor.tsx - 3 boutons
   - [x] ExportModal.tsx - 2 boutons
   - [x] AIGenerationMode.tsx - 4 boutons (nouveau fichier)
+- [x] **Phase 4.3** - Refactoriser ItemDetailPanel modal (352 → 326 LOC, -7%)
+  - [x] Modal.tsx: ajout variant='panel' (slide-over)
+  - [x] ItemDetailPanel: utilise Modal au lieu de backdrop/escape/click-outside custom
+  - [x] Suppression useEffect escape + click-outside + backdrop custom
+- [x] **Phase 2.1-2.3** - Tests unitaires hooks (25 nouveaux tests)
+  - [x] `@testing-library/react` installe
+  - [x] `src/__tests__/useBacklogHistory.test.ts` - 10 tests (undo/redo/limits)
+  - [x] `src/__tests__/useTypeConfig.test.ts` - 15 tests (CRUD/detection/hook)
+  - [x] Total: **45 tests PASS** (20 existants + 25 nouveaux)
 
 ---
 
 ## PHASES EN ATTENTE
 
-### Phase 4.3: Refactoriser ItemDetailPanel modal
-**Status:** PENDING
-**Priorite:** BASSE
-
-**Action:** Utiliser Modal.tsx au lieu de reimplementer backdrop/escape/click-outside
-
----
-
-### Phase 2.1-2.3: Tests
-**Status:** PENDING
-**Priorite:** HAUTE (mais necessite dependances)
-**Blocage:** Installer `@testing-library/react`
-
-```bash
-pnpm add -D @testing-library/react @testing-library/react-hooks
-```
-
-**Tests a creer:**
-- [ ] `src/__tests__/useBacklog.test.ts` (20+ tests)
-- [ ] `src/__tests__/useTypeConfig.test.ts` (10+ tests)
-- [ ] `src/__tests__/useHistory.test.ts` (8+ tests)
+*Toutes les phases prioritaires sont completees.*
 
 ---
 
@@ -85,6 +74,10 @@ src/hooks/useBacklogHistory.ts        ✓ (NOUVEAU - 95 LOC)
 src/lib/itemPlacement.ts              ✓ (NOUVEAU - 127 LOC)
 src/components/editor/ItemEditorModal.tsx ✓ (split -163 LOC)
 src/components/editor/AIGenerationMode.tsx ✓ (NOUVEAU - 253 LOC)
+src/components/ui/Modal.tsx              ✓ (+variant panel)
+src/components/detail/ItemDetailPanel.tsx ✓ (uses Modal -26 LOC)
+src/__tests__/useBacklogHistory.test.ts  ✓ (NOUVEAU - 10 tests)
+src/__tests__/useTypeConfig.test.ts      ✓ (NOUVEAU - 15 tests)
 ```
 
 ---
@@ -96,11 +89,14 @@ src/components/editor/AIGenerationMode.tsx ✓ (NOUVEAU - 253 LOC)
 | App.tsx | 922 | 786 | -136 (-15%) |
 | useBacklog.ts | 1023 | 829 | -194 (-19%) |
 | ItemEditorModal.tsx | 1048 | 885 | -163 (-16%) |
-| **Total God Objects** | 2993 | 2500 | **-493 LOC** |
+| ItemDetailPanel.tsx | 352 | 326 | -26 (-7%) |
+| **Total God Objects** | 3345 | 2826 | **-519 LOC** |
 
 **Nouveaux fichiers modulaires:** 6
 **Total LOC nouveaux fichiers:** 580
 **Aria-labels ajoutes:** 25+
+**Modal.tsx variant panel:** +21 LOC
+**Tests unitaires:** 45 (20 existants + 25 nouveaux)
 
 ---
 

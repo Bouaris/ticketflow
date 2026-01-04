@@ -34,6 +34,8 @@ export interface ModalProps {
   header?: React.ReactNode;
   /** Footer content */
   footer?: React.ReactNode;
+  /** Variant: centered modal or right slide-over panel */
+  variant?: 'modal' | 'panel';
 }
 
 // ============================================================
@@ -64,6 +66,7 @@ export function Modal({
   className = '',
   header,
   footer,
+  variant = 'modal',
 }: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -86,24 +89,30 @@ export function Modal({
   if (!isOpen) return null;
 
   const isFullSize = size === 'full';
+  const isPanel = variant === 'panel';
+
+  // Panel variant: slide-over from right
+  const panelClasses = 'right-0 top-0 h-full w-full max-w-xl animate-slide-in rounded-none';
+
+  // Modal variant: centered with size
+  const modalClasses = isFullSize
+    ? sizeClasses.full + ' rounded-2xl'
+    : `${sizeClasses[size]} w-full top-[4vh] bottom-[4vh] left-1/2 -translate-x-1/2 rounded-xl`;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-50"
+        className={`fixed inset-0 z-40 ${isPanel ? 'bg-black/30' : 'bg-black/50'}`}
         onClick={closeOnBackdrop ? onClose : undefined}
         aria-hidden="true"
       />
 
-      {/* Modal */}
+      {/* Modal / Panel */}
       <div
         className={`
           fixed z-50 bg-white shadow-xl overflow-hidden flex flex-col
-          ${isFullSize
-            ? sizeClasses.full + ' rounded-2xl'
-            : `${sizeClasses[size]} w-full top-[4vh] bottom-[4vh] left-1/2 -translate-x-1/2 rounded-xl`
-          }
+          ${isPanel ? panelClasses : modalClasses}
           ${className}
         `}
         role="dialog"
