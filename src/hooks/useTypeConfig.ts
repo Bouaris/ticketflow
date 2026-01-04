@@ -36,6 +36,8 @@ export interface UseTypeConfigReturn {
   updateTypeById: (typeId: string, updates: Partial<TypeDefinition>) => void;
   /** Reorder types (for drag & drop) */
   reorderTypesAtIndex: (fromIndex: number, toIndex: number) => void;
+  /** Toggle type visibility in Kanban */
+  toggleTypeVisibility: (typeId: string) => void;
   /** Get type by ID */
   getType: (typeId: string) => TypeDefinition | undefined;
   /** Check if type exists */
@@ -154,6 +156,18 @@ export function useTypeConfig(): UseTypeConfigReturn {
   }, []);
 
   /**
+   * Toggle type visibility in Kanban
+   */
+  const toggleTypeVisibility = useCallback((typeId: string) => {
+    setConfig(prev => ({
+      ...prev,
+      types: prev.types.map(t =>
+        t.id === typeId ? { ...t, visible: !t.visible } : t
+      ),
+    }));
+  }, []);
+
+  /**
    * Get type by ID
    */
   const getType = useCallback((typeId: string): TypeDefinition | undefined => {
@@ -177,6 +191,7 @@ export function useTypeConfig(): UseTypeConfigReturn {
     removeTypeById,
     updateTypeById,
     reorderTypesAtIndex,
+    toggleTypeVisibility,
     getType,
     hasType,
     projectPath,

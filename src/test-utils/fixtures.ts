@@ -113,10 +113,10 @@ export function createMockItems(count: number, type = 'BUG'): BacklogItem[] {
 // ============================================================
 
 export const DEFAULT_TYPE_DEFINITIONS: TypeDefinition[] = [
-  { id: 'BUG', label: 'Bugs', color: '#ef4444', order: 0 },
-  { id: 'CT', label: 'Court Terme', color: '#3b82f6', order: 1 },
-  { id: 'LT', label: 'Long Terme', color: '#8b5cf6', order: 2 },
-  { id: 'AUTRE', label: 'Autres', color: '#6b7280', order: 3 },
+  { id: 'BUG', label: 'Bugs', color: '#ef4444', order: 0, visible: true },
+  { id: 'CT', label: 'Court Terme', color: '#3b82f6', order: 1, visible: true },
+  { id: 'LT', label: 'Long Terme', color: '#8b5cf6', order: 2, visible: true },
+  { id: 'AUTRE', label: 'Autres', color: '#6b7280', order: 3, visible: true },
 ];
 
 export function createMockTypeDefinition(overrides: Partial<TypeDefinition> = {}): TypeDefinition {
@@ -125,6 +125,7 @@ export function createMockTypeDefinition(overrides: Partial<TypeDefinition> = {}
     label: 'Test Type',
     color: '#000000',
     order: 0,
+    visible: true,
     ...overrides,
   };
 }

@@ -13,6 +13,7 @@ interface FilterBarProps {
   filteredCount: number;
   types: TypeDefinition[];
   onFiltersChange: (filters: Partial<BacklogFilters>) => void;
+  onToggleTypeVisibility: (typeId: string) => void;
   onReset: () => void;
 }
 
@@ -22,10 +23,14 @@ export function FilterBar({
   filteredCount,
   types,
   onFiltersChange,
+  onToggleTypeVisibility,
   onReset,
 }: FilterBarProps) {
+  // Count hidden types (visible=false)
+  const hiddenTypesCount = types.filter(t => !t.visible).length;
+
   const hasActiveFilters =
-    filters.types.length > 0 ||
+    hiddenTypesCount > 0 ||
     filters.priorities.length > 0 ||
     filters.efforts.length > 0 ||
     filters.severities.length > 0 ||
@@ -46,15 +51,10 @@ export function FilterBar({
           />
         </div>
 
-        {/* Type Filter */}
-        <FilterDropdown
-          label="Type"
-          options={types.map(t => ({
-            value: t.id,
-            label: t.label,
-          }))}
-          selected={filters.types}
-          onChange={(selectedTypes) => onFiltersChange({ types: selectedTypes })}
+        {/* Type Visibility Filter */}
+        <TypeVisibilityDropdown
+          types={types}
+          onToggle={onToggleTypeVisibility}
         />
 
         {/* Priority Filter */}
@@ -103,6 +103,62 @@ export function FilterBar({
           <span className="text-sm text-gray-500">
             {filteredCount} / {totalCount} items
           </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TYPE VISIBILITY DROPDOWN
+// ============================================================
+
+interface TypeVisibilityDropdownProps {
+  types: TypeDefinition[];
+  onToggle: (typeId: string) => void;
+}
+
+function TypeVisibilityDropdown({ types, onToggle }: TypeVisibilityDropdownProps) {
+  const visibleCount = types.filter(t => t.visible).length;
+  const hasHidden = visibleCount < types.length;
+
+  return (
+    <div className="relative group">
+      <button
+        className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+          hasHidden
+            ? 'bg-blue-50 border-blue-200 text-blue-700'
+            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <span className="flex items-center gap-1">
+          Type
+          {hasHidden && (
+            <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {visibleCount}
+            </span>
+          )}
+          <ChevronDownIcon className="w-4 h-4" />
+        </span>
+      </button>
+
+      {/* Dropdown */}
+      <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 min-w-[160px]">
+        <div className="py-1">
+          {types.map(type => (
+            <label
+              key={type.id}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={type.visible}
+                onChange={() => onToggle(type.id)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              {type.label}
+            </label>
+          ))}
         </div>
       </div>
     </div>

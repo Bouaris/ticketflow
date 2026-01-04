@@ -228,6 +228,12 @@ function App() {
     fileAccess.setDirty(true);
   }, [backlog, fileAccess]);
 
+  // Handle cross-column drag & drop (move item to different type)
+  const handleMoveItem = useCallback((itemId: string, targetType: string) => {
+    backlog.moveItemToType(itemId, targetType);
+    fileAccess.setDirty(true);
+  }, [backlog, fileAccess]);
+
   // Handle AI refinement
   const handleRefineWithAI = useCallback(async (item: BacklogItem) => {
     if (!hasApiKey()) {
@@ -295,6 +301,18 @@ function App() {
     // Save the type config
     typeConfig.setTypes(newTypes);
   }, [typeConfig, backlog, fileAccess]);
+
+  // Handle type deletion - removes section from backlog AND type from config
+  const handleDeleteType = useCallback((typeId: string) => {
+    // 1. Remove section from backlog (modifies markdown structure)
+    backlog.removeSection(typeId);
+
+    // 2. Remove type from config (adds to deletedTypes to prevent re-creation)
+    typeConfig.removeTypeById(typeId);
+
+    // 3. Mark file as dirty to trigger save
+    fileAccess.setDirty(true);
+  }, [backlog, typeConfig, fileAccess]);
 
   // Handle create new item
   const handleCreateItem = useCallback(() => {
@@ -594,6 +612,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
             filteredCount={backlog.filteredItems.length}
             types={typeConfig.sortedTypes}
             onFiltersChange={backlog.setFilters}
+            onToggleTypeVisibility={typeConfig.toggleTypeVisibility}
             onReset={backlog.resetFilters}
           />
 
@@ -604,6 +623,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
               types={typeConfig.sortedTypes}
               onItemClick={handleItemClick}
               onTypesReorder={typeConfig.reorderTypesAtIndex}
+              onMoveItem={handleMoveItem}
             />
           ) : (
             <ListView
@@ -651,6 +671,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         isOpen={isTypeConfigOpen}
         types={typeConfig.sortedTypes}
         onSave={handleTypeConfigSave}
+        onDeleteType={handleDeleteType}
         onCancel={() => setIsTypeConfigOpen(false)}
       />
 

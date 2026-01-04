@@ -84,8 +84,10 @@ export interface UseBacklogReturn {
   toggleItemCriterion: (id: string, criterionIndex: number) => void;
   addItem: (item: BacklogItem) => void;
   addSection: (typeId: string, label: string) => void;
+  removeSection: (typeId: string) => void;
   syncToc: () => void;
   deleteItem: (id: string) => void;
+  moveItemToType: (itemId: string, targetType: ItemType) => void;
   existingIds: string[];
   reset: () => void;
 
@@ -552,6 +554,127 @@ export function useBacklog(): UseBacklogReturn {
   }, [backlog, selectedItem, pushToHistory]);
 
   // ============================================================
+  // MOVE ITEM TO TYPE (Cross-column drag & drop)
+  // ============================================================
+
+  const moveItemToType = useCallback((itemId: string, targetType: ItemType) => {
+    if (!backlog) return;
+
+    // Find the item
+    const item = allItems.find(i => i.id === itemId);
+    if (!item || item.type === targetType) return;
+
+    pushToHistory(); // Save state before mutation
+
+    // Generate new ID for target type (compute from allItems to avoid circular dependency)
+    const allIds = allItems.map(i => i.id);
+    const prefix = targetType;
+    const existingNumbers = allIds
+      .filter(id => id.startsWith(prefix + '-'))
+      .map(id => parseInt(id.split('-')[1], 10))
+      .filter(n => !isNaN(n));
+    const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    const newId = `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`;
+
+    // Create modified item with new type and ID (use item found above, not from callback)
+    const movedItem: BacklogItem = {
+      ...item,
+      id: newId,
+      type: targetType,
+      rawMarkdown: '', // Will be rebuilt by serializer
+      _modified: true,
+    } as BacklogItem & { _modified: boolean };
+
+    setBacklog(prev => {
+      if (!prev) return prev;
+
+      // 1. Remove item from original section
+      const sectionsWithoutItem = prev.sections.map(section => ({
+        ...section,
+        items: section.items.filter(sItem => {
+          if (isBacklogItem(sItem) && sItem.id === itemId) {
+            return false;
+          }
+          return true;
+        }),
+      }));
+
+      // 3. Find target section for new type
+      // Strategy 1: Find section with existing items of same type
+      let targetSectionIndex = sectionsWithoutItem.findIndex(section =>
+        section.items.some(sItem => isBacklogItem(sItem) && sItem.type === targetType)
+      );
+
+      // Strategy 2: Match section by title/label
+      if (targetSectionIndex === -1) {
+        const TYPE_LABEL_MAP: Record<string, string[]> = {
+          'BUG': ['BUGS', 'BUG'],
+          'CT': ['COURT TERME', 'CT', 'COURT-TERME'],
+          'LT': ['LONG TERME', 'LT', 'LONG-TERME'],
+          'AUTRE': ['AUTRES', 'AUTRE', 'IDÉES', 'IDEES', 'AUTRES IDÉES'],
+          'TEST': ['TESTS', 'TEST'],
+          'DFA': ['DADA', 'DFA'],
+        };
+        const matchLabels = TYPE_LABEL_MAP[targetType] || [targetType];
+
+        targetSectionIndex = sectionsWithoutItem.findIndex(section => {
+          const titleUpper = section.title.toUpperCase();
+          return matchLabels.some(label => titleUpper.includes(label));
+        });
+      }
+
+      // Strategy 3: Check for HTML comment marker
+      if (targetSectionIndex === -1) {
+        targetSectionIndex = sectionsWithoutItem.findIndex(section =>
+          section.items.some(sItem => {
+            if ('rawMarkdown' in sItem) {
+              const marker = `<!-- Type: ${targetType} -->`;
+              return sItem.rawMarkdown.includes(marker);
+            }
+            return false;
+          })
+        );
+      }
+
+      // Fallback: first non-raw section
+      if (targetSectionIndex === -1) {
+        for (let i = 0; i < sectionsWithoutItem.length; i++) {
+          const section = sectionsWithoutItem[i];
+          const isRawSection = section.items.length > 0 &&
+            section.items[0] &&
+            'type' in section.items[0] &&
+            section.items[0].type === 'raw-section';
+          if (!isRawSection) {
+            targetSectionIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Ultimate fallback: section 0
+      if (targetSectionIndex === -1) {
+        targetSectionIndex = 0;
+      }
+
+      // 4. Add item to target section
+      const newSections = sectionsWithoutItem.map((section, index) => {
+        if (index === targetSectionIndex) {
+          return {
+            ...section,
+            items: [...section.items, movedItem],
+          };
+        }
+        return section;
+      });
+
+      return { ...prev, sections: newSections };
+    });
+
+    // Clear selection after move
+    setSelectedItem(null);
+  }, [backlog, allItems, pushToHistory]);
+
+  // ============================================================
   // ADD SECTION (for new types)
   // ============================================================
 
@@ -688,6 +811,81 @@ export function useBacklog(): UseBacklogReturn {
   }, [backlog, pushToHistory]);
 
   // ============================================================
+  // REMOVE SECTION (for type deletion)
+  // ============================================================
+
+  const removeSection = useCallback((typeId: string) => {
+    if (!backlog) return;
+
+    pushToHistory(); // Save state before mutation
+
+    setBacklog(prev => {
+      if (!prev) return prev;
+
+      const typeIdUpper = typeId.toUpperCase();
+
+      // Mapping of type IDs to possible section labels
+      const TYPE_TO_LABELS: Record<string, string[]> = {
+        'BUG': ['BUGS', 'BUG'],
+        'CT': ['COURT TERME', 'COURT-TERME', 'CT'],
+        'LT': ['LONG TERME', 'LONG-TERME', 'LT'],
+        'AUTRE': ['AUTRES IDÉES', 'AUTRES IDEES', 'AUTRES', 'AUTRE'],
+        'TEST': ['TESTS', 'TEST'],
+      };
+
+      const possibleLabels = TYPE_TO_LABELS[typeIdUpper] || [typeIdUpper, typeId.replace(/_/g, ' ')];
+
+      // Find section to remove
+      const sectionIndex = prev.sections.findIndex(s => {
+        const titleUpper = s.title.toUpperCase().trim();
+        return possibleLabels.some(label =>
+          titleUpper === label ||
+          titleUpper.startsWith(label + ' ') ||
+          titleUpper === typeIdUpper
+        );
+      });
+
+      // Section not found
+      if (sectionIndex === -1) {
+        return prev;
+      }
+
+      // Remove the section
+      let newSections = prev.sections.filter((_, idx) => idx !== sectionIndex);
+
+      // Renumber remaining sections
+      newSections = newSections.map((section, index) => {
+        const newId = String(index + 1);
+        const newRawHeader = section.rawHeader.replace(/^## \d+\./, `## ${newId}.`);
+        return {
+          ...section,
+          id: newId,
+          rawHeader: newRawHeader,
+        };
+      });
+
+      // Update TOC - rebuild from sections
+      const tocHeader = '## Table des matières';
+      const newTocEntries: string[] = [];
+
+      for (let i = 0; i < newSections.length; i++) {
+        const section = newSections[i];
+        const num = i + 1;
+        const label = section.title;
+        const anchor = `${num}-${label.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')}`;
+        newTocEntries.push(`${num}. [${label}](#${anchor})`);
+      }
+
+      const newToc = `${tocHeader}\n${newTocEntries.join('\n')}\n`;
+
+      return { ...prev, sections: newSections, tableOfContents: newToc };
+    });
+  }, [backlog, pushToHistory]);
+
+  // ============================================================
   // SYNC TOC - Synchronize TOC with existing sections
   // ============================================================
 
@@ -808,8 +1006,10 @@ export function useBacklog(): UseBacklogReturn {
     toggleItemCriterion,
     addItem,
     addSection,
+    removeSection,
     syncToc,
     deleteItem,
+    moveItemToType,
     existingIds,
     reset,
 

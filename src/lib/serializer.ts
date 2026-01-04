@@ -394,3 +394,187 @@ export function exportItemForClipboard(
 interface ModifiedBacklogItem extends BacklogItem {
   _modified?: boolean;
 }
+
+// ============================================================
+// SECTION REMOVAL (for type deletion)
+// ============================================================
+
+/**
+ * Mapping of type IDs to possible section labels in markdown
+ */
+const TYPE_TO_SECTION_LABELS: Record<string, string[]> = {
+  'BUG': ['BUGS', 'BUG'],
+  'CT': ['COURT TERME', 'COURT-TERME', 'CT'],
+  'LT': ['LONG TERME', 'LONG-TERME', 'LT'],
+  'AUTRE': ['AUTRES IDÉES', 'AUTRES IDEES', 'AUTRES', 'AUTRE'],
+  'TEST': ['TESTS', 'TEST'],
+};
+
+/**
+ * Remove a section from markdown content by type ID
+ * - Removes the section header and all content until next section
+ * - Updates the table of contents
+ * - Renumbers remaining sections
+ *
+ * @param markdown - Original markdown content
+ * @param typeId - Type ID to remove (e.g., "RARA", "CT", "BUG")
+ * @returns Updated markdown content
+ */
+export function removeSectionFromMarkdown(markdown: string, typeId: string): string {
+  const lines = markdown.split('\n');
+
+  // Find possible section labels for this type
+  const possibleLabels = TYPE_TO_SECTION_LABELS[typeId] || [typeId];
+
+  // Patterns for section headers: "## 1. LABEL" or "## LABEL"
+  const sectionPattern = /^##\s*(?:(\d+)\.\s*)?(.+)$/;
+
+  // Find section boundaries
+  let sectionStartIndex = -1;
+  let sectionEndIndex = -1;
+  let sectionNumber: number | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(sectionPattern);
+    if (match) {
+      const num = match[1] ? parseInt(match[1], 10) : null;
+      const label = match[2].trim().toUpperCase();
+
+      // Check if this is the section to remove
+      if (sectionStartIndex === -1) {
+        const isMatch = possibleLabels.some(pl =>
+          label === pl.toUpperCase() ||
+          label.startsWith(pl.toUpperCase()) ||
+          label.replace(/[_\s-]+/g, ' ') === typeId.replace(/[_\s-]+/g, ' ')
+        );
+
+        if (isMatch) {
+          sectionStartIndex = i;
+          sectionNumber = num;
+        }
+      } else {
+        // Found next section - this is where the removed section ends
+        sectionEndIndex = i;
+        break;
+      }
+    }
+  }
+
+  // Section not found
+  if (sectionStartIndex === -1) {
+    return markdown;
+  }
+
+  // If no end found, section goes to end of file
+  if (sectionEndIndex === -1) {
+    sectionEndIndex = lines.length;
+  }
+
+  // Remove the section (including any trailing separators/blank lines)
+  // Look backwards from end to trim trailing --- and blank lines
+  let actualEnd = sectionEndIndex;
+  while (actualEnd > sectionStartIndex) {
+    const prevLine = lines[actualEnd - 1].trim();
+    if (prevLine === '---' || prevLine === '') {
+      actualEnd--;
+    } else {
+      break;
+    }
+  }
+
+  // Build new lines array without the section
+  const newLines: string[] = [
+    ...lines.slice(0, sectionStartIndex),
+    ...lines.slice(sectionEndIndex),
+  ];
+
+  // Renumber sections if needed
+  if (sectionNumber !== null) {
+    let currentNum = 1;
+    for (let i = 0; i < newLines.length; i++) {
+      const match = newLines[i].match(sectionPattern);
+      if (match && match[1]) {
+        const label = match[2].trim();
+        newLines[i] = `## ${currentNum}. ${label}`;
+        currentNum++;
+      }
+    }
+  }
+
+  // Update table of contents
+  const result = updateTableOfContents(newLines.join('\n'));
+
+  return result;
+}
+
+/**
+ * Update the table of contents based on existing sections
+ */
+function updateTableOfContents(markdown: string): string {
+  const lines = markdown.split('\n');
+
+  // Find TOC boundaries
+  let tocStart = -1;
+  let tocEnd = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // TOC starts with "## Table des matières" or similar
+    if (tocStart === -1 && (
+      line.toLowerCase().includes('table des matières') ||
+      line.toLowerCase().includes('table des matieres') ||
+      line.toLowerCase() === '## sommaire'
+    )) {
+      tocStart = i + 1; // Start after the header
+      continue;
+    }
+
+    // TOC ends at first "---" or "##" after TOC start
+    if (tocStart !== -1 && tocEnd === -1) {
+      if (line === '---' || (line.startsWith('##') && !line.toLowerCase().includes('table'))) {
+        tocEnd = i;
+        break;
+      }
+    }
+  }
+
+  // No TOC found
+  if (tocStart === -1 || tocEnd === -1) {
+    return markdown;
+  }
+
+  // Find all numbered sections
+  const sectionPattern = /^##\s*(\d+)\.\s*(.+)$/;
+  const sections: { num: number; label: string; anchor: string }[] = [];
+
+  for (const line of lines) {
+    const match = line.match(sectionPattern);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      const label = match[2].trim();
+      // Generate anchor: lowercase, replace spaces with dashes, remove special chars
+      const anchor = `${num}-${label.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')}`;
+      sections.push({ num, label, anchor });
+    }
+  }
+
+  // Generate new TOC lines
+  const newTocLines: string[] = [''];
+  for (const section of sections) {
+    newTocLines.push(`${section.num}. [${section.label}](#${section.anchor})`);
+  }
+  newTocLines.push('');
+
+  // Replace old TOC with new one
+  const resultLines = [
+    ...lines.slice(0, tocStart),
+    ...newTocLines,
+    ...lines.slice(tocEnd),
+  ];
+
+  return resultLines.join('\n');
+}

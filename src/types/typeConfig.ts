@@ -19,11 +19,15 @@ export interface TypeDefinition {
   color: string;
   /** Order for Kanban columns (lower = first) */
   order: number;
+  /** Whether this type column is visible in Kanban (default: true) */
+  visible: boolean;
 }
 
 export interface TypeConfig {
   /** List of type definitions */
   types: TypeDefinition[];
+  /** List of type IDs that user explicitly deleted (won't be re-created from Markdown) */
+  deletedTypes?: string[];
   /** Version for future migrations */
   version: number;
 }
@@ -33,10 +37,10 @@ export interface TypeConfig {
 // ============================================================
 
 export const DEFAULT_TYPES: TypeDefinition[] = [
-  { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0 },
-  { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1 },
-  { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2 },
-  { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3 },
+  { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0, visible: true },
+  { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1, visible: true },
+  { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2, visible: true },
+  { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3, visible: true },
 ];
 
 export const DEFAULT_TYPE_CONFIG: TypeConfig = {
@@ -49,10 +53,10 @@ export const DEFAULT_TYPE_CONFIG: TypeConfig = {
 // ============================================================
 
 export const LEGACY_TYPE_MAP: Record<string, TypeDefinition> = {
-  BUG: { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0 },
-  CT: { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1 },
-  LT: { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2 },
-  AUTRE: { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3 },
+  BUG: { id: 'BUG', label: 'Bugs', color: TYPE_COLORS.BUG, order: 0, visible: true },
+  CT: { id: 'CT', label: 'Court Terme', color: TYPE_COLORS.CT, order: 1, visible: true },
+  LT: { id: 'LT', label: 'Long Terme', color: TYPE_COLORS.LT, order: 2, visible: true },
+  AUTRE: { id: 'AUTRE', label: 'Autres Idées', color: TYPE_COLORS.AUTRE, order: 3, visible: true },
 };
 
 // ============================================================
@@ -63,13 +67,20 @@ const TYPE_CONFIG_STORAGE_KEY = 'ticketflow-type-config';
 
 /**
  * Load type config from localStorage for a specific project
+ * Migrates old configs without `visible` field by defaulting to true
  */
 export function loadTypeConfig(projectPath: string): TypeConfig | null {
   try {
     const key = `${TYPE_CONFIG_STORAGE_KEY}-${hashPath(projectPath)}`;
     const stored = localStorage.getItem(key);
     if (stored) {
-      return JSON.parse(stored);
+      const config = JSON.parse(stored) as TypeConfig;
+      // Migration: add visible=true to types that don't have it
+      config.types = config.types.map(t => ({
+        ...t,
+        visible: t.visible ?? true,
+      }));
+      return config;
     }
   } catch (error) {
     console.error('Failed to load type config:', error);
@@ -151,16 +162,32 @@ export function detectTypesFromMarkdown(markdown: string): string[] {
   const sectionPattern = /^##\s*\d+\.\s*(.+)$/gm;
   while ((match = sectionPattern.exec(markdown)) !== null) {
     const sectionLabel = match[1].trim().toUpperCase();
-    // Try direct mapping
+
+    // Skip legend/légende sections
+    if (sectionLabel.includes('LÉGENDE') || sectionLabel.includes('LEGENDE')) {
+      continue;
+    }
+
+    // Try direct mapping for known types
     if (sectionToType[sectionLabel]) {
       types.add(sectionToType[sectionLabel]);
     } else {
       // Try partial match for labels like "BUGS (Hotfix)"
+      let found = false;
       for (const [key, value] of Object.entries(sectionToType)) {
         if (sectionLabel.startsWith(key)) {
           types.add(value);
+          found = true;
           break;
         }
+      }
+
+      // If no mapping found, treat the section label as a custom type
+      // Only if it looks like a valid type ID (uppercase letters, possibly with spaces)
+      if (!found && /^[A-ZÀ-ÿ\s]+$/.test(sectionLabel)) {
+        // Use the section label as type ID (remove spaces, keep uppercase)
+        const customTypeId = sectionLabel.replace(/\s+/g, '_');
+        types.add(customTypeId);
       }
     }
   }
@@ -175,7 +202,7 @@ export function createTypeConfigFromDetected(detectedTypes: string[]): TypeConfi
   const types: TypeDefinition[] = detectedTypes.map((typeId, index) => {
     // Use legacy mapping if available
     if (LEGACY_TYPE_MAP[typeId]) {
-      return { ...LEGACY_TYPE_MAP[typeId], order: index };
+      return { ...LEGACY_TYPE_MAP[typeId], order: index, visible: true };
     }
     // Create new type with auto-generated color
     return {
@@ -183,6 +210,7 @@ export function createTypeConfigFromDetected(detectedTypes: string[]): TypeConfi
       label: typeId.charAt(0) + typeId.slice(1).toLowerCase(),
       color: getAutoColor(index),
       order: index,
+      visible: true,
     };
   });
 
@@ -191,24 +219,30 @@ export function createTypeConfigFromDetected(detectedTypes: string[]): TypeConfi
 
 /**
  * Merge detected types with existing config
- * - Keep existing labels/colors for types that exist in both
- * - Add new types from detected
- * - Remove types not in detected (sync with file)
+ * - Keep existing labels/colors/visible for types that exist in both
+ * - Add new types from detected (visible: true by default)
+ * - Skip types that user explicitly deleted (in deletedTypes list)
  */
 export function mergeTypesWithDetected(
   existingConfig: TypeConfig | null,
   detectedTypes: string[]
 ): TypeConfig {
   const result: TypeDefinition[] = [];
+  const deletedTypes = existingConfig?.deletedTypes || [];
 
   detectedTypes.forEach((typeId, index) => {
-    // Check if exists in current config (preserve user customizations)
+    // Skip types that user explicitly deleted
+    if (deletedTypes.includes(typeId)) {
+      return;
+    }
+
+    // Check if exists in current config (preserve user customizations including visibility)
     const existing = existingConfig?.types.find(t => t.id === typeId);
     if (existing) {
-      result.push({ ...existing, order: index });
+      result.push({ ...existing, order: index, visible: existing.visible ?? true });
     } else if (LEGACY_TYPE_MAP[typeId]) {
       // Use legacy mapping for known types
-      result.push({ ...LEGACY_TYPE_MAP[typeId], order: index });
+      result.push({ ...LEGACY_TYPE_MAP[typeId], order: index, visible: true });
     } else {
       // Create new type with auto-generated label and color
       result.push({
@@ -216,11 +250,13 @@ export function mergeTypesWithDetected(
         label: typeId.charAt(0) + typeId.slice(1).toLowerCase(),
         color: getAutoColor(index),
         order: index,
+        visible: true,
       });
     }
   });
 
-  return { types: result, version: 1 };
+  // Preserve deletedTypes list
+  return { types: result, deletedTypes, version: 1 };
 }
 
 // getAutoColor is imported from colors.ts
@@ -240,13 +276,15 @@ export function getSortedTypes(config: TypeConfig): TypeDefinition[] {
 }
 
 /**
- * Add a new type to config
+ * Add a new type to config (removes from deletedTypes if it was there)
  */
-export function addType(config: TypeConfig, type: Omit<TypeDefinition, 'order'>): TypeConfig {
+export function addType(config: TypeConfig, type: Omit<TypeDefinition, 'order' | 'visible'>): TypeConfig {
   const maxOrder = Math.max(...config.types.map(t => t.order), -1);
+  const deletedTypes = (config.deletedTypes || []).filter(id => id !== type.id);
   return {
     ...config,
-    types: [...config.types, { ...type, order: maxOrder + 1 }],
+    types: [...config.types, { ...type, order: maxOrder + 1, visible: true }],
+    deletedTypes,
   };
 }
 
@@ -265,12 +303,15 @@ export function reorderTypes(config: TypeConfig, fromIndex: number, toIndex: num
 }
 
 /**
- * Remove a type from config
+ * Remove a type from config and add to deletedTypes list
+ * (prevents re-creation from Markdown detection)
  */
 export function removeType(config: TypeConfig, typeId: string): TypeConfig {
+  const deletedTypes = config.deletedTypes || [];
   return {
     ...config,
     types: config.types.filter(t => t.id !== typeId),
+    deletedTypes: deletedTypes.includes(typeId) ? deletedTypes : [...deletedTypes, typeId],
   };
 }
 

@@ -1,19 +1,26 @@
 /**
  * KanbanBoard component with dynamic columns per item type.
- * Supports drag & drop for reordering columns.
+ * Supports drag & drop for:
+ *  - Reordering columns (horizontal)
+ *  - Moving cards between columns (cross-type migration)
  * Uses virtual scrolling for performance with large lists.
  */
 
-import { useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   DndContext,
   closestCenter,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -24,6 +31,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { BacklogItem } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
+import { isColumnDrag, isCardDrag, type DragData } from '../../types/dnd';
 import { KanbanCard } from './KanbanCard';
 import { GripIcon } from '../ui/Icons';
 import { hexToRgba } from '../../lib/utils';
@@ -37,16 +45,21 @@ interface KanbanBoardProps {
   types: TypeDefinition[];
   onItemClick: (item: BacklogItem) => void;
   onTypesReorder?: (fromIndex: number, toIndex: number) => void;
+  onMoveItem?: (itemId: string, targetType: string) => void;
 }
 
-export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }: KanbanBoardProps) {
+export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, onMoveItem }: KanbanBoardProps) {
   const totalItems = Object.values(itemsByType).reduce((sum, items) => sum + items.length, 0);
   const { getMultiplier, getWidth, toggleWidth } = useKanbanColumnWidths();
 
-  // Filter types to only show columns with items
+  // Drag state for dual-drag (columns + cards)
+  const [activeDragType, setActiveDragType] = useState<'column' | 'card' | null>(null);
+  const [activeItem, setActiveItem] = useState<BacklogItem | null>(null);
+
+  // Filter types to only show columns where visible=true
   const visibleTypes = useMemo(() => {
-    return types.filter(type => (itemsByType[type.id]?.length ?? 0) > 0);
-  }, [types, itemsByType]);
+    return types.filter(type => type.visible);
+  }, [types]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -59,14 +72,64 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }:
     })
   );
 
+  // Custom collision detection: closestCenter for columns, pointerWithin for cards
+  const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
+    if (activeDragType === 'column') {
+      return closestCenter(args);
+    }
+    // For cards, use pointerWithin to detect which column we're over
+    return pointerWithin(args);
+  }, [activeDragType]);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const data = active.data.current as DragData | undefined;
+
+    if (isColumnDrag(data)) {
+      setActiveDragType('column');
+      setActiveItem(null);
+    } else if (isCardDrag(data)) {
+      setActiveDragType('card');
+      // Find the item for DragOverlay
+      const sourceItems = itemsByType[data.sourceType] || [];
+      const item = sourceItems.find(i => i.id === data.itemId);
+      setActiveItem(item || null);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id && onTypesReorder) {
-      // Use original types array for reordering to preserve correct indices
+    // Reset drag state
+    const wasCardDrag = activeDragType === 'card';
+    setActiveDragType(null);
+    setActiveItem(null);
+
+    if (!over) return;
+
+    const activeData = active.data.current as DragData | undefined;
+
+    // Column reordering
+    if (isColumnDrag(activeData) && active.id !== over.id && onTypesReorder) {
       const oldIndex = types.findIndex(t => t.id === active.id);
       const newIndex = types.findIndex(t => t.id === over.id);
-      onTypesReorder(oldIndex, newIndex);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onTypesReorder(oldIndex, newIndex);
+      }
+      return;
+    }
+
+    // Card drop onto column
+    if (isCardDrag(activeData) && wasCardDrag && onMoveItem) {
+      // over.id is the droppable column ID (type ID)
+      const overId = String(over.id);
+      // Extract target type: if overId starts with 'drop-', it's a column drop zone
+      const targetType = overId.startsWith('drop-') ? overId.slice(5) : overId;
+
+      // Only move if dropping on different column
+      if (targetType !== activeData.sourceType && types.some(t => t.id === targetType)) {
+        onMoveItem(activeData.itemId, targetType);
+      }
     }
   };
 
@@ -82,7 +145,8 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }:
     <div className="flex-1 overflow-x-auto p-6">
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={collisionDetectionStrategy}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <SortableContext
@@ -99,10 +163,24 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }:
                 width={getWidth(type.id)}
                 multiplier={getMultiplier(type.id)}
                 onToggleWidth={() => toggleWidth(type.id)}
+                isDropTarget={activeDragType === 'card'}
               />
             ))}
           </div>
         </SortableContext>
+
+        {/* Drag Overlay for visual feedback */}
+        <DragOverlay>
+          {activeItem && activeDragType === 'card' && (
+            <div className="w-72">
+              <KanbanCard
+                item={activeItem}
+                onClick={() => {}}
+                isDragOverlay
+              />
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
     </div>
   );
@@ -119,16 +197,33 @@ interface SortableKanbanColumnProps {
   width: number;
   multiplier: WidthMultiplier;
   onToggleWidth: () => void;
+  isDropTarget?: boolean;
 }
-function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multiplier, onToggleWidth }: SortableKanbanColumnProps) {
+function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multiplier, onToggleWidth, isDropTarget = false }: SortableKanbanColumnProps) {
+  // Sortable for column reordering (header drag)
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setNodeRef: setSortableRef,
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: type.id });
+  } = useSortable({
+    id: type.id,
+    data: { type: 'column', columnId: type.id } as DragData,
+  });
+
+  // Droppable for receiving cards
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `drop-${type.id}`,
+    data: { columnId: type.id },
+  });
+
+  // Combine refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setSortableRef(node);
+    setDroppableRef(node);
+  };
 
   // Only virtualize large lists to avoid height estimation issues
   const shouldVirtualize = items.length > VIRTUALIZATION_THRESHOLD;
@@ -155,6 +250,11 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
 
   const isDouble = multiplier === 2;
 
+  // Visual feedback when card is dragged over this column
+  const dropHighlight = isDropTarget && isOver
+    ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white'
+    : '';
+
   return (
     <div
       ref={setNodeRef}
@@ -165,7 +265,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
         width: `${width}px`,
         minWidth: `${KANBAN_BASE_WIDTH}px`,
       }}
-      className="flex flex-col rounded-lg border max-h-[calc(100vh-200px)] transition-all duration-200"
+      className={`flex flex-col rounded-lg border max-h-[calc(100vh-200px)] transition-all duration-200 ${dropHighlight}`}
     >
       {/* Header - Draggable */}
       <div
@@ -235,6 +335,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
                   <KanbanCard
                     item={item}
                     onClick={() => onItemClick(item)}
+                    columnType={type.id}
                   />
                 </div>
               );
@@ -248,6 +349,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
                 key={item.id}
                 item={item}
                 onClick={() => onItemClick(item)}
+                columnType={type.id}
               />
             ))}
           </div>

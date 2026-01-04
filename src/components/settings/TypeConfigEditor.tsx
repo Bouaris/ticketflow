@@ -10,11 +10,13 @@ import { ChevronUpIcon, ChevronDownIcon, TrashIcon } from '../ui/Icons';
 interface TypeConfigEditorProps {
   types: TypeDefinition[];
   onChange: (types: TypeDefinition[]) => void;
+  /** Called when a type is deleted (to persist deletion across reloads) */
+  onDeleteType?: (typeId: string) => void;
   /** Compact mode for dialogs */
   compact?: boolean;
 }
 
-export function TypeConfigEditor({ types, onChange, compact = false }: TypeConfigEditorProps) {
+export function TypeConfigEditor({ types, onChange, onDeleteType, compact = false }: TypeConfigEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newType, setNewType] = useState({ id: '', label: '', color: '#3b82f6' });
 
@@ -28,7 +30,7 @@ export function TypeConfigEditor({ types, onChange, compact = false }: TypeConfi
     }
 
     const maxOrder = Math.max(...types.map(t => t.order), -1);
-    onChange([...types, { id, label: newType.label.trim(), color: newType.color, order: maxOrder + 1 }]);
+    onChange([...types, { id, label: newType.label.trim(), color: newType.color, order: maxOrder + 1, visible: true }]);
     setNewType({ id: '', label: '', color: '#3b82f6' });
   };
 
@@ -41,7 +43,12 @@ export function TypeConfigEditor({ types, onChange, compact = false }: TypeConfi
       alert('Vous devez garder au moins un type');
       return;
     }
-    onChange(types.filter(t => t.id !== typeId));
+    // Use onDeleteType if available (persists deletion), otherwise fallback to onChange
+    if (onDeleteType) {
+      onDeleteType(typeId);
+    } else {
+      onChange(types.filter(t => t.id !== typeId));
+    }
   };
 
   const handleMoveUp = (index: number) => {

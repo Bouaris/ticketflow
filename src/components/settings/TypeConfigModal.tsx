@@ -9,6 +9,7 @@ interface TypeConfigModalProps {
   isOpen: boolean;
   types: TypeDefinition[];
   onSave: (types: TypeDefinition[]) => void;
+  onDeleteType: (typeId: string) => void;
   onCancel: () => void;
 }
 
@@ -16,6 +17,7 @@ export function TypeConfigModal({
   isOpen,
   types,
   onSave,
+  onDeleteType,
   onCancel,
 }: TypeConfigModalProps) {
   if (!isOpen) return null;
@@ -54,6 +56,7 @@ export function TypeConfigModal({
             <TypeConfigEditor
               types={types}
               onChange={(newTypes) => onSave(newTypes)}
+              onDeleteType={onDeleteType}
             />
           </div>
 

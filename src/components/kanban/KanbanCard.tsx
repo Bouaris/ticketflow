@@ -1,16 +1,46 @@
 /**
  * KanbanCard component - Individual card in a Kanban column.
+ * Supports drag & drop for cross-column movement.
  */
 
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import type { BacklogItem } from '../../types/backlog';
+import type { DragData } from '../../types/dnd';
 import { SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 
 interface KanbanCardProps {
   item: BacklogItem;
   onClick: () => void;
+  columnType?: string;      // Parent column type for drag data
+  isDragOverlay?: boolean;  // True when rendered in DragOverlay (disables drag)
 }
 
-export function KanbanCard({ item, onClick }: KanbanCardProps) {
+export function KanbanCard({ item, onClick, columnType, isDragOverlay = false }: KanbanCardProps) {
+  // Drag data for cross-column movement
+  const dragData: DragData = {
+    type: 'card',
+    itemId: item.id,
+    sourceType: columnType || item.type,
+  };
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `card-${item.id}`,
+    data: dragData,
+    disabled: isDragOverlay, // Disable drag on overlay clone
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragOverlay ? 'grabbing' : 'grab',
+  };
   const criteriaProgress = item.criteria
     ? {
         completed: item.criteria.filter(c => c.checked).length,
@@ -18,10 +48,23 @@ export function KanbanCard({ item, onClick }: KanbanCardProps) {
       }
     : null;
 
+  // Handle click - only trigger if not dragging
+  const handleClick = () => {
+    if (!isDragging) {
+      onClick();
+    }
+  };
+
   return (
     <div
-      onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md hover:border-gray-300 cursor-pointer transition-all"
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      className={`bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md hover:border-gray-300 transition-all select-none ${
+        isDragOverlay ? 'rotate-3 scale-105 shadow-xl' : ''
+      }`}
     >
       {/* Header: ID + Emoji + Screenshot indicator */}
       <div className="flex items-center gap-2 mb-2">
