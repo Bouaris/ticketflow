@@ -208,3 +208,127 @@ describe('useFileAccess - Stored Handle Detection', () => {
     expect(result.current.hasStoredHandle).toBe(true);
   });
 });
+
+// ============================================================
+// TAURI MODE TESTS (11-16)
+// ============================================================
+
+import {
+  readTextFileContents,
+  writeTextFileContents,
+  saveMarkdownFileDialog,
+} from '../lib/tauri-bridge';
+
+describe('useFileAccess - Tauri Mode', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(true);
+  });
+
+  test('11. loadFromPath loads file and updates state', async () => {
+    const mockContent = '# Test Backlog\n\n## 1. BUGS\n\n---';
+    vi.mocked(readTextFileContents).mockResolvedValue(mockContent);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadFromPath('/path/to/BACKLOG.md');
+    });
+
+    expect(content).toBe(mockContent);
+    expect(result.current.content).toBe(mockContent);
+    expect(result.current.filePath).toBe('/path/to/BACKLOG.md');
+    expect(result.current.fileName).toBe('BACKLOG.md');
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test('12. loadFromPath sets error on failure', async () => {
+    vi.mocked(readTextFileContents).mockRejectedValue(new Error('File not found'));
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadFromPath('/nonexistent.md');
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('File not found');
+  });
+
+  test('13. loadFromPath returns null in web mode', async () => {
+    vi.mocked(isTauri).mockReturnValue(false);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadFromPath('/path/file.md');
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toContain('version desktop');
+  });
+
+  test('14. save writes to file and clears dirty flag', async () => {
+    vi.mocked(readTextFileContents).mockResolvedValue('# Original');
+    vi.mocked(writeTextFileContents).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    // First load a file
+    await act(async () => {
+      await result.current.loadFromPath('/path/BACKLOG.md');
+    });
+
+    // Mark as dirty
+    act(() => {
+      result.current.setDirty(true);
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    // Save
+    let success;
+    await act(async () => {
+      success = await result.current.save('# Updated Content');
+    });
+
+    expect(success).toBe(true);
+    expect(vi.mocked(writeTextFileContents)).toHaveBeenCalledWith('/path/BACKLOG.md', '# Updated Content');
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.content).toBe('# Updated Content');
+  });
+
+  test('15. save returns false when no file is open', async () => {
+    const { result } = renderHook(() => useFileAccess());
+
+    let success;
+    await act(async () => {
+      success = await result.current.save('# Content');
+    });
+
+    expect(success).toBe(false);
+    expect(result.current.error).toBe('No file open');
+  });
+
+  test('16. saveAs opens dialog and saves to new path', async () => {
+    vi.mocked(saveMarkdownFileDialog).mockResolvedValue('/new/path/NEWFILE.md');
+    vi.mocked(writeTextFileContents).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let success;
+    await act(async () => {
+      success = await result.current.saveAs('# New Content', 'NEWFILE.md');
+    });
+
+    expect(success).toBe(true);
+    expect(vi.mocked(saveMarkdownFileDialog)).toHaveBeenCalledWith('NEWFILE.md');
+    expect(vi.mocked(writeTextFileContents)).toHaveBeenCalledWith('/new/path/NEWFILE.md', '# New Content');
+    expect(result.current.filePath).toBe('/new/path/NEWFILE.md');
+    expect(result.current.fileName).toBe('NEWFILE.md');
+    expect(localStorage.getItem('ticketflow-last-file')).toBe('/new/path/NEWFILE.md');
+  });
+});
