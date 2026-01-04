@@ -91,7 +91,7 @@ export function Modal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-black/50 z-50"
         onClick={closeOnBackdrop ? onClose : undefined}
         aria-hidden="true"
       />
@@ -99,10 +99,10 @@ export function Modal({
       {/* Modal */}
       <div
         className={`
-          fixed z-50 bg-white shadow-2xl overflow-hidden flex flex-col
+          fixed z-50 bg-white shadow-xl overflow-hidden flex flex-col
           ${isFullSize
             ? sizeClasses.full + ' rounded-2xl'
-            : `${sizeClasses[size]} w-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl`
+            : `${sizeClasses[size]} w-full top-[4vh] bottom-[4vh] left-1/2 -translate-x-1/2 rounded-xl`
           }
           ${className}
         `}
@@ -110,9 +110,9 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
       >
-        {/* Header */}
+        {/* Header - flex-shrink-0 prevents shrinking */}
         {(title || header || showCloseButton) && (
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
             {header || (
               <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
                 {title}
@@ -130,14 +130,14 @@ export function Modal({
           </div>
         )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content - min-h-0 allows shrinking below content size */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {children}
         </div>
 
-        {/* Footer */}
+        {/* Footer - flex-shrink-0 prevents shrinking, always visible */}
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
             {footer}
           </div>
         )}

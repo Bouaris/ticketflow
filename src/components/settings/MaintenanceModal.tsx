@@ -167,11 +167,12 @@ export function MaintenanceModal({
       title="Maintenance Backlog.md"
       size="lg"
       footer={footerContent}
+      className="h-auto"
     >
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+      <div className="flex flex-col h-full min-h-[300px]">
         {/* Initial state - no analysis yet */}
         {!result && !analyzing && (
-          <div className="text-center py-8">
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
             <div className="mb-4">
               <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
                 <WarningIcon className="w-8 h-8 text-blue-600" />
@@ -195,7 +196,7 @@ export function MaintenanceModal({
 
         {/* Analyzing state */}
         {analyzing && (
-          <div className="text-center py-12">
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
             <SpinnerIcon className="w-10 h-10 mx-auto text-blue-600 animate-spin mb-4" />
             <p className="text-gray-600">Analyse en cours...</p>
             <p className="text-sm text-gray-400 mt-1">L'IA vérifie le format de votre backlog</p>
@@ -204,12 +205,14 @@ export function MaintenanceModal({
 
         {/* Error state */}
         {result && !result.success && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <WarningIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-red-800">Erreur d'analyse</h4>
-                <p className="text-sm text-red-600 mt-1">{result.error}</p>
+          <div className="flex-1 flex items-center">
+            <div className="w-full bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <WarningIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-red-800">Erreur d'analyse</h4>
+                  <p className="text-sm text-red-600 mt-1">{result.error}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -217,7 +220,7 @@ export function MaintenanceModal({
 
         {/* Success - no issues */}
         {result?.success && result.issues.length === 0 && (
-          <div className="text-center py-8">
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
             <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
               <CheckIcon className="w-8 h-8 text-green-600" />
             </div>
@@ -230,9 +233,9 @@ export function MaintenanceModal({
 
         {/* Success - issues found */}
         {result?.success && result.issues.length > 0 && (
-          <>
-            {/* Summary */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex flex-col h-full gap-4">
+            {/* Summary - fixed height */}
+            <div className="flex-shrink-0 bg-amber-50 border border-amber-200 rounded-lg p-4">
               <h4 className="font-medium text-amber-800 mb-1">
                 {result.issues.length} problème{result.issues.length > 1 ? 's' : ''} détecté{result.issues.length > 1 ? 's' : ''}
               </h4>
@@ -241,8 +244,8 @@ export function MaintenanceModal({
               )}
             </div>
 
-            {/* Issues list */}
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            {/* Issues list - expands when no preview, limited when preview shown */}
+            <div className={`space-y-2 overflow-y-auto ${correctedMarkdown ? 'flex-shrink-0 max-h-[35%]' : 'flex-1'}`}>
               {result.issues.map((issue, index) => {
                 const typeInfo = ISSUE_TYPE_LABELS[issue.type];
                 return (
@@ -251,7 +254,7 @@ export function MaintenanceModal({
                     className="border border-gray-200 rounded-lg p-3 bg-white"
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded ${typeInfo.color}`}>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded flex-shrink-0 ${typeInfo.color}`}>
                         {typeInfo.label}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -273,27 +276,27 @@ export function MaintenanceModal({
 
             {/* Correction error */}
             {correctionError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex-shrink-0 bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-sm text-red-700">Erreur de correction : {correctionError}</p>
               </div>
             )}
 
-            {/* Correction preview */}
+            {/* Correction preview - takes remaining space */}
             {correctedMarkdown && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-medium text-green-800 mb-2">Corrections prêtes</h4>
-                <p className="text-sm text-green-700 mb-3">
+              <div className="flex-1 min-h-0 flex flex-col bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="flex-shrink-0 font-medium text-green-800 mb-2">Corrections prêtes</h4>
+                <p className="flex-shrink-0 text-sm text-green-700 mb-3">
                   Le fichier a été corrigé. Cliquez sur "Appliquer les corrections" pour sauvegarder.
                 </p>
-                <div className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono max-h-32 overflow-auto">
+                <div className="flex-1 min-h-0 bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-auto">
                   <pre className="whitespace-pre-wrap">
-                    {correctedMarkdown.slice(0, 1000)}
-                    {correctedMarkdown.length > 1000 && '\n\n[...]'}
+                    {correctedMarkdown.slice(0, 2000)}
+                    {correctedMarkdown.length > 2000 && '\n\n[...]'}
                   </pre>
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </Modal>
