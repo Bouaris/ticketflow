@@ -2,7 +2,7 @@
 
 > **Etat au:** 2026-01-04
 > **Issues:** 38/73 corrigees | 35 restantes
-> **Build:** PASS | **Tests:** 45/45 PASS
+> **Build:** PASS | **Tests:** 103/103 PASS
 
 ---
 
@@ -41,7 +41,12 @@
   - [x] `@testing-library/react` installe
   - [x] `src/__tests__/useBacklogHistory.test.ts` - 10 tests (undo/redo/limits)
   - [x] `src/__tests__/useTypeConfig.test.ts` - 15 tests (CRUD/detection/hook)
-  - [x] Total: **45 tests PASS** (20 existants + 25 nouveaux)
+- [x] **Sprint A** - Tests hooks critiques (58 nouveaux tests)
+  - [x] `src/__tests__/useBacklog.test.ts` - 28 tests (CRUD/filters/undo/redo)
+  - [x] `src/__tests__/useFileAccess.test.ts` - 10 tests (state/mode/dirty/close)
+  - [x] `src/__tests__/useProjects.test.ts` - 10 tests (CRUD/storage/persistence)
+  - [x] `src/__tests__/otherHooks.test.ts` - 10 tests (shortcuts/kanban widths)
+  - [x] Total: **103 tests PASS** (45 existants + 58 nouveaux)
 
 ---
 
