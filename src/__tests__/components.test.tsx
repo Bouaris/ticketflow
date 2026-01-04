@@ -18,6 +18,7 @@ import { Modal, ModalActions } from '../components/ui/Modal';
 import { Progress, CriteriaProgress } from '../components/ui/Progress';
 import { Spinner } from '../components/ui/Spinner';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { ListEditor } from '../components/ui/ListEditor';
 
 // ============================================================
 // BADGE TESTS (1-5)
@@ -335,5 +336,136 @@ describe('ConfirmModal', () => {
     );
     fireEvent.click(screen.getByText('Annuler'));
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ============================================================
+// LIST EDITOR TESTS (33-40)
+// ============================================================
+
+describe('ListEditor', () => {
+  const mockOnAdd = vi.fn();
+  const mockOnUpdate = vi.fn();
+  const mockOnRemove = vi.fn();
+
+  beforeEach(() => {
+    mockOnAdd.mockClear();
+    mockOnUpdate.mockClear();
+    mockOnRemove.mockClear();
+  });
+
+  test('33. renders label', () => {
+    render(
+      <ListEditor
+        label="Steps"
+        items={[]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+      />
+    );
+    expect(screen.getByText('Steps')).toBeInTheDocument();
+  });
+
+  test('34. shows empty message when no items', () => {
+    render(
+      <ListEditor
+        label="Items"
+        items={[]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        emptyMessage="No items yet"
+      />
+    );
+    expect(screen.getByText('No items yet')).toBeInTheDocument();
+  });
+
+  test('35. renders items', () => {
+    render(
+      <ListEditor
+        label="Items"
+        items={['First item', 'Second item']}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+      />
+    );
+    expect(screen.getByDisplayValue('First item')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Second item')).toBeInTheDocument();
+  });
+
+  test('36. calls onAdd when add button is clicked', () => {
+    render(
+      <ListEditor
+        label="Items"
+        items={[]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+      />
+    );
+    fireEvent.click(screen.getByText('Ajouter'));
+    expect(mockOnAdd).toHaveBeenCalledTimes(1);
+  });
+
+  test('37. calls onUpdate when item is changed', () => {
+    render(
+      <ListEditor
+        label="Items"
+        items={['Original']}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+      />
+    );
+    const input = screen.getByDisplayValue('Original');
+    fireEvent.change(input, { target: { value: 'Updated' } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(0, 'Updated');
+  });
+
+  test('38. calls onRemove when delete button is clicked', () => {
+    render(
+      <ListEditor
+        label="Items"
+        items={['To delete']}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+      />
+    );
+    const deleteButton = screen.getByLabelText('Supprimer');
+    fireEvent.click(deleteButton);
+    expect(mockOnRemove).toHaveBeenCalledWith(0);
+  });
+
+  test('39. renders numbered items when numbered=true', () => {
+    const { container } = render(
+      <ListEditor
+        label="Steps"
+        items={['Step one', 'Step two']}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        numbered={true}
+      />
+    );
+    // Numbers are rendered (format may vary)
+    expect(container.textContent).toContain('1');
+    expect(container.textContent).toContain('2');
+  });
+
+  test('40. applies custom className', () => {
+    const { container } = render(
+      <ListEditor
+        label="Items"
+        items={[]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        className="custom-class"
+      />
+    );
+    expect(container.firstChild).toHaveClass('custom-class');
   });
 });

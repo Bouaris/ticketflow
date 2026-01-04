@@ -612,3 +612,136 @@ describe('useBacklog - Reset & Edge Cases', () => {
     expect(result.current.existingIds.length).toBe(5);
   });
 });
+
+// ============================================================
+// FILTER BY EFFORT & SEVERITY TESTS (29-32)
+// ============================================================
+
+describe('useBacklog - Filter by Effort & Severity', () => {
+  test('29. filter by severity returns matching items', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    act(() => {
+      result.current.setFilters({ severities: ['P1'] });
+    });
+
+    expect(result.current.filteredItems.some(i => i.id === 'BUG-001')).toBe(true);
+  });
+
+  test('30. filter by effort returns matching items', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    act(() => {
+      result.current.setFilters({ efforts: ['M'] });
+    });
+
+    expect(result.current.filteredItems.some(i => i.id === 'CT-001')).toBe(true);
+  });
+
+  test('31. combined filters narrow down results', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    act(() => {
+      result.current.setFilters({ types: ['CT'], efforts: ['S'] });
+    });
+
+    // Only CT-002 has effort S
+    expect(result.current.filteredItems.length).toBe(1);
+    expect(result.current.filteredItems[0].id).toBe('CT-002');
+  });
+
+  test('32. filter by multiple severities', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    act(() => {
+      result.current.setFilters({ severities: ['P1', 'P3'] });
+    });
+
+    expect(result.current.filteredItems.length).toBe(2);
+  });
+});
+
+// ============================================================
+// ADDITIONAL EDGE CASES (33-36)
+// ============================================================
+
+describe('useBacklog - Additional Edge Cases', () => {
+  test('33. updateItemById does nothing for non-existent ID', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    const initialCount = result.current.allItems.length;
+
+    act(() => {
+      result.current.updateItemById('NONEXISTENT-001', { title: 'New Title' });
+    });
+
+    expect(result.current.allItems.length).toBe(initialCount);
+  });
+
+  test('34. deleteItem does nothing for non-existent ID', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    const initialCount = result.current.allItems.length;
+
+    act(() => {
+      result.current.deleteItem('NONEXISTENT-001');
+    });
+
+    expect(result.current.allItems.length).toBe(initialCount);
+  });
+
+  test('35. toggleItemCriterion does nothing for non-existent item', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(BACKLOG_WITH_CRITERIA);
+    });
+
+    // Should not throw
+    act(() => {
+      result.current.toggleItemCriterion('NONEXISTENT', 0);
+    });
+
+    expect(result.current.allItems.length).toBe(1);
+  });
+
+  test('36. empty filters returns all items', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    expect(result.current.filteredItems.length).toBe(5);
+
+    act(() => {
+      result.current.setFilters({ types: [], priorities: [], severities: [], efforts: [] });
+    });
+
+    expect(result.current.filteredItems.length).toBe(5);
+  });
+});
