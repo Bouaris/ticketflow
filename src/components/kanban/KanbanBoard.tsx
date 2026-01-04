@@ -24,6 +24,7 @@ import type { BacklogItem } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { KanbanCard } from './KanbanCard';
 import { GripIcon } from '../ui/Icons';
+import { hexToRgba } from '../../lib/utils';
 
 interface KanbanBoardProps {
   itemsByType: Record<string, BacklogItem[]>;
@@ -172,11 +173,3 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
     </div>
   );
 }
-
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-

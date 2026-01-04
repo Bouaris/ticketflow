@@ -86,15 +86,11 @@ export function useUpdater() {
     }
 
     try {
-      console.log('[Updater] Starting update check...');
       const { check } = await import('@tauri-apps/plugin-updater');
-      console.log('[Updater] Plugin imported, calling check()...');
 
       const update = await check();
-      console.log('[Updater] Check result:', update);
 
       if (update) {
-        console.log('[Updater] Update available:', update.version);
         updateRef.current = update;
         const info: UpdateInfo = {
           version: update.version,
@@ -118,7 +114,6 @@ export function useUpdater() {
 
         return info;
       } else {
-        console.log('[Updater] No update available, current version is latest');
         setState(prev => ({ ...prev, checking: false, available: null }));
         return null;
       }

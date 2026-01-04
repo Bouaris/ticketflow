@@ -7,6 +7,7 @@
 import type { ItemType, Severity, Priority, Effort } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_SHORT_LABELS } from '../../constants/labels';
+import { hexToRgba } from '../../lib/utils';
 
 // ============================================================
 // TYPE BADGE
@@ -149,24 +150,4 @@ export function EffortBadge({ effort, size = 'md', showLabel = false }: EffortBa
       {label}
     </span>
   );
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function hexToRgba(hex: string, alpha: number): string {
-  let r = 0, g = 0, b = 0;
-
-  if (hex.length === 4) {
-    r = parseInt(hex[1] + hex[1], 16);
-    g = parseInt(hex[2] + hex[2], 16);
-    b = parseInt(hex[3] + hex[3], 16);
-  } else if (hex.length === 7) {
-    r = parseInt(hex.slice(1, 3), 16);
-    g = parseInt(hex.slice(3, 5), 16);
-    b = parseInt(hex.slice(5, 7), 16);
-  }
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

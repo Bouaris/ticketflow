@@ -4,6 +4,8 @@
  * For displaying labels, tags, and status indicators.
  */
 
+import { hexToRgba } from '../../lib/utils';
+
 // ============================================================
 // TYPES
 // ============================================================
@@ -141,25 +143,4 @@ export function DynamicBadge({
       {children}
     </span>
   );
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function hexToRgba(hex: string, alpha: number): string {
-  // Handle both #RGB and #RRGGBB formats
-  let r = 0, g = 0, b = 0;
-
-  if (hex.length === 4) {
-    r = parseInt(hex[1] + hex[1], 16);
-    g = parseInt(hex[2] + hex[2], 16);
-    b = parseInt(hex[3] + hex[3], 16);
-  } else if (hex.length === 7) {
-    r = parseInt(hex.slice(1, 3), 16);
-    g = parseInt(hex.slice(3, 5), 16);
-    b = parseInt(hex.slice(5, 7), 16);
-  }
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

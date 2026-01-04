@@ -20,129 +20,15 @@ import { TypeConfigModal } from './components/settings/TypeConfigModal';
 import { ItemEditorModal, type ItemFormData } from './components/editor/ItemEditorModal';
 import { WelcomePage } from './components/welcome/WelcomePage';
 import { ExportModal } from './components/export/ExportModal';
-import { hasApiKey, refineItem } from './lib/ai';
-import { exportItemForClipboard } from './lib/serializer';
+import { hasApiKey, refineItem, initSecureStorage } from './lib/ai';
+import { exportItemForClipboard, buildItemMarkdown } from './lib/serializer';
 import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
-import { getScreenshotMarkdownRef } from './lib/screenshots';
 import { joinPath, isTauri, getDirFromPath, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { UpdateModal } from './components/ui/UpdateModal';
-
-// Helper to generate rawMarkdown from form data
-function generateRawMarkdown(data: ItemFormData): string {
-  const lines: string[] = [];
-
-  // Header
-  const emoji = data.emoji ? `${data.emoji} ` : '';
-  lines.push(`### ${data.id} | ${emoji}${data.title}`);
-
-  // Metadata
-  if (data.component) {
-    lines.push(`**Composant:** ${data.component}`);
-  }
-  if (data.module) {
-    lines.push(`**Module:** ${data.module}`);
-  }
-  if (data.severity) {
-    const severityLabels: Record<string, string> = {
-      P0: 'P0 - Bloquant',
-      P1: 'P1 - Critique',
-      P2: 'P2 - Moyenne',
-      P3: 'P3 - Faible',
-      P4: 'P4 - Mineure',
-    };
-    lines.push(`**Sévérité:** ${severityLabels[data.severity] || data.severity}`);
-  }
-  if (data.priority) {
-    lines.push(`**Priorité:** ${data.priority}`);
-  }
-  if (data.effort) {
-    const effortLabels: Record<string, string> = {
-      XS: 'XS (Extra Small)',
-      S: 'S (Small)',
-      M: 'M (Medium)',
-      L: 'L (Large)',
-      XL: 'XL (Extra Large)',
-    };
-    lines.push(`**Effort:** ${effortLabels[data.effort] || data.effort}`);
-  }
-
-  // Description
-  if (data.description) {
-    lines.push(`**Description:** ${data.description}`);
-  }
-
-  // User Story
-  if (data.userStory) {
-    lines.push('');
-    lines.push('**User Story:**');
-    lines.push(`> ${data.userStory}`);
-  }
-
-  // Reproduction
-  if (data.reproduction.length > 0) {
-    lines.push('');
-    lines.push('**Reproduction:**');
-    data.reproduction.forEach((step, i) => {
-      lines.push(`${i + 1}. ${step}`);
-    });
-  }
-
-  // Specs
-  if (data.specs.length > 0) {
-    lines.push('');
-    lines.push('**Spécifications:**');
-    data.specs.forEach(spec => {
-      lines.push(`- ${spec}`);
-    });
-  }
-
-  // Criteria
-  if (data.criteria.length > 0) {
-    lines.push('');
-    lines.push(`**Critères d'acceptation:**`);
-    data.criteria.forEach(criterion => {
-      const check = criterion.checked ? 'x' : ' ';
-      lines.push(`- [${check}] ${criterion.text}`);
-    });
-  }
-
-  // Dependencies
-  if (data.dependencies.length > 0) {
-    lines.push('');
-    lines.push('**Dépendances:**');
-    data.dependencies.forEach(dep => {
-      lines.push(`- ${dep}`);
-    });
-  }
-
-  // Constraints
-  if (data.constraints.length > 0) {
-    lines.push('');
-    lines.push('**Contraintes:**');
-    data.constraints.forEach(constraint => {
-      lines.push(`- ${constraint}`);
-    });
-  }
-
-  // Screenshots
-  if (data.screenshots.length > 0) {
-    lines.push('');
-    lines.push('**Screenshots:**');
-    data.screenshots.forEach(screenshot => {
-      lines.push(getScreenshotMarkdownRef(screenshot.filename, screenshot.alt));
-    });
-  }
-
-  // Separator
-  lines.push('');
-  lines.push('---');
-  lines.push('');
-
-  return lines.join('\n');
-}
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 function App() {
   // File access
@@ -175,6 +61,41 @@ function App() {
   const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
   const [showHomeConfirmModal, setShowHomeConfirmModal] = useState(false);
 
+  // AI refinement confirmation state
+  const [aiConfirmModal, setAiConfirmModal] = useState<{
+    isOpen: boolean;
+    item: BacklogItem | null;
+    refinedItem: Partial<BacklogItem> | null;
+  }>({ isOpen: false, item: null, refinedItem: null });
+
+  // Archive confirmation state
+  const [archiveConfirmModal, setArchiveConfirmModal] = useState<{
+    isOpen: boolean;
+    item: BacklogItem | null;
+  }>({ isOpen: false, item: null });
+
+  // Delete confirmation state
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean;
+    item: BacklogItem | null;
+  }>({ isOpen: false, item: null });
+
+  // Error notification state
+  const [errorNotification, setErrorNotification] = useState<string | null>(null);
+
+  // Initialize secure storage for API keys on startup
+  useEffect(() => {
+    initSecureStorage();
+  }, []);
+
+  // Auto-dismiss error notifications after 5 seconds
+  useEffect(() => {
+    if (errorNotification) {
+      const timer = setTimeout(() => setErrorNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorNotification]);
+
   // Tray quit listener (Tauri only)
   useEffect(() => {
     if (!isTauri()) return;
@@ -197,8 +118,6 @@ function App() {
     const content = await fileAccess.openFile();
     if (content) {
       backlog.loadFromMarkdown(content);
-      // Sync TOC with sections after loading
-      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config from file content
       if (fileAccess.filePath) {
         const projectDir = getDirFromPath(fileAccess.filePath);
@@ -214,8 +133,6 @@ function App() {
     const content = await fileAccess.loadFromPath(fullPath);
     if (content) {
       backlog.loadFromMarkdown(content);
-      // Sync TOC with sections after loading
-      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config - use provided types for new projects, otherwise detect from content
       if (types && types.length > 0) {
         // New project with custom types - initialize with those types
@@ -285,22 +202,31 @@ function App() {
     setIsRefining(false);
 
     if (result.success && result.refinedItem) {
-      if (window.confirm('Appliquer les suggestions de Gemini ?')) {
-        backlog.updateItemById(item.id, result.refinedItem);
-        fileAccess.setDirty(true);
-      }
+      // Show confirmation modal
+      setAiConfirmModal({
+        isOpen: true,
+        item,
+        refinedItem: result.refinedItem,
+      });
     } else {
-      alert(`Erreur: ${result.error}`);
+      setErrorNotification(`Erreur IA: ${result.error}`);
     }
-  }, [backlog, fileAccess]);
+  }, []);
+
+  // Confirm AI refinement
+  const confirmAiRefinement = useCallback(() => {
+    if (aiConfirmModal.item && aiConfirmModal.refinedItem) {
+      backlog.updateItemById(aiConfirmModal.item.id, aiConfirmModal.refinedItem);
+      fileAccess.setDirty(true);
+    }
+    setAiConfirmModal({ isOpen: false, item: null, refinedItem: null });
+  }, [aiConfirmModal, backlog, fileAccess]);
 
   // Handle load stored file
   const handleLoadStoredFile = useCallback(async () => {
     const content = await fileAccess.loadStoredFile();
     if (content) {
       backlog.loadFromMarkdown(content);
-      // Sync TOC with sections after loading
-      setTimeout(() => backlog.syncToc(), 0);
       // Initialize type config from file content
       if (fileAccess.filePath) {
         const projectDir = getDirFromPath(fileAccess.filePath);
@@ -343,8 +269,23 @@ function App() {
     backlog.selectItem(null); // Close detail panel
   }, [backlog]);
 
-  // Handle delete item
-  const handleDeleteItem = useCallback(async (item: BacklogItem) => {
+  // Handle archive item - open confirmation modal
+  const handleArchiveItem = useCallback((item: BacklogItem) => {
+    setArchiveConfirmModal({ isOpen: true, item });
+  }, []);
+
+  // Handle delete request - open confirmation modal
+  const handleDeleteRequest = useCallback((item: BacklogItem) => {
+    setDeleteConfirmModal({ isOpen: true, item });
+  }, []);
+
+  // Confirm delete item
+  const confirmDeleteItem = useCallback(async () => {
+    const item = deleteConfirmModal.item;
+    setDeleteConfirmModal({ isOpen: false, item: null });
+
+    if (!item) return;
+
     // Delete associated screenshots using actual filenames from item
     if (screenshotFolder.isReady && item.screenshots && item.screenshots.length > 0) {
       for (const screenshot of item.screenshots) {
@@ -354,13 +295,14 @@ function App() {
     backlog.deleteItem(item.id);
     backlog.selectItem(null);
     fileAccess.setDirty(true);
-  }, [backlog, fileAccess, screenshotFolder]);
+  }, [deleteConfirmModal, backlog, fileAccess, screenshotFolder]);
 
-  // Handle archive item
-  const handleArchiveItem = useCallback(async (item: BacklogItem) => {
-    if (!window.confirm(`Archiver l'item ${item.id} ? Il sera déplacé vers TICKETFLOW_Archive.md`)) {
-      return;
-    }
+  // Confirm archive item
+  const confirmArchive = useCallback(async () => {
+    const item = archiveConfirmModal.item;
+    setArchiveConfirmModal({ isOpen: false, item: null });
+
+    if (!item) return;
 
     try {
       // Create archive entry
@@ -426,9 +368,9 @@ ${item.description ? `**Description:** ${item.description}` : ''}
 
     } catch (error) {
       console.error('Failed to archive item:', error);
-      alert('Erreur lors de l\'archivage');
+      setErrorNotification('Erreur lors de l\'archivage');
     }
-  }, [backlog, fileAccess, screenshotFolder]);
+  }, [archiveConfirmModal, backlog, fileAccess, screenshotFolder]);
 
   // Handle export item (for clipboard)
   const handleExportItem = useCallback((item: BacklogItem) => {
@@ -452,7 +394,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
 
   // Handle save item (from editor modal)
   const handleSaveItem = useCallback((data: ItemFormData, isNew: boolean) => {
-    const rawMarkdown = generateRawMarkdown(data);
+    const rawMarkdown = buildItemMarkdown(data);
 
     const item: BacklogItem = {
       id: data.id,
@@ -535,6 +477,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
   const shouldShowTauriWelcome = shouldShowWelcome && isTauri();
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header - Hidden on Tauri welcome page */}
       {!shouldShowTauriWelcome && (
@@ -637,7 +580,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onToggleCriterion={handleToggleCriterion}
         onRefineWithAI={handleRefineWithAI}
         onEdit={handleEditItem}
-        onDelete={handleDeleteItem}
+        onDeleteRequest={handleDeleteRequest}
         onArchive={handleArchiveItem}
         onExport={handleExportItem}
         getScreenshotUrl={screenshotFolder.isReady ? screenshotFolder.getScreenshotUrl : undefined}
@@ -696,6 +639,55 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         </div>
       )}
 
+      {/* Error notification toast */}
+      {errorNotification && (
+        <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3">
+          <span>{errorNotification}</span>
+          <button
+            onClick={() => setErrorNotification(null)}
+            className="text-white/80 hover:text-white"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* AI refinement confirmation modal */}
+      <ConfirmModal
+        isOpen={aiConfirmModal.isOpen}
+        title="Appliquer les suggestions IA ?"
+        message="L'IA propose des améliorations pour cet item. Voulez-vous les appliquer ?"
+        confirmLabel="Appliquer"
+        cancelLabel="Annuler"
+        variant="primary"
+        onConfirm={confirmAiRefinement}
+        onCancel={() => setAiConfirmModal({ isOpen: false, item: null, refinedItem: null })}
+      />
+
+      {/* Archive confirmation modal */}
+      <ConfirmModal
+        isOpen={archiveConfirmModal.isOpen}
+        title="Archiver cet item ?"
+        message={`L'item ${archiveConfirmModal.item?.id || ''} sera déplacé vers TICKETFLOW_Archive.md`}
+        confirmLabel="Archiver"
+        cancelLabel="Annuler"
+        variant="warning"
+        onConfirm={confirmArchive}
+        onCancel={() => setArchiveConfirmModal({ isOpen: false, item: null })}
+      />
+
+      {/* Delete confirmation modal */}
+      <ConfirmModal
+        isOpen={deleteConfirmModal.isOpen}
+        title="Supprimer cet item ?"
+        message={`L'item ${deleteConfirmModal.item?.id || ''} sera définitivement supprimé.`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => setDeleteConfirmModal({ isOpen: false, item: null })}
+      />
+
       {/* Quit confirmation modal (Tauri tray) */}
       <ConfirmModal
         isOpen={showQuitConfirmModal}
@@ -732,6 +724,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onClearError={updater.clearError}
       />
     </div>
+    </ErrorBoundary>
   );
 }
 

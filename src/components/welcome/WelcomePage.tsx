@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { ProjectCard } from './ProjectCard';
 import { NewProjectDialog } from './NewProjectDialog';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import type { Project } from '../../types/project';
 import { VISIBLE_PROJECTS_COUNT, BACKLOG_FILE_NAME } from '../../types/project';
 import type { TypeDefinition } from '../../types/typeConfig';
@@ -42,6 +43,15 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
     path: '',
     name: '',
   });
+
+  // Modal for confirming project removal
+  const [confirmRemoveModal, setConfirmRemoveModal] = useState<{
+    isOpen: boolean;
+    project: Project | null;
+  }>({ isOpen: false, project: null });
+
+  // Error notification state
+  const [errorNotification, setErrorNotification] = useState<string | null>(null);
 
   // Visible projects based on showAll toggle
   const visibleProjects = showAllProjects
@@ -87,13 +97,8 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
     const isValid = await validateProject(project);
 
     if (!isValid) {
-      // Project no longer exists - offer to remove
-      const shouldRemove = window.confirm(
-        `Le fichier "${project.backlogFile}" n'existe plus dans "${project.name}".\n\nVoulez-vous retirer ce projet de la liste ?`
-      );
-      if (shouldRemove) {
-        removeProject(project.id);
-      }
+      // Project no longer exists - offer to remove via modal
+      setConfirmRemoveModal({ isOpen: true, project });
       return;
     }
 
@@ -104,6 +109,16 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
       backlogFile: project.backlogFile,
     });
     onProjectSelect(project.path, project.backlogFile);
+  };
+
+  /**
+   * Handle confirming project removal
+   */
+  const handleConfirmRemoveProject = () => {
+    if (confirmRemoveModal.project) {
+      removeProject(confirmRemoveModal.project.id);
+    }
+    setConfirmRemoveModal({ isOpen: false, project: null });
   };
 
   /**
@@ -126,7 +141,7 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
       onProjectSelect(path, BACKLOG_FILE_NAME, types);
     } catch (err) {
       console.error('Failed to create backlog:', err);
-      alert('Erreur lors de la création du fichier.');
+      setErrorNotification('Erreur lors de la création du fichier.');
     }
   };
 
@@ -252,6 +267,38 @@ export function WelcomePage({ onProjectSelect }: WelcomePageProps) {
         onConfirm={handleCreateNewBacklog}
         onCancel={() => setNewProjectDialog({ isOpen: false, path: '', name: '' })}
       />
+
+      {/* Confirm Remove Project Modal */}
+      <ConfirmModal
+        isOpen={confirmRemoveModal.isOpen}
+        onCancel={() => setConfirmRemoveModal({ isOpen: false, project: null })}
+        onConfirm={handleConfirmRemoveProject}
+        title="Projet introuvable"
+        message={
+          confirmRemoveModal.project
+            ? `Le fichier "${confirmRemoveModal.project.backlogFile}" n'existe plus dans "${confirmRemoveModal.project.name}".\n\nVoulez-vous retirer ce projet de la liste ?`
+            : ''
+        }
+        confirmLabel="Retirer"
+        cancelLabel="Annuler"
+        variant="warning"
+      />
+
+      {/* Error Notification Toast */}
+      {errorNotification && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+          <div className="flex items-center gap-3 px-4 py-3 bg-red-600 text-white rounded-lg shadow-lg">
+            <ErrorIcon className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm font-medium">{errorNotification}</span>
+            <button
+              onClick={() => setErrorNotification(null)}
+              className="ml-2 p-1 hover:bg-red-700 rounded"
+            >
+              <CloseSmallIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -284,6 +331,23 @@ function SpinnerIcon({ className }: { className?: string }) {
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
+function ErrorIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function CloseSmallIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
 }

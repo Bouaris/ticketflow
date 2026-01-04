@@ -4,6 +4,24 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.1.1] - 2026-01-04
+
+### Corrigé
+- Animation CSS `animate-fade-in` manquante
+- Unification du schema `CriterionSchema` (default false)
+- Type `suggestedSeverity` (null → undefined)
+
+### Refactoring
+- Extraction `hexToRgba()` dans lib/utils.ts (DRY)
+- Suppression dead code serializer (wrappers inline)
+- Suppression exports legacy ai.ts
+- Nettoyage CSS variables orphelines
+- Standardisation backdrop opacity
+
+### Tests
+- Infrastructure test-utils (setup, mocks, fixtures)
+- Configuration Playwright E2E
+
 ## [1.1.0] - 2026-01-04
 
 ### Ajouté

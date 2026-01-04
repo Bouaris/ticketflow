@@ -11,10 +11,167 @@ import type {
   Section,
   TableGroup,
   Criterion,
+  Severity,
+  Effort,
 } from '../types/backlog';
 import { isTableGroup, isRawSection } from '../types/guards';
 import { SEVERITY_FULL_LABELS, EFFORT_SHORT_LABELS } from '../constants/labels';
 import { getScreenshotMarkdownRef } from './screenshots';
+
+// ============================================================
+// UNIFIED ITEM MARKDOWN BUILDER
+// ============================================================
+
+/**
+ * Input type for buildItemMarkdown - accepts both BacklogItem and form data
+ */
+export interface ItemMarkdownInput {
+  id: string;
+  title: string;
+  emoji?: string | null;
+  component?: string | null;
+  module?: string | null;
+  severity?: Severity | null;
+  priority?: string | null;
+  effort?: Effort | null;
+  description?: string | null;
+  userStory?: string | null;
+  reproduction?: string[];
+  specs?: string[];
+  screens?: string[];
+  criteria?: Criterion[];
+  dependencies?: string[];
+  constraints?: string[];
+  screenshots?: { filename: string; alt?: string }[];
+}
+
+export interface BuildItemMarkdownOptions {
+  /** Base path for absolute screenshot paths (for export) */
+  screenshotBasePath?: string;
+}
+
+/**
+ * Unified function to build item markdown.
+ * Replaces generateRawMarkdown (App.tsx), rebuildItemMarkdown, and rebuildItemMarkdownForExport.
+ */
+export function buildItemMarkdown(
+  item: ItemMarkdownInput,
+  options: BuildItemMarkdownOptions = {}
+): string {
+  const lines: string[] = [];
+
+  // Header
+  const emoji = item.emoji ? `${item.emoji} ` : '';
+  lines.push(`### ${item.id} | ${emoji}${item.title}`);
+
+  // Metadata
+  if (item.component) {
+    lines.push(`**Composant:** ${item.component}`);
+  }
+  if (item.module) {
+    lines.push(`**Module:** ${item.module}`);
+  }
+  if (item.severity) {
+    lines.push(`**Sévérité:** ${SEVERITY_FULL_LABELS[item.severity] || item.severity}`);
+  }
+  if (item.priority) {
+    lines.push(`**Priorité:** ${item.priority}`);
+  }
+  if (item.effort) {
+    lines.push(`**Effort:** ${EFFORT_SHORT_LABELS[item.effort] || item.effort}`);
+  }
+
+  // Description
+  if (item.description) {
+    lines.push(`**Description:** ${item.description}`);
+  }
+
+  // User Story
+  if (item.userStory) {
+    lines.push('');
+    lines.push('**User Story:**');
+    lines.push(`> ${item.userStory}`);
+  }
+
+  // Reproduction
+  if (item.reproduction && item.reproduction.length > 0) {
+    lines.push('');
+    lines.push('**Reproduction:**');
+    item.reproduction.forEach((step, i) => {
+      lines.push(`${i + 1}. ${step}`);
+    });
+  }
+
+  // Specs
+  if (item.specs && item.specs.length > 0) {
+    lines.push('');
+    lines.push('**Spécifications:**');
+    item.specs.forEach(spec => {
+      lines.push(`- ${spec}`);
+    });
+  }
+
+  // Screens
+  if (item.screens && item.screens.length > 0) {
+    lines.push('');
+    lines.push('**Écrans:**');
+    item.screens.forEach((screen, i) => {
+      lines.push(`${i + 1}. ${screen}`);
+    });
+  }
+
+  // Criteria
+  if (item.criteria && item.criteria.length > 0) {
+    lines.push('');
+    lines.push(`**Critères d'acceptation:**`);
+    item.criteria.forEach(criterion => {
+      const check = criterion.checked ? 'x' : ' ';
+      lines.push(`- [${check}] ${criterion.text}`);
+    });
+  }
+
+  // Dependencies
+  if (item.dependencies && item.dependencies.length > 0) {
+    lines.push('');
+    lines.push('**Dépendances:**');
+    item.dependencies.forEach(dep => {
+      lines.push(`- ${dep}`);
+    });
+  }
+
+  // Constraints
+  if (item.constraints && item.constraints.length > 0) {
+    lines.push('');
+    lines.push('**Contraintes:**');
+    item.constraints.forEach(constraint => {
+      lines.push(`- ${constraint}`);
+    });
+  }
+
+  // Screenshots
+  if (item.screenshots && item.screenshots.length > 0) {
+    lines.push('');
+    lines.push('**Screenshots:**');
+    item.screenshots.forEach(screenshot => {
+      if (options.screenshotBasePath) {
+        // Absolute path for export
+        const altText = screenshot.alt || screenshot.filename.replace('.png', '');
+        const absolutePath = `${options.screenshotBasePath}\\${screenshot.filename}`;
+        lines.push(`![${altText}](${absolutePath})`);
+      } else {
+        // Relative path (standard)
+        lines.push(getScreenshotMarkdownRef(screenshot.filename, screenshot.alt));
+      }
+    });
+  }
+
+  // Separator
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  return lines.join('\n');
+}
 
 // ============================================================
 // MAIN SERIALIZER
@@ -125,119 +282,7 @@ function serializeItem(item: BacklogItem): string {
   }
 
   // Sinon, reconstruire le Markdown
-  return rebuildItemMarkdown(item);
-}
-
-/**
- * Reconstruit le Markdown d'un item modifié.
- * Utilisé uniquement quand on édite un item.
- */
-function rebuildItemMarkdown(item: BacklogItem): string {
-  const lines: string[] = [];
-
-  // Header
-  const emoji = item.emoji ? `${item.emoji} ` : '';
-  lines.push(`### ${item.id} | ${emoji}${item.title}`);
-
-  // Metadata
-  if (item.component) {
-    lines.push(`**Composant:** ${item.component}`);
-  }
-  if (item.module) {
-    lines.push(`**Module:** ${item.module}`);
-  }
-  if (item.severity) {
-    lines.push(`**Sévérité:** ${SEVERITY_FULL_LABELS[item.severity] || item.severity}`);
-  }
-  if (item.priority) {
-    lines.push(`**Priorité:** ${item.priority}`);
-  }
-  if (item.effort) {
-    lines.push(`**Effort:** ${EFFORT_SHORT_LABELS[item.effort] || item.effort}`);
-  }
-
-  // Description
-  if (item.description) {
-    lines.push(`**Description:** ${item.description}`);
-  }
-
-  // User Story
-  if (item.userStory) {
-    lines.push('');
-    lines.push(`**User Story:**`);
-    lines.push(`> ${item.userStory}`);
-  }
-
-  // Reproduction
-  if (item.reproduction && item.reproduction.length > 0) {
-    lines.push('');
-    lines.push('**Reproduction:**');
-    item.reproduction.forEach((step, i) => {
-      lines.push(`${i + 1}. ${step}`);
-    });
-  }
-
-  // Specs
-  if (item.specs && item.specs.length > 0) {
-    lines.push('');
-    lines.push('**Spécifications:**');
-    item.specs.forEach(spec => {
-      lines.push(`- ${spec}`);
-    });
-  }
-
-  // Screens
-  if (item.screens && item.screens.length > 0) {
-    lines.push('');
-    lines.push('**Écrans:**');
-    item.screens.forEach((screen, i) => {
-      lines.push(`${i + 1}. ${screen}`);
-    });
-  }
-
-  // Criteria
-  if (item.criteria && item.criteria.length > 0) {
-    lines.push('');
-    lines.push('**Critères d\'acceptation:**');
-    item.criteria.forEach(criterion => {
-      const check = criterion.checked ? 'x' : ' ';
-      lines.push(`- [${check}] ${criterion.text}`);
-    });
-  }
-
-  // Dependencies
-  if (item.dependencies && item.dependencies.length > 0) {
-    lines.push('');
-    lines.push('**Dépendances:**');
-    item.dependencies.forEach(dep => {
-      lines.push(`- ${dep}`);
-    });
-  }
-
-  // Constraints
-  if (item.constraints && item.constraints.length > 0) {
-    lines.push('');
-    lines.push('**Contraintes:**');
-    item.constraints.forEach(constraint => {
-      lines.push(`- ${constraint}`);
-    });
-  }
-
-  // Screenshots
-  if (item.screenshots && item.screenshots.length > 0) {
-    lines.push('');
-    lines.push('**Screenshots:**');
-    item.screenshots.forEach(screenshot => {
-      lines.push(getScreenshotMarkdownRef(screenshot.filename, screenshot.alt));
-    });
-  }
-
-  // Séparateur
-  lines.push('');
-  lines.push('---');
-  lines.push('');
-
-  return lines.join('\n');
+  return buildItemMarkdown(item);
 }
 
 // ============================================================
@@ -340,126 +385,7 @@ export function exportItemForClipboard(
   lines.push('');
 
   // Contenu de l'item avec chemins absolus
-  lines.push(rebuildItemMarkdownForExport(item, screenshotBasePath));
-
-  return lines.join('\n');
-}
-
-/**
- * Reconstruit le markdown d'un item pour l'export.
- * Similaire à rebuildItemMarkdown mais avec chemins absolus pour screenshots.
- */
-function rebuildItemMarkdownForExport(item: BacklogItem, screenshotBasePath?: string): string {
-  const lines: string[] = [];
-
-  // Header
-  const emoji = item.emoji ? `${item.emoji} ` : '';
-  lines.push(`### ${item.id} | ${emoji}${item.title}`);
-
-  // Metadata
-  if (item.component) {
-    lines.push(`**Composant:** ${item.component}`);
-  }
-  if (item.module) {
-    lines.push(`**Module:** ${item.module}`);
-  }
-  if (item.severity) {
-    lines.push(`**Sévérité:** ${SEVERITY_FULL_LABELS[item.severity] || item.severity}`);
-  }
-  if (item.priority) {
-    lines.push(`**Priorité:** ${item.priority}`);
-  }
-  if (item.effort) {
-    lines.push(`**Effort:** ${EFFORT_SHORT_LABELS[item.effort] || item.effort}`);
-  }
-
-  // Description
-  if (item.description) {
-    lines.push(`**Description:** ${item.description}`);
-  }
-
-  // User Story
-  if (item.userStory) {
-    lines.push('');
-    lines.push(`**User Story:**`);
-    lines.push(`> ${item.userStory}`);
-  }
-
-  // Reproduction
-  if (item.reproduction && item.reproduction.length > 0) {
-    lines.push('');
-    lines.push('**Reproduction:**');
-    item.reproduction.forEach((step, i) => {
-      lines.push(`${i + 1}. ${step}`);
-    });
-  }
-
-  // Specs
-  if (item.specs && item.specs.length > 0) {
-    lines.push('');
-    lines.push('**Spécifications:**');
-    item.specs.forEach(spec => {
-      lines.push(`- ${spec}`);
-    });
-  }
-
-  // Screens
-  if (item.screens && item.screens.length > 0) {
-    lines.push('');
-    lines.push('**Écrans:**');
-    item.screens.forEach((screen, i) => {
-      lines.push(`${i + 1}. ${screen}`);
-    });
-  }
-
-  // Criteria
-  if (item.criteria && item.criteria.length > 0) {
-    lines.push('');
-    lines.push('**Critères d\'acceptation:**');
-    item.criteria.forEach(criterion => {
-      const check = criterion.checked ? 'x' : ' ';
-      lines.push(`- [${check}] ${criterion.text}`);
-    });
-  }
-
-  // Dependencies
-  if (item.dependencies && item.dependencies.length > 0) {
-    lines.push('');
-    lines.push('**Dépendances:**');
-    item.dependencies.forEach(dep => {
-      lines.push(`- ${dep}`);
-    });
-  }
-
-  // Constraints
-  if (item.constraints && item.constraints.length > 0) {
-    lines.push('');
-    lines.push('**Contraintes:**');
-    item.constraints.forEach(constraint => {
-      lines.push(`- ${constraint}`);
-    });
-  }
-
-  // Screenshots avec chemins absolus
-  if (item.screenshots && item.screenshots.length > 0) {
-    lines.push('');
-    lines.push('**Screenshots:**');
-    item.screenshots.forEach(screenshot => {
-      const altText = screenshot.alt || screenshot.filename.replace('.png', '');
-      if (screenshotBasePath) {
-        // Chemin absolu Windows
-        const absolutePath = `${screenshotBasePath}\\${screenshot.filename}`;
-        lines.push(`![${altText}](${absolutePath})`);
-      } else {
-        // Fallback: chemin relatif
-        lines.push(`![${altText}](.backlog-assets/screenshots/${screenshot.filename})`);
-      }
-    });
-  }
-
-  // Séparateur
-  lines.push('');
-  lines.push('---');
+  lines.push(buildItemMarkdown(item, { screenshotBasePath }).trimEnd());
 
   return lines.join('\n');
 }

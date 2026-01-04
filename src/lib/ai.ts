@@ -9,6 +9,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { BacklogItem } from '../types/backlog';
 import { STORAGE_KEYS } from '../constants/storage';
 import { AI_CONFIG } from '../constants/config';
+import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
+import {
+  RefineResponseSchema,
+  GenerateItemResponseSchema,
+  SuggestionsResponseSchema,
+  safeParseAIResponse,
+} from '../types/ai';
 
 // ============================================================
 // TYPES
@@ -35,17 +42,28 @@ export function setProvider(provider: AIProvider): void {
 
 export function getApiKey(provider?: AIProvider): string | null {
   const p = provider || getProvider();
-  return localStorage.getItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
+  return getSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
 }
 
 export function setApiKey(key: string, provider?: AIProvider): void {
   const p = provider || getProvider();
-  localStorage.setItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY, key);
+  setSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY, key);
 }
 
 export function clearApiKey(provider?: AIProvider): void {
   const p = provider || getProvider();
-  localStorage.removeItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
+  removeSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
+}
+
+/**
+ * Initialize secure storage - migrate legacy plaintext keys
+ * Call this once on app startup
+ */
+export function initSecureStorage(): void {
+  migrateToSecureStorage([
+    STORAGE_KEYS.GROQ_API_KEY,
+    STORAGE_KEYS.GEMINI_API_KEY,
+  ]);
 }
 
 export function hasApiKey(provider?: AIProvider): boolean {
@@ -58,11 +76,6 @@ export function getClientConfig(overrideProvider?: AIProvider): AIClientConfig |
   if (!apiKey) return null;
   return { provider, apiKey };
 }
-
-// Legacy exports for compatibility
-export const getStoredApiKey = () => getApiKey();
-export const storeApiKey = (key: string) => setApiKey(key);
-export const getConfig = getClientConfig;
 
 // ============================================================
 // AI CLIENTS
@@ -190,7 +203,10 @@ export async function refineItem(item: BacklogItem, provider?: AIProvider): Prom
       throw new Error('Réponse invalide de l\'IA');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = safeParseAIResponse(jsonMatch[0], RefineResponseSchema);
+    if (!parsed) {
+      throw new Error('Format de réponse IA invalide');
+    }
 
     return {
       success: true,
@@ -313,7 +329,10 @@ export async function generateItemFromDescription(description: string, provider?
       throw new Error('Réponse invalide de l\'IA');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = safeParseAIResponse(jsonMatch[0], GenerateItemResponseSchema);
+    if (!parsed) {
+      throw new Error('Format de réponse IA invalide');
+    }
 
     return {
       success: true,
@@ -378,7 +397,10 @@ export async function suggestImprovements(items: BacklogItem[], provider?: AIPro
       throw new Error('Réponse invalide de l\'IA');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = safeParseAIResponse(jsonMatch[0], SuggestionsResponseSchema);
+    if (!parsed) {
+      throw new Error('Format de réponse IA invalide');
+    }
 
     return {
       success: true,

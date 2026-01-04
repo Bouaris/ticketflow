@@ -98,13 +98,77 @@ export function useBacklog(): UseBacklogReturn {
   // LOAD & SERIALIZE
   // ============================================================
 
+  // Helper to synchronize TOC immediately on a backlog
+  const syncTocOnBacklog = (bl: Backlog): Backlog => {
+    const tocLines = bl.tableOfContents.split('\n');
+    const newTocLines: string[] = [];
+
+    // Build list of sections (excluding Légende)
+    const sectionsToInclude = bl.sections.filter(s =>
+      !s.title.toLowerCase().includes('légende') &&
+      !s.title.toLowerCase().includes('legende')
+    );
+
+    // Build new TOC
+    let inEntries = false;
+    let entriesAdded = false;
+
+    for (let i = 0; i < tocLines.length; i++) {
+      const line = tocLines[i];
+      const isEntry = /^\d+\.\s*\[/.test(line);
+
+      if (isEntry && !entriesAdded) {
+        // Add all section entries
+        sectionsToInclude.forEach((section, idx) => {
+          const num = idx + 1;
+          const anchor = `${num}-${section.title.toLowerCase().replace(/\s+/g, '-')}`;
+          newTocLines.push(`${num}. [${section.title}](#${anchor})`);
+        });
+
+        // Add Légende entry
+        const legendeSection = bl.sections.find(s =>
+          s.title.toLowerCase().includes('légende') ||
+          s.title.toLowerCase().includes('legende')
+        );
+        if (legendeSection) {
+          const num = bl.sections.indexOf(legendeSection) + 1;
+          newTocLines.push(`${num}. [Légende](#${num}-legende)`);
+        }
+
+        entriesAdded = true;
+        inEntries = true;
+      }
+
+      if (inEntries && isEntry) {
+        continue; // Skip old entries
+      }
+
+      if (inEntries && !isEntry) {
+        inEntries = false;
+      }
+
+      if (!inEntries || !isEntry) {
+        newTocLines.push(line);
+      }
+    }
+
+    const newToc = newTocLines.join('\n');
+    if (newToc === bl.tableOfContents) {
+      return bl; // No changes needed
+    }
+
+    return { ...bl, tableOfContents: newToc };
+  };
+
   const loadFromMarkdown = useCallback((markdown: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const parsed = parseBacklog(markdown);
-      setBacklog(parsed);
+      // Sync TOC immediately to avoid race condition
+      const synced = syncTocOnBacklog(parsed);
+      setBacklog(synced);
       setIsLoading(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to parse backlog';

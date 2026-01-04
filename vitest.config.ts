@@ -8,11 +8,16 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     exclude: ['node_modules', 'dist', 'src-tauri'],
+    setupFiles: ['./src/test-utils/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/lib/**', 'src/hooks/**', 'src/types/**'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx',
+        'src/test-utils/**',
+      ],
     },
   },
 });

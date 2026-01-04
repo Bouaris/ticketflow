@@ -192,11 +192,12 @@ export async function openExternalUrl(url: string): Promise<void> {
 /**
  * Setup global click handler for external links in Tauri
  * Call this once in your app initialization
+ * @returns Cleanup function to remove the event listener
  */
-export function setupExternalLinkHandler(): void {
-  if (!isTauri()) return;
+export function setupExternalLinkHandler(): () => void {
+  if (!isTauri()) return () => {};
 
-  document.addEventListener('click', (e) => {
+  const handleClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a');
 
@@ -210,7 +211,12 @@ export function setupExternalLinkHandler(): void {
         openUrl(url).catch(console.error);
       }
     }
-  });
+  };
+
+  document.addEventListener('click', handleClick);
+
+  // Return cleanup function
+  return () => document.removeEventListener('click', handleClick);
 }
 
 // ============================================================

@@ -515,10 +515,6 @@ function deduplicateItems(items: BacklogItem[]): BacklogItem[] {
     }
   }
 
-  if (duplicates.length > 0) {
-    console.warn(`[Parser] Duplicate IDs detected and removed: ${duplicates.join(', ')}`);
-  }
-
   return Array.from(seen.values());
 }
 

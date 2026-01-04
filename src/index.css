@@ -8,12 +8,6 @@
   --color-severity-p3: #84cc16;
   --color-severity-p4: #6b7280;
 
-  --color-type-bug: #ef4444;
-  --color-type-ext: #3b82f6;
-  --color-type-adm: #8b5cf6;
-  --color-type-cos: #06b6d4;
-  --color-type-lt: #6b7280;
-
   --color-effort-xs: #22c55e;
   --color-effort-s: #84cc16;
   --color-effort-m: #f59e0b;
@@ -59,4 +53,20 @@ body {
 
 .animate-slide-in {
   animation: slide-in 0.2s ease-out;
+}
+
+/* Fade-in animation for toasts and notifications */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }

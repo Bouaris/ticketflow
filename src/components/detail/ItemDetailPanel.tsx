@@ -15,6 +15,7 @@ interface ItemDetailPanelProps {
   onRefineWithAI?: (item: BacklogItem) => void;
   onEdit?: (item: BacklogItem) => void;
   onDelete?: (item: BacklogItem) => void;
+  onDeleteRequest?: (item: BacklogItem) => void;
   onArchive?: (item: BacklogItem) => void;
   onExport?: (item: BacklogItem) => void;
   getScreenshotUrl?: (filename: string) => Promise<string | null>;
@@ -27,6 +28,7 @@ export function ItemDetailPanel({
   onRefineWithAI,
   onEdit,
   onDelete,
+  onDeleteRequest,
   onArchive,
   onExport,
   getScreenshotUrl,
@@ -242,10 +244,12 @@ export function ItemDetailPanel({
                 <ArchiveIcon />
               </button>
             )}
-            {onDelete && (
+            {(onDeleteRequest || onDelete) && (
               <button
                 onClick={() => {
-                  if (window.confirm(`Supprimer définitivement ${item.id} ?`)) {
+                  if (onDeleteRequest) {
+                    onDeleteRequest(item);
+                  } else if (onDelete) {
                     onDelete(item);
                   }
                 }}

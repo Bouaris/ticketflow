@@ -153,7 +153,6 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
       if (stored) {
         try {
           // Verify permission
-          // @ts-expect-error - queryPermission not in types
           const permission = await stored.queryPermission({ mode: 'readwrite' });
           if (permission === 'granted') {
             const handle = await getScreenshotsFolder(stored);
@@ -192,7 +191,6 @@ export function useScreenshotFolder(): UseScreenshotFolderReturn {
 
     try {
       // Ask user to select the folder containing the backlog
-      // @ts-expect-error - showDirectoryPicker not in types
       const selected = await window.showDirectoryPicker({
         id: 'backlog-assets-parent',
         mode: 'readwrite',

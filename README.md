@@ -2,7 +2,7 @@
 
 Application de gestion de backlog produit avec génération IA.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -183,12 +183,11 @@ ticketflow/
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
-### Dernière version: v1.1.0
-- System tray avec minimisation dans la barre des tâches
-- Protection single-instance (une seule fenêtre)
-- Mise à jour automatique via GitHub Releases
-- Badge notification quand une mise à jour est disponible
-- Smart dismiss: le modal de mise à jour respecte le choix "Plus tard"
+### Dernière version: v1.1.1
+- Corrections CSS et animation `animate-fade-in`
+- Unification du schema `CriterionSchema`
+- Infrastructure de tests (Vitest + Playwright E2E)
+- Nettoyage du code (DRY, dead code, legacy exports)
 
 ## Roadmap
 

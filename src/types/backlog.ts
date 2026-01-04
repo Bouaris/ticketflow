@@ -26,7 +26,7 @@ export type Effort = z.infer<typeof EffortSchema>;
 
 export const CriterionSchema = z.object({
   text: z.string(),
-  checked: z.boolean(),
+  checked: z.boolean().default(false),
 });
 export type Criterion = z.infer<typeof CriterionSchema>;
 

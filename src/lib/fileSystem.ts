@@ -98,9 +98,7 @@ export async function saveFile(handle: FileSystemFileHandle, content: string): P
   // Vérifier les permissions d'écriture
   const options = { mode: 'readwrite' as const };
 
-  // @ts-expect-error - queryPermission is not in types yet
   if ((await handle.queryPermission(options)) !== 'granted') {
-    // @ts-expect-error - requestPermission is not in types yet
     if ((await handle.requestPermission(options)) !== 'granted') {
       throw new Error('Permission denied to write file');
     }
@@ -207,7 +205,8 @@ export async function getStoredHandle(): Promise<FileSystemFileHandle | null> {
 
       tx.oncomplete = () => db.close();
     });
-  } catch {
+  } catch (error) {
+    console.error('[FileSystem] Failed to get stored handle:', error);
     return null;
   }
 }
@@ -228,8 +227,8 @@ export async function clearStoredHandle(): Promise<void> {
 
       tx.oncomplete = () => db.close();
     });
-  } catch {
-    // Ignore errors
+  } catch (error) {
+    console.error('[FileSystem] Failed to clear stored handle:', error);
   }
 }
 
@@ -239,12 +238,10 @@ export async function clearStoredHandle(): Promise<void> {
 export async function verifyPermission(handle: FileSystemFileHandle): Promise<boolean> {
   const options = { mode: 'readwrite' as const };
 
-  // @ts-expect-error - queryPermission is not in types yet
   if ((await handle.queryPermission(options)) === 'granted') {
     return true;
   }
 
-  // @ts-expect-error - requestPermission is not in types yet
   if ((await handle.requestPermission(options)) === 'granted') {
     return true;
   }

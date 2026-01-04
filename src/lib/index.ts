@@ -19,7 +19,7 @@ export {
   setApiKey,
   clearApiKey,
   hasApiKey,
-  getConfig,
+  getClientConfig,
   resetClient,
   refineItem,
   generateItemFromDescription,
