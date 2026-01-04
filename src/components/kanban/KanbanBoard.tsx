@@ -46,11 +46,12 @@ interface KanbanBoardProps {
   onItemClick: (item: BacklogItem) => void;
   onTypesReorder?: (fromIndex: number, toIndex: number) => void;
   onMoveItem?: (itemId: string, targetType: string) => void;
+  projectPath?: string;
 }
 
-export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, onMoveItem }: KanbanBoardProps) {
+export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, onMoveItem, projectPath }: KanbanBoardProps) {
   const totalItems = Object.values(itemsByType).reduce((sum, items) => sum + items.length, 0);
-  const { getMultiplier, getWidth, toggleWidth } = useKanbanColumnWidths();
+  const { getMultiplier, getWidth, toggleWidth } = useKanbanColumnWidths(projectPath);
 
   // Drag state for dual-drag (columns + cards)
   const [activeDragType, setActiveDragType] = useState<'column' | 'card' | null>(null);

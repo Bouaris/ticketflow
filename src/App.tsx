@@ -633,6 +633,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
               onItemClick={handleItemClick}
               onTypesReorder={typeConfig.reorderTypesAtIndex}
               onMoveItem={handleMoveItem}
+              projectPath={typeConfig.projectPath || undefined}
             />
           ) : (
             <ListView
