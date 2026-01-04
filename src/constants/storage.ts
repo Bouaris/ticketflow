@@ -13,6 +13,9 @@ export const STORAGE_KEYS = {
   PROJECTS: 'ticketflow-projects',
   TYPE_CONFIG_PREFIX: 'ticketflow-type-config',
 
+  // UI Preferences
+  COLUMN_WIDTHS: 'ticketflow-column-widths',
+
   // AI Configuration
   AI_PROVIDER: 'ai-provider',
   GROQ_API_KEY: 'groq-api-key',

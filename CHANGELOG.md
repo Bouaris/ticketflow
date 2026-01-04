@@ -4,6 +4,16 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.1.3] - 2026-01-04
+
+### Ajouté
+- Injection automatique CLAUDE.md/AGENTS.md dans les prompts IA (CT-006)
+- Affichage du nom du projet dans le header (CT-007)
+- Toggle 1x/2x largeur colonnes Kanban avec persistence localStorage (CT-005)
+- Indicateur visuel du contexte IA chargé
+
+---
+
 ## [1.1.2] - 2026-01-04
 
 ### Ajouté

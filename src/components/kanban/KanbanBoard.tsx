@@ -27,6 +27,7 @@ import type { TypeDefinition } from '../../types/typeConfig';
 import { KanbanCard } from './KanbanCard';
 import { GripIcon } from '../ui/Icons';
 import { hexToRgba } from '../../lib/utils';
+import { useKanbanColumnWidths, KANBAN_BASE_WIDTH, type WidthMultiplier } from '../../hooks/useKanbanColumnWidths';
 
 // Only virtualize columns with many items (avoids height estimation issues for small lists)
 const VIRTUALIZATION_THRESHOLD = 15;
@@ -40,6 +41,7 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }: KanbanBoardProps) {
   const totalItems = Object.values(itemsByType).reduce((sum, items) => sum + items.length, 0);
+  const { getMultiplier, getWidth, toggleWidth } = useKanbanColumnWidths();
 
   // Filter types to only show columns with items
   const visibleTypes = useMemo(() => {
@@ -94,6 +96,9 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder }:
                 type={type}
                 items={itemsByType[type.id] || []}
                 onItemClick={onItemClick}
+                width={getWidth(type.id)}
+                multiplier={getMultiplier(type.id)}
+                onToggleWidth={() => toggleWidth(type.id)}
               />
             ))}
           </div>
@@ -111,8 +116,11 @@ interface SortableKanbanColumnProps {
   type: TypeDefinition;
   items: BacklogItem[];
   onItemClick: (item: BacklogItem) => void;
+  width: number;
+  multiplier: WidthMultiplier;
+  onToggleWidth: () => void;
 }
-function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKanbanColumnProps) {
+function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multiplier, onToggleWidth }: SortableKanbanColumnProps) {
   const {
     attributes,
     listeners,
@@ -145,6 +153,8 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
   const borderColor = hexToRgba(type.color, 0.3);
   const headerBgColor = hexToRgba(type.color, 0.15);
 
+  const isDouble = multiplier === 2;
+
   return (
     <div
       ref={setNodeRef}
@@ -152,8 +162,10 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
         ...style,
         backgroundColor: bgColor,
         borderColor: borderColor,
+        width: `${width}px`,
+        minWidth: `${KANBAN_BASE_WIDTH}px`,
       }}
-      className="flex flex-col w-full sm:w-72 md:w-80 rounded-lg border max-h-[calc(100vh-200px)]"
+      className="flex flex-col rounded-lg border max-h-[calc(100vh-200px)] transition-all duration-200"
     >
       {/* Header - Draggable */}
       <div
@@ -167,7 +179,27 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
             <GripIcon className="w-4 h-4 opacity-50" />
             <h3 className="font-semibold" style={{ color: type.color }}>{type.label}</h3>
           </div>
-          <span className="text-sm" style={{ color: type.color, opacity: 0.75 }}>{items.length}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleWidth();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`
+                px-1.5 py-0.5 text-[10px] font-medium rounded
+                transition-all duration-150 ease-out
+                ${isDouble
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'bg-white/50 text-gray-600 hover:bg-white/80'
+                }
+              `}
+              title={isDouble ? 'Réduire (1 carte)' : 'Élargir (2 cartes)'}
+            >
+              {isDouble ? '2x' : '1x'}
+            </button>
+            <span className="text-sm" style={{ color: type.color, opacity: 0.75 }}>{items.length}</span>
+          </div>
         </div>
       </div>
 
@@ -178,7 +210,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
             Aucun item
           </div>
         ) : shouldVirtualize ? (
-          // Virtualized rendering for large lists
+          // Virtualized rendering for large lists (single column only for now)
           <div
             style={{
               height: `${virtualizer.getTotalSize()}px`,
@@ -209,8 +241,8 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
             })}
           </div>
         ) : (
-          // Classic rendering for small lists (avoids height estimation issues)
-          <div className="space-y-3">
+          // Classic rendering - grid for 2x mode, single column for 1x
+          <div className={isDouble ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
             {items.map(item => (
               <KanbanCard
                 key={item.id}

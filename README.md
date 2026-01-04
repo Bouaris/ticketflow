@@ -2,7 +2,7 @@
 
 Application de gestion de backlog produit avec génération IA.
 
-![Version](https://img.shields.io/badge/version-1.1.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.3-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -183,11 +183,10 @@ ticketflow/
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
-### Dernière version: v1.1.2
-- Virtual scrolling Kanban (performance 1000+ items)
-- Recherche indexée instantanée (MiniSearch)
-- Système Undo/Redo (Ctrl+Z / Ctrl+Y)
-- Roadmap stratégique 2026
+### Dernière version: v1.1.3
+- Injection automatique CLAUDE.md/AGENTS.md dans prompts IA
+- Affichage nom du projet dans le header
+- Toggle 1x/2x largeur colonnes Kanban
 
 ## Roadmap
 
