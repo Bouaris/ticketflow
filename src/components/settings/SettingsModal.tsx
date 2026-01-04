@@ -15,13 +15,16 @@ import {
 } from '../../lib/ai';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 import type { useUpdater } from '../../hooks/useUpdater';
-import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon } from '../ui/Icons';
+import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
+import { MaintenanceModal } from './MaintenanceModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   updater: ReturnType<typeof useUpdater>;
+  markdownContent?: string;
+  onApplyCorrections?: (correctedMarkdown: string) => Promise<void>;
 }
 
 const PROVIDERS: { id: AIProvider; name: string; description: string; url: string; placeholder: string }[] = [
@@ -41,12 +44,13 @@ const PROVIDERS: { id: AIProvider; name: string; description: string; url: strin
   },
 ];
 
-export function SettingsModal({ isOpen, onClose, updater }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApplyCorrections }: SettingsModalProps) {
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('groq');
   const [apiKey, setApiKeyState] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -242,6 +246,25 @@ export function SettingsModal({ isOpen, onClose, updater }: SettingsModalProps) 
             </div>
           )}
 
+          {/* Maintenance section */}
+          {markdownContent && onApplyCorrections && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Maintenance</h4>
+                  <p className="text-xs text-gray-500">Vérifier le format du backlog avec l'IA</p>
+                </div>
+                <button
+                  onClick={() => setShowMaintenanceModal(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <WrenchIcon className="w-4 h-4" />
+                  Analyser
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Update section (Tauri only) */}
           {isTauri() && (
             <div className="pt-4 border-t border-gray-200">
@@ -272,6 +295,16 @@ export function SettingsModal({ isOpen, onClose, updater }: SettingsModalProps) 
             </div>
           )}
       </div>
+
+      {/* Maintenance Modal */}
+      {markdownContent && onApplyCorrections && (
+        <MaintenanceModal
+          isOpen={showMaintenanceModal}
+          onClose={() => setShowMaintenanceModal(false)}
+          markdownContent={markdownContent}
+          onApplyCorrections={onApplyCorrections}
+        />
+      )}
     </Modal>
   );
 }

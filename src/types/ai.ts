@@ -50,6 +50,22 @@ export const SuggestionsResponseSchema = z.object({
   suggestions: z.array(z.string()),
 });
 
+/**
+ * Schema for backlog maintenance response
+ */
+export const MaintenanceIssueSchema = z.object({
+  type: z.enum(['duplicate_id', 'missing_separator', 'malformed_section', 'fused_items', 'invalid_format']),
+  description: z.string(),
+  location: z.string().optional(),
+  suggestion: z.string(),
+});
+
+export const MaintenanceResponseSchema = z.object({
+  issues: z.array(MaintenanceIssueSchema),
+  correctedMarkdown: z.string(),
+  summary: z.string(),
+});
+
 // ============================================================
 // TYPES (inferred from schemas)
 // ============================================================
@@ -58,6 +74,8 @@ export type Criterion = z.infer<typeof CriterionSchema>;
 export type RefineResponse = z.infer<typeof RefineResponseSchema>;
 export type GenerateItemResponse = z.infer<typeof GenerateItemResponseSchema>;
 export type SuggestionsResponse = z.infer<typeof SuggestionsResponseSchema>;
+export type MaintenanceIssue = z.infer<typeof MaintenanceIssueSchema>;
+export type MaintenanceResponse = z.infer<typeof MaintenanceResponseSchema>;
 
 // ============================================================
 // VALIDATION HELPERS

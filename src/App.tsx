@@ -212,6 +212,15 @@ function App() {
     }
   }, [backlog, fileAccess]);
 
+  // Handle maintenance corrections from AI
+  const handleApplyMaintenanceCorrections = useCallback(async (correctedMarkdown: string) => {
+    const success = await fileAccess.save(correctedMarkdown);
+    if (success) {
+      backlog.loadFromMarkdown(correctedMarkdown);
+      fileAccess.setDirty(false);
+    }
+  }, [backlog, fileAccess]);
+
   // Handle item click
   const handleItemClick = useCallback((item: BacklogItem) => {
     backlog.selectItem(item);
@@ -664,6 +673,8 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         updater={updater}
+        markdownContent={backlog.allItems.length > 0 ? backlog.toMarkdown() : undefined}
+        onApplyCorrections={handleApplyMaintenanceCorrections}
       />
 
       {/* Type Config modal */}

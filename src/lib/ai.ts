@@ -14,7 +14,9 @@ import {
   RefineResponseSchema,
   GenerateItemResponseSchema,
   SuggestionsResponseSchema,
+  MaintenanceResponseSchema,
   safeParseAIResponse,
+  type MaintenanceIssue,
 } from '../types/ai';
 import { buildPromptWithContext, type AIOptions } from './ai-context';
 
@@ -417,6 +419,217 @@ export async function suggestImprovements(items: BacklogItem[], options?: AIOpti
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
+    };
+  }
+}
+
+// ============================================================
+// BACKLOG MAINTENANCE
+// ============================================================
+
+export interface BacklogMaintenanceResult {
+  success: boolean;
+  issues: MaintenanceIssue[];
+  correctedMarkdown?: string;
+  summary?: string;
+  error?: string;
+}
+
+const MAINTENANCE_PROMPT = `Tu es un validateur de fichiers Markdown de backlog. Analyse et retourne UNIQUEMENT un JSON valide.
+
+## PROBLÈMES À DÉTECTER:
+
+1. **duplicate_id**: Le MÊME ID exact apparaît 2+ fois (ex: "### BUG-001" deux fois)
+   - NE PAS signaler les groupes "### BUG-005 à BUG-007"
+
+2. **fused_items**: Items/sections collés sans saut de ligne
+   - Ex: "**Effort:** M### CT-002" (### collé)
+   - Ex: "- [ ] Critère## 3." (## collé)
+
+3. **malformed_section**: Section "## X." dupliquée avec même numéro
+
+## NE PAS SIGNALER:
+- Sections vides, groupes d'items, emojis
+- "### Légende", "### Conventions" (sections doc sans ID = normal)
+
+## FICHIER:
+{backlog_content}
+
+## RÉPONSE JSON (RIEN D'AUTRE):
+{"issues":[{"type":"duplicate_id|fused_items|malformed_section","description":"description courte","location":"ligne ou section","suggestion":"correction à faire"}],"correctedMarkdown":"OK","summary":"N problème(s)"}
+
+Si aucun problème: {"issues":[],"correctedMarkdown":"OK","summary":"Aucun problème"}`;
+
+const CORRECTION_PROMPT = `Tu es un correcteur de fichiers Markdown de backlog Ticketflow.
+
+## FORMAT OFFICIEL TICKETFLOW:
+\`\`\`markdown
+# NomProjet - Product Backlog
+
+> Document de référence pour le développement
+> Dernière mise à jour : YYYY-MM-DD
+
+---
+
+## Table des matières
+1. [Bugs](#1-bugs)
+2. [Court Terme](#2-court-terme)
+...
+
+---
+
+## 1. BUGS
+
+### BUG-001 | Titre du bug
+**Composant:** ...
+**Sévérité:** P0-P4 - Description
+**Effort:** XS/S/M/L/XL (description)
+**Description:** ...
+
+**Critères d'acceptation:**
+- [ ] Critère 1
+
+---
+
+## 2. COURT TERME
+
+### CT-001 | Titre feature
+**Module:** ...
+**Priorité:** Haute/Moyenne/Faible
+**Effort:** ...
+**Description:** ...
+
+**User Story:**
+> En tant que..., je veux...
+
+**Critères d'acceptation:**
+- [ ] Critère 1
+
+---
+
+## X. Légende
+
+### Effort
+| Code | Signification | Estimation |
+...
+
+### Sévérité (Bugs)
+...
+
+### Priorité (Features)
+...
+\`\`\`
+
+## PROBLÈMES DÉTECTÉS:
+{issues_list}
+
+## FICHIER À CORRIGER:
+{backlog_content}
+
+## INSTRUCTIONS:
+1. Corrige TOUS les problèmes listés
+2. duplicate_id: renomme le second ID (ex: CT-002 → CT-003, trouve le prochain ID libre)
+3. fused_items: ajoute une ligne vide ET "---" entre les items/sections
+4. malformed_section: renumérote la section dupliquée
+5. GARDE le contenu des tickets INTACT, corrige seulement la structure
+6. Respecte le format officiel ci-dessus
+
+## RÉPONSE:
+Retourne UNIQUEMENT le fichier Markdown corrigé.
+Commence par # et termine par ---.
+Pas de texte avant ni après.`;
+
+export async function analyzeBacklogFormat(
+  markdownContent: string,
+  options?: AIOptions
+): Promise<BacklogMaintenanceResult> {
+  try {
+    // Limit content size to avoid token limits
+    const truncatedContent = markdownContent.length > 50000
+      ? markdownContent.slice(0, 50000) + '\n\n[...contenu tronqué...]'
+      : markdownContent;
+
+    const basePrompt = MAINTENANCE_PROMPT.replace('{backlog_content}', truncatedContent);
+    const prompt = await buildPromptWithContext(basePrompt, options);
+    const text = await generateCompletion(prompt, options?.provider);
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Réponse invalide de l\'IA');
+    }
+
+    const parsed = safeParseAIResponse(jsonMatch[0], MaintenanceResponseSchema);
+    if (!parsed) {
+      throw new Error('Format de réponse IA invalide');
+    }
+
+    return {
+      success: true,
+      issues: parsed.issues,
+      correctedMarkdown: parsed.correctedMarkdown,
+      summary: parsed.summary,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      issues: [],
+      error: error instanceof Error ? error.message : 'Erreur inconnue',
+    };
+  }
+}
+
+/**
+ * Correct a backlog file based on detected issues (2nd AI call)
+ */
+export async function correctBacklogFormat(
+  markdownContent: string,
+  issues: MaintenanceIssue[],
+  options?: AIOptions
+): Promise<{ success: boolean; correctedMarkdown?: string; error?: string }> {
+  try {
+    if (issues.length === 0) {
+      return { success: true, correctedMarkdown: markdownContent };
+    }
+
+    // Build issues list for the prompt
+    const issuesList = issues
+      .map((issue, i) => `${i + 1}. [${issue.type}] ${issue.description} (${issue.location}) → ${issue.suggestion}`)
+      .join('\n');
+
+    const truncatedContent = markdownContent.length > 50000
+      ? markdownContent.slice(0, 50000) + '\n\n[...contenu tronqué...]'
+      : markdownContent;
+
+    const basePrompt = CORRECTION_PROMPT
+      .replace('{issues_list}', issuesList)
+      .replace('{backlog_content}', truncatedContent);
+
+    const prompt = await buildPromptWithContext(basePrompt, options);
+    const text = await generateCompletion(prompt, options?.provider);
+
+    // The response should be the corrected markdown directly
+    // Clean up any potential wrapper text
+    let corrected = text.trim();
+
+    // If wrapped in code block, extract it
+    const codeBlockMatch = corrected.match(/```(?:markdown)?\n?([\s\S]*?)\n?```/);
+    if (codeBlockMatch) {
+      corrected = codeBlockMatch[1].trim();
+    }
+
+    // Validate it looks like a markdown file
+    if (!corrected.startsWith('#')) {
+      throw new Error('Le fichier corrigé ne semble pas valide');
+    }
+
+    return {
+      success: true,
+      correctedMarkdown: corrected,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erreur de correction',
     };
   }
 }

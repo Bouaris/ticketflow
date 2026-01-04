@@ -219,7 +219,7 @@ export function createTypeConfigFromDetected(detectedTypes: string[]): TypeConfi
 
 /**
  * Merge detected types with existing config
- * - Keep existing labels/colors/visible for types that exist in both
+ * - Keep existing labels/colors/visible/ORDER for types that exist in both
  * - Add new types from detected (visible: true by default)
  * - Skip types that user explicitly deleted (in deletedTypes list)
  */
@@ -230,26 +230,34 @@ export function mergeTypesWithDetected(
   const result: TypeDefinition[] = [];
   const deletedTypes = existingConfig?.deletedTypes || [];
 
-  detectedTypes.forEach((typeId, index) => {
+  // Find max existing order to assign to new types
+  const maxExistingOrder = existingConfig?.types.reduce(
+    (max, t) => Math.max(max, t.order),
+    -1
+  ) ?? -1;
+  let nextOrder = maxExistingOrder + 1;
+
+  detectedTypes.forEach((typeId) => {
     // Skip types that user explicitly deleted
     if (deletedTypes.includes(typeId)) {
       return;
     }
 
-    // Check if exists in current config (preserve user customizations including visibility)
+    // Check if exists in current config (preserve ALL user customizations including order)
     const existing = existingConfig?.types.find(t => t.id === typeId);
     if (existing) {
-      result.push({ ...existing, order: index, visible: existing.visible ?? true });
+      // CRITICAL: Preserve existing order, don't override with detection index
+      result.push({ ...existing, visible: existing.visible ?? true });
     } else if (LEGACY_TYPE_MAP[typeId]) {
-      // Use legacy mapping for known types
-      result.push({ ...LEGACY_TYPE_MAP[typeId], order: index, visible: true });
+      // Use legacy mapping for known types, assign next available order
+      result.push({ ...LEGACY_TYPE_MAP[typeId], order: nextOrder++, visible: true });
     } else {
       // Create new type with auto-generated label and color
       result.push({
         id: typeId,
         label: typeId.charAt(0) + typeId.slice(1).toLowerCase(),
-        color: getAutoColor(index),
-        order: index,
+        color: getAutoColor(nextOrder),
+        order: nextOrder++,
         visible: true,
       });
     }
