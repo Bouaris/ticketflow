@@ -4,6 +4,17 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.1.2] - 2026-01-04
+
+### Ajouté
+- Virtual scrolling Kanban pour performance 1000+ items
+- Recherche indexée instantanée (MiniSearch)
+- Système Undo/Redo (Ctrl+Z / Ctrl+Y, 50 états max)
+- Roadmap stratégique 2026
+
+### Corrigé
+- Affichage Kanban: virtualisation conditionnelle (< 15 items = rendu classique)
+
 ## [1.1.1] - 2026-01-04
 
 ### Corrigé

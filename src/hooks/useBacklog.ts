@@ -2,10 +2,12 @@
  * Hook principal pour gérer l'état du backlog.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { parseBacklog, getAllItems } from '../lib/parser';
 import { serializeBacklog, toggleCriterion, updateItem } from '../lib/serializer';
 import { isBacklogItem } from '../types/guards';
+import { getSearchEngine } from '../lib/search';
+
 import type {
   Backlog,
   BacklogItem,
@@ -40,6 +42,12 @@ const DEFAULT_FILTERS: BacklogFilters = {
 // ============================================================
 
 export type ViewMode = 'kanban' | 'list';
+
+// ============================================================
+// HISTORY CONFIG
+// ============================================================
+
+const MAX_HISTORY = 50;
 
 // ============================================================
 // HOOK RETURN TYPE
@@ -80,6 +88,12 @@ export interface UseBacklogReturn {
   deleteItem: (id: string) => void;
   existingIds: string[];
   reset: () => void;
+
+  // History (Undo/Redo)
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
 }
 
 // ============================================================
@@ -93,6 +107,59 @@ export function useBacklog(): UseBacklogReturn {
   const [filters, setFiltersState] = useState<BacklogFilters>(DEFAULT_FILTERS);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [selectedItem, setSelectedItem] = useState<BacklogItem | null>(null);
+
+  // History for undo/redo
+  const [past, setPast] = useState<Backlog[]>([]);
+  const [future, setFuture] = useState<Backlog[]>([]);
+  const isUndoRedoRef = useRef(false); // Flag to skip history push during undo/redo
+
+  // Push current state to history before mutations
+  const pushToHistory = useCallback(() => {
+    if (backlog && !isUndoRedoRef.current) {
+      setPast(prev => {
+        const newPast = [...prev, backlog];
+        return newPast.length > MAX_HISTORY ? newPast.slice(-MAX_HISTORY) : newPast;
+      });
+      setFuture([]); // Clear future on new change
+    }
+  }, [backlog]);
+
+  // Undo: restore previous state
+  const undo = useCallback(() => {
+    if (past.length === 0) return;
+
+    const previous = past[past.length - 1];
+    const newPast = past.slice(0, -1);
+
+    isUndoRedoRef.current = true;
+    setPast(newPast);
+    if (backlog) {
+      setFuture(prev => [backlog, ...prev]);
+    }
+    setBacklog(previous);
+    setSelectedItem(null); // Clear selection on undo
+    isUndoRedoRef.current = false;
+  }, [past, backlog]);
+
+  // Redo: restore next state
+  const redo = useCallback(() => {
+    if (future.length === 0) return;
+
+    const next = future[0];
+    const newFuture = future.slice(1);
+
+    isUndoRedoRef.current = true;
+    setFuture(newFuture);
+    if (backlog) {
+      setPast(prev => [...prev, backlog]);
+    }
+    setBacklog(next);
+    setSelectedItem(null); // Clear selection on redo
+    isUndoRedoRef.current = false;
+  }, [future, backlog]);
+
+  const canUndo = past.length > 0;
+  const canRedo = future.length > 0;
 
   // ============================================================
   // LOAD & SERIALIZE
@@ -191,6 +258,14 @@ export function useBacklog(): UseBacklogReturn {
     return getAllItems(backlog);
   }, [backlog]);
 
+  // Index items for fast search
+  useEffect(() => {
+    if (allItems.length > 0) {
+      const searchEngine = getSearchEngine();
+      searchEngine.indexAll(allItems);
+    }
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     let items = allItems;
 
@@ -214,15 +289,24 @@ export function useBacklog(): UseBacklogReturn {
       items = items.filter(item => item.severity && filters.severities.includes(item.severity));
     }
 
-    // Filter by search
+    // Filter by search (using MiniSearch for fast indexed search)
     if (filters.search.trim()) {
-      const search = filters.search.toLowerCase();
-      items = items.filter(item =>
-        item.id.toLowerCase().includes(search) ||
-        item.title.toLowerCase().includes(search) ||
-        item.description?.toLowerCase().includes(search) ||
-        item.userStory?.toLowerCase().includes(search)
-      );
+      const searchEngine = getSearchEngine();
+      const matchingIds = new Set(searchEngine.search(filters.search));
+
+      // If search engine has results, use them; otherwise fallback to basic search
+      if (matchingIds.size > 0) {
+        items = items.filter(item => matchingIds.has(item.id));
+      } else {
+        // Fallback for edge cases (new items not yet indexed)
+        const search = filters.search.toLowerCase();
+        items = items.filter(item =>
+          item.id.toLowerCase().includes(search) ||
+          item.title.toLowerCase().includes(search) ||
+          item.description?.toLowerCase().includes(search) ||
+          item.userStory?.toLowerCase().includes(search)
+        );
+      }
     }
 
     return items;
@@ -269,6 +353,8 @@ export function useBacklog(): UseBacklogReturn {
   const updateItemById = useCallback((id: string, updates: Partial<BacklogItem>) => {
     if (!backlog) return;
 
+    pushToHistory(); // Save state before mutation
+
     setBacklog(prev => {
       if (!prev) return prev;
 
@@ -289,10 +375,12 @@ export function useBacklog(): UseBacklogReturn {
     if (selectedItem?.id === id) {
       setSelectedItem(prev => prev ? { ...prev, ...updates } as BacklogItem : null);
     }
-  }, [backlog, selectedItem]);
+  }, [backlog, selectedItem, pushToHistory]);
 
   const toggleItemCriterion = useCallback((id: string, criterionIndex: number) => {
     if (!backlog) return;
+
+    pushToHistory(); // Save state before mutation
 
     // Update backlog sections
     setBacklog(prev => {
@@ -317,7 +405,7 @@ export function useBacklog(): UseBacklogReturn {
       if (!prev || prev.id !== id) return prev;
       return toggleCriterion(prev, criterionIndex);
     });
-  }, [backlog]);
+  }, [backlog, pushToHistory]);
 
   // ============================================================
   // ADD ITEM
@@ -325,6 +413,8 @@ export function useBacklog(): UseBacklogReturn {
 
   const addItem = useCallback((newItem: BacklogItem) => {
     if (!backlog) return;
+
+    pushToHistory(); // Save state before mutation
 
     setBacklog(prev => {
       if (!prev) return prev;
@@ -428,7 +518,7 @@ export function useBacklog(): UseBacklogReturn {
 
       return { ...prev, sections: newSections };
     });
-  }, [backlog]);
+  }, [backlog, pushToHistory]);
 
   // ============================================================
   // DELETE ITEM
@@ -436,6 +526,8 @@ export function useBacklog(): UseBacklogReturn {
 
   const deleteItem = useCallback((id: string) => {
     if (!backlog) return;
+
+    pushToHistory(); // Save state before mutation
 
     setBacklog(prev => {
       if (!prev) return prev;
@@ -457,7 +549,7 @@ export function useBacklog(): UseBacklogReturn {
     if (selectedItem?.id === id) {
       setSelectedItem(null);
     }
-  }, [backlog, selectedItem]);
+  }, [backlog, selectedItem, pushToHistory]);
 
   // ============================================================
   // ADD SECTION (for new types)
@@ -465,6 +557,8 @@ export function useBacklog(): UseBacklogReturn {
 
   const addSection = useCallback((typeId: string, label: string) => {
     if (!backlog) return;
+
+    pushToHistory(); // Save state before mutation
 
     setBacklog(prev => {
       if (!prev) return prev;
@@ -591,7 +685,7 @@ export function useBacklog(): UseBacklogReturn {
 
       return { ...prev, sections: newSections, tableOfContents: newToc };
     });
-  }, [backlog]);
+  }, [backlog, pushToHistory]);
 
   // ============================================================
   // SYNC TOC - Synchronize TOC with existing sections
@@ -718,5 +812,11 @@ export function useBacklog(): UseBacklogReturn {
     deleteItem,
     existingIds,
     reset,
+
+    // History (Undo/Redo)
+    canUndo,
+    canRedo,
+    undo,
+    redo,
   };
 }

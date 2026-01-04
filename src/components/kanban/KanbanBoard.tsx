@@ -1,9 +1,11 @@
 /**
  * KanbanBoard component with dynamic columns per item type.
  * Supports drag & drop for reordering columns.
+ * Uses virtual scrolling for performance with large lists.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   DndContext,
   closestCenter,
@@ -25,6 +27,9 @@ import type { TypeDefinition } from '../../types/typeConfig';
 import { KanbanCard } from './KanbanCard';
 import { GripIcon } from '../ui/Icons';
 import { hexToRgba } from '../../lib/utils';
+
+// Only virtualize columns with many items (avoids height estimation issues for small lists)
+const VIRTUALIZATION_THRESHOLD = 15;
 
 interface KanbanBoardProps {
   itemsByType: Record<string, BacklogItem[]>;
@@ -117,6 +122,18 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
     isDragging,
   } = useSortable({ id: type.id });
 
+  // Only virtualize large lists to avoid height estimation issues
+  const shouldVirtualize = items.length > VIRTUALIZATION_THRESHOLD;
+
+  // Virtualizer for card list (only used when shouldVirtualize is true)
+  const parentRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualize ? items.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 180, // Increased estimate for safety margin
+    overscan: 3, // Render 3 extra items above/below
+  });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -136,14 +153,14 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
         backgroundColor: bgColor,
         borderColor: borderColor,
       }}
-      className="flex flex-col w-full sm:w-72 md:w-80 rounded-lg border"
+      className="flex flex-col w-full sm:w-72 md:w-80 rounded-lg border max-h-[calc(100vh-200px)]"
     >
       {/* Header - Draggable */}
       <div
         {...attributes}
         {...listeners}
         style={{ backgroundColor: headerBgColor }}
-        className="px-4 py-3 rounded-t-lg cursor-grab active:cursor-grabbing"
+        className="px-4 py-3 rounded-t-lg cursor-grab active:cursor-grabbing flex-shrink-0"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -155,19 +172,53 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick }: SortableKa
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div ref={parentRef} className="flex-1 overflow-y-auto p-3">
         {items.length === 0 ? (
           <div className="text-center text-gray-400 text-sm py-8">
             Aucun item
           </div>
+        ) : shouldVirtualize ? (
+          // Virtualized rendering for large lists
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = items[virtualRow.index];
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: '12px',
+                  }}
+                >
+                  <KanbanCard
+                    item={item}
+                    onClick={() => onItemClick(item)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         ) : (
-          items.map(item => (
-            <KanbanCard
-              key={item.id}
-              item={item}
-              onClick={() => onItemClick(item)}
-            />
-          ))
+          // Classic rendering for small lists (avoids height estimation issues)
+          <div className="space-y-3">
+            {items.map(item => (
+              <KanbanCard
+                key={item.id}
+                item={item}
+                onClick={() => onItemClick(item)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
