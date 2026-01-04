@@ -1016,13 +1016,13 @@ describe('LabeledProgress', () => {
 
 describe('CheckboxListEditor', () => {
   const mockOnToggle = vi.fn();
-  const mockOnUpdate = vi.fn();
+  const mockOnUpdateText = vi.fn();
   const mockOnAdd = vi.fn();
   const mockOnRemove = vi.fn();
 
   beforeEach(() => {
     mockOnToggle.mockClear();
-    mockOnUpdate.mockClear();
+    mockOnUpdateText.mockClear();
     mockOnAdd.mockClear();
     mockOnRemove.mockClear();
   });
@@ -1036,7 +1036,7 @@ describe('CheckboxListEditor', () => {
           { text: 'Second item', checked: true },
         ]}
         onToggle={mockOnToggle}
-        onUpdate={mockOnUpdate}
+        onUpdateText={mockOnUpdateText}
         onAdd={mockOnAdd}
         onRemove={mockOnRemove}
       />
@@ -1051,7 +1051,7 @@ describe('CheckboxListEditor', () => {
         label="Criteria"
         items={[{ text: 'Test item', checked: false }]}
         onToggle={mockOnToggle}
-        onUpdate={mockOnUpdate}
+        onUpdateText={mockOnUpdateText}
         onAdd={mockOnAdd}
         onRemove={mockOnRemove}
       />
