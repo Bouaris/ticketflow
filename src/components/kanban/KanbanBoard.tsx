@@ -287,6 +287,7 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
                 onToggleWidth();
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              aria-label={isDouble ? 'Réduire la colonne à 1 carte' : 'Élargir la colonne à 2 cartes'}
               className={`
                 px-1.5 py-0.5 text-[10px] font-medium rounded
                 transition-all duration-150 ease-out

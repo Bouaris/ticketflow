@@ -17,13 +17,13 @@ import type {
 import type { TypeDefinition } from '../../types/typeConfig';
 import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from '../../constants/labels';
 import { refineItem, hasApiKey, generateItemFromDescription, getProvider, type AIProvider } from '../../lib/ai';
-import { ProviderToggle, getProviderLabel } from '../ui/ProviderToggle';
+import { getProviderLabel } from '../ui/ProviderToggle';
 import { extractImageFromClipboard } from '../../lib/screenshots';
 import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } from '../ui/Icons';
 import { ListEditor } from '../ui/ListEditor';
 import { Spinner } from '../ui/Spinner';
 import { ScreenshotEditor } from './ScreenshotEditor';
-import { AIContextIndicator } from '../ui/AIContextIndicator';
+import { AIGenerationMode } from './AIGenerationMode';
 
 // ============================================================
 // TYPES
@@ -531,127 +531,25 @@ export function ItemEditorModal({
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           {/* AI Mode */}
           {aiMode && (
-            <div className="max-w-2xl mx-auto py-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                  <SparklesIcon className="text-white w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Décrivez votre idée
-                </h3>
-                <p className="text-sm text-gray-500">
-                  L'IA va analyser votre description et générer un ticket complet avec titre, user story, specs et critères d'acceptation.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {/* Provider Toggle + Context Indicator */}
-                <div className="flex items-center justify-center gap-3">
-                  <ProviderToggle
-                    value={selectedProvider}
-                    onChange={setSelectedProvider}
-                    size="md"
-                  />
-                  {projectPath && <AIContextIndicator projectPath={projectPath} />}
-                </div>
-
-                <textarea
-                  value={aiPrompt}
-                  onChange={e => setAiPrompt(e.target.value)}
-                  placeholder="Ex: Je voudrais ajouter un bouton pour exporter les données en PDF. L'utilisateur doit pouvoir choisir les colonnes à inclure et le format (portrait/paysage)..."
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-gray-900 placeholder:text-gray-400"
-                  autoFocus
-                />
-
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setAiMode(false)}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
-                  >
-                    Créer manuellement
-                  </button>
-
-                  <button
-                    onClick={handleGenerateFromAI}
-                    disabled={isGenerating || !aiPrompt.trim()}
-                    className={`px-6 py-3 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-lg ${
-                      selectedProvider === 'groq'
-                        ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-orange-500/25'
-                        : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/25'
-                    }`}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Spinner size="sm" color="white" />
-                        Génération en cours...
-                      </>
-                    ) : (
-                      <>
-                        <SparklesIcon />
-                        Générer avec {getProviderLabel(selectedProvider)}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Screenshots in AI mode */}
-              {form.screenshots.length > 0 && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <CameraIcon />
-                      Captures jointes
-                      <span className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded">
-                        {form.screenshots.length}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {form.screenshots.map((screenshot) => (
-                      <AiModeScreenshotThumb
-                        key={screenshot.filename}
-                        screenshot={screenshot}
-                        getUrl={screenshotOps?.getUrl}
-                        onRemove={() => {
-                          screenshotOps?.deleteFile(screenshot.filename);
-                          setForm(f => ({
-                            ...f,
-                            screenshots: f.screenshots.filter(s => s.filename !== screenshot.filename),
-                          }));
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Paste hint */}
-              <p className="mt-4 text-xs text-center text-gray-400">
-                Astuce: Collez une capture d'écran (CTRL+V) pour l'ajouter
-              </p>
-
-              {/* Examples */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Exemples</p>
-                <div className="grid gap-2">
-                  {[
-                    'Bug: Le bouton de sauvegarde ne fonctionne pas sur Safari',
-                    'Feature: Ajouter un mode sombre à l\'interface',
-                    'API: Intégrer l\'endpoint de synchronisation externe',
-                  ].map((example, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setAiPrompt(example)}
-                      className="text-left px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <AIGenerationMode
+              prompt={aiPrompt}
+              onPromptChange={setAiPrompt}
+              provider={selectedProvider}
+              onProviderChange={setSelectedProvider}
+              isGenerating={isGenerating}
+              onGenerate={handleGenerateFromAI}
+              onSwitchToManual={() => setAiMode(false)}
+              projectPath={projectPath}
+              screenshots={form.screenshots}
+              getScreenshotUrl={screenshotOps?.getUrl}
+              onRemoveScreenshot={(filename) => {
+                screenshotOps?.deleteFile(filename);
+                setForm(f => ({
+                  ...f,
+                  screenshots: f.screenshots.filter(s => s.filename !== filename),
+                }));
+              }}
+            />
           )}
 
           {/* General Tab */}
@@ -983,65 +881,5 @@ export function ItemEditorModal({
         )}
       </div>
     </>
-  );
-}
-
-
-// ============================================================
-// AI MODE SCREENSHOT THUMBNAIL
-// ============================================================
-
-interface AiModeScreenshotThumbProps {
-  screenshot: Screenshot;
-  getUrl?: (filename: string) => Promise<string | null>;
-  onRemove: () => void;
-}
-
-function AiModeScreenshotThumb({ screenshot, getUrl, onRemove }: AiModeScreenshotThumbProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!getUrl) return;
-
-    let mounted = true;
-    getUrl(screenshot.filename).then(url => {
-      if (mounted && url) {
-        setThumbnailUrl(url);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      if (thumbnailUrl) {
-        URL.revokeObjectURL(thumbnailUrl);
-      }
-    };
-  }, [screenshot.filename, getUrl]);
-
-  return (
-    <div className="relative group aspect-video bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-      {thumbnailUrl ? (
-        <img
-          src={thumbnailUrl}
-          alt={screenshot.alt || screenshot.filename}
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Delete button */}
-      <button
-        onClick={onRemove}
-        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
-        title="Supprimer"
-      >
-        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
   );
 }

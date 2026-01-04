@@ -6,6 +6,8 @@ import { useState } from 'react';
 import type { BacklogItem } from '../../types/backlog';
 import { PRIORITY_LABELS } from '../../constants/labels';
 import { ItemBadge } from '../shared/ItemBadge';
+import { CriteriaProgress } from '../ui/Progress';
+import { CameraIcon } from '../ui/Icons';
 
 interface ListViewProps {
   items: BacklogItem[];
@@ -164,7 +166,11 @@ export function ListView({ items, onItemClick }: ListViewProps) {
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
                 {item.criteria && item.criteria.length > 0 && (
-                  <CriteriaProgress criteria={item.criteria} />
+                  <CriteriaProgress
+                    completed={item.criteria.filter(c => c.checked).length}
+                    total={item.criteria.length}
+                    size="sm"
+                  />
                 )}
               </td>
             </tr>
@@ -172,43 +178,5 @@ export function ListView({ items, onItemClick }: ListViewProps) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-// ============================================================
-// CRITERIA PROGRESS
-// ============================================================
-
-function CriteriaProgress({ criteria }: { criteria: { checked: boolean }[] }) {
-  const completed = criteria.filter(c => c.checked).length;
-  const total = criteria.length;
-  const percentage = Math.round((completed / total) * 100);
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full ${
-            percentage === 100 ? 'bg-green-500' :
-            percentage >= 50 ? 'bg-amber-500' :
-            'bg-gray-400'
-          }`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <span className="text-xs text-gray-500">{completed}/{total}</span>
-    </div>
-  );
-}
-
-// Camera icon for screenshot indicator
-function CameraIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
   );
 }

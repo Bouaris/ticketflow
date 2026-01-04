@@ -12,6 +12,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Screenshot } from '../../types/backlog';
 import { extractImageFromClipboard, isValidImageFile } from '../../lib/screenshots';
+import {
+  ImageIcon,
+  UploadIcon,
+  CloseIcon,
+  FolderIcon,
+  FolderOpenIcon,
+} from '../ui/Icons';
 
 // ============================================================
 // TYPES
@@ -233,6 +240,7 @@ export function ScreenshotEditor({
             <button
               onClick={onRequestAccess}
               disabled={isProcessing}
+              aria-label="Autoriser l'accès au dossier"
               className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
             >
               {isProcessing ? (
@@ -290,6 +298,7 @@ export function ScreenshotEditor({
         <button
           onClick={handleImportClick}
           disabled={!isReady || isProcessing}
+          aria-label="Importer des captures d'écran"
           className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <UploadIcon className="w-4 h-4" />
@@ -320,6 +329,7 @@ export function ScreenshotEditor({
               {/* Delete overlay */}
               <button
                 onClick={() => handleRemove(screenshot.filename)}
+                aria-label="Supprimer la capture"
                 className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
                 title="Supprimer"
               >
@@ -361,98 +371,8 @@ export function ScreenshotEditor({
 }
 
 // ============================================================
-// ICONS
+// LOADING SPINNER
 // ============================================================
-
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className || 'w-5 h-5'}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-      />
-    </svg>
-  );
-}
-
-function UploadIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className || 'w-5 h-5'}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-      />
-    </svg>
-  );
-}
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className || 'w-5 h-5'}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M6 18L18 6M6 6l12 12"
-      />
-    </svg>
-  );
-}
-
-function FolderIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className || 'w-5 h-5'}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-      />
-    </svg>
-  );
-}
-
-function FolderOpenIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className || 'w-5 h-5'}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
-      />
-    </svg>
-  );
-}
 
 function LoadingSpinner() {
   return (

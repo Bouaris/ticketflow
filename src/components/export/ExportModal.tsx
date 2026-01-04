@@ -41,12 +41,14 @@ export function ExportModal({ isOpen, onClose, content, itemId }: ExportModalPro
     <ModalFooter>
       <button
         onClick={onClose}
+        aria-label="Fermer la fenêtre d'export"
         className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors"
       >
         Fermer
       </button>
       <button
         onClick={handleCopy}
+        aria-label={copied ? 'Contenu copié' : 'Copier dans le presse-papier'}
         className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
           copied
             ? 'bg-green-600 text-white'

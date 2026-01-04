@@ -2,11 +2,13 @@
  * Hook principal pour gérer l'état du backlog.
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { parseBacklog, getAllItems } from '../lib/parser';
 import { serializeBacklog, toggleCriterion, updateItem } from '../lib/serializer';
 import { isBacklogItem } from '../types/guards';
 import { getSearchEngine } from '../lib/search';
+import { useBacklogHistory } from './useBacklogHistory';
+import { findTargetSectionIndex, generateItemId, TYPE_TO_SECTION_LABELS } from '../lib/itemPlacement';
 
 import type {
   Backlog,
@@ -43,11 +45,6 @@ const DEFAULT_FILTERS: BacklogFilters = {
 
 export type ViewMode = 'kanban' | 'list';
 
-// ============================================================
-// HISTORY CONFIG
-// ============================================================
-
-const MAX_HISTORY = 50;
 
 // ============================================================
 // HOOK RETURN TYPE
@@ -110,58 +107,25 @@ export function useBacklog(): UseBacklogReturn {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [selectedItem, setSelectedItem] = useState<BacklogItem | null>(null);
 
-  // History for undo/redo
-  const [past, setPast] = useState<Backlog[]>([]);
-  const [future, setFuture] = useState<Backlog[]>([]);
-  const isUndoRedoRef = useRef(false); // Flag to skip history push during undo/redo
+  // History for undo/redo (extracted hook)
+  const history = useBacklogHistory();
 
-  // Push current state to history before mutations
-  const pushToHistory = useCallback(() => {
-    if (backlog && !isUndoRedoRef.current) {
-      setPast(prev => {
-        const newPast = [...prev, backlog];
-        return newPast.length > MAX_HISTORY ? newPast.slice(-MAX_HISTORY) : newPast;
-      });
-      setFuture([]); // Clear future on new change
-    }
-  }, [backlog]);
-
-  // Undo: restore previous state
+  // Wrapper for undo that clears selection
   const undo = useCallback(() => {
-    if (past.length === 0) return;
+    history.undo(backlog, setBacklog);
+    setSelectedItem(null);
+  }, [backlog, history]);
 
-    const previous = past[past.length - 1];
-    const newPast = past.slice(0, -1);
-
-    isUndoRedoRef.current = true;
-    setPast(newPast);
-    if (backlog) {
-      setFuture(prev => [backlog, ...prev]);
-    }
-    setBacklog(previous);
-    setSelectedItem(null); // Clear selection on undo
-    isUndoRedoRef.current = false;
-  }, [past, backlog]);
-
-  // Redo: restore next state
+  // Wrapper for redo that clears selection
   const redo = useCallback(() => {
-    if (future.length === 0) return;
+    history.redo(backlog, setBacklog);
+    setSelectedItem(null);
+  }, [backlog, history]);
 
-    const next = future[0];
-    const newFuture = future.slice(1);
-
-    isUndoRedoRef.current = true;
-    setFuture(newFuture);
-    if (backlog) {
-      setPast(prev => [...prev, backlog]);
-    }
-    setBacklog(next);
-    setSelectedItem(null); // Clear selection on redo
-    isUndoRedoRef.current = false;
-  }, [future, backlog]);
-
-  const canUndo = past.length > 0;
-  const canRedo = future.length > 0;
+  // Push to history before mutations
+  const pushToHistory = useCallback(() => {
+    history.pushToHistory(backlog);
+  }, [backlog, history]);
 
   // ============================================================
   // LOAD & SERIALIZE
@@ -416,7 +380,7 @@ export function useBacklog(): UseBacklogReturn {
   const addItem = useCallback((newItem: BacklogItem) => {
     if (!backlog) return;
 
-    pushToHistory(); // Save state before mutation
+    pushToHistory();
 
     setBacklog(prev => {
       if (!prev) return prev;
@@ -432,88 +396,12 @@ export function useBacklog(): UseBacklogReturn {
         return { ...prev, sections: [defaultSection] };
       }
 
-      // Find the right section using multi-strategy approach
-      let targetSectionIndex = -1;
-
-      // Strategy 1: Find section with existing items of same type
-      for (let i = 0; i < prev.sections.length; i++) {
-        const section = prev.sections[i];
-        const hasMatchingType = section.items.some(item =>
-          isBacklogItem(item) && item.type === newItem.type
-        );
-        if (hasMatchingType) {
-          targetSectionIndex = i;
-          break;
-        }
-      }
-
-      // Strategy 2: Match section by title/label (for NEW types with no existing items)
-      if (targetSectionIndex === -1) {
-        const TYPE_LABEL_MAP: Record<string, string[]> = {
-          'BUG': ['BUGS', 'BUG'],
-          'CT': ['COURT TERME', 'CT', 'COURT-TERME'],
-          'LT': ['LONG TERME', 'LT', 'LONG-TERME'],
-          'AUTRE': ['AUTRES', 'AUTRE', 'IDÉES', 'IDEES', 'AUTRES IDÉES'],
-          'TEST': ['TESTS', 'TEST'],
-          'DFA': ['DADA', 'DFA'],
-        };
-        const matchLabels = TYPE_LABEL_MAP[newItem.type] || [newItem.type];
-
-        for (let i = 0; i < prev.sections.length; i++) {
-          const section = prev.sections[i];
-          const titleUpper = section.title.toUpperCase();
-          if (matchLabels.some(label => titleUpper.includes(label))) {
-            targetSectionIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Strategy 3: Check for HTML comment marker <!-- Type: X -->
-      if (targetSectionIndex === -1) {
-        for (let i = 0; i < prev.sections.length; i++) {
-          const section = prev.sections[i];
-          // Check if any item in section has type marker in rawMarkdown
-          const hasTypeMarker = section.items.some(item => {
-            if ('rawMarkdown' in item) {
-              const marker = `<!-- Type: ${newItem.type} -->`;
-              return item.rawMarkdown.includes(marker);
-            }
-            return false;
-          });
-          if (hasTypeMarker) {
-            targetSectionIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Strategy 4: Fallback to first non-raw section
-      if (targetSectionIndex === -1) {
-        for (let i = 0; i < prev.sections.length; i++) {
-          const section = prev.sections[i];
-          const isRawSection = section.items.length > 0 &&
-            section.items[0] &&
-            'type' in section.items[0] &&
-            section.items[0].type === 'raw-section';
-          if (!isRawSection) {
-            targetSectionIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Ultimate fallback: section 0
-      if (targetSectionIndex === -1) {
-        targetSectionIndex = 0;
-      }
+      // Use centralized placement logic
+      const targetSectionIndex = findTargetSectionIndex(prev.sections, newItem.type);
 
       const newSections = prev.sections.map((section, index) => {
         if (index === targetSectionIndex) {
-          return {
-            ...section,
-            items: [...section.items, newItem],
-          };
+          return { ...section, items: [...section.items, newItem] };
         }
         return section;
       });
@@ -560,109 +448,39 @@ export function useBacklog(): UseBacklogReturn {
   const moveItemToType = useCallback((itemId: string, targetType: ItemType) => {
     if (!backlog) return;
 
-    // Find the item
     const item = allItems.find(i => i.id === itemId);
     if (!item || item.type === targetType) return;
 
-    pushToHistory(); // Save state before mutation
+    pushToHistory();
 
-    // Generate new ID for target type (compute from allItems to avoid circular dependency)
-    const allIds = allItems.map(i => i.id);
-    const prefix = targetType;
-    const existingNumbers = allIds
-      .filter(id => id.startsWith(prefix + '-'))
-      .map(id => parseInt(id.split('-')[1], 10))
-      .filter(n => !isNaN(n));
-    const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
-    const newId = `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`;
+    // Generate new ID using centralized logic
+    const newId = generateItemId(allItems.map(i => i.id), targetType);
 
-    // Create modified item with new type and ID (use item found above, not from callback)
     const movedItem: BacklogItem = {
       ...item,
       id: newId,
       type: targetType,
-      rawMarkdown: '', // Will be rebuilt by serializer
+      rawMarkdown: '',
       _modified: true,
     } as BacklogItem & { _modified: boolean };
 
     setBacklog(prev => {
       if (!prev) return prev;
 
-      // 1. Remove item from original section
+      // Remove item from original section
       const sectionsWithoutItem = prev.sections.map(section => ({
         ...section,
-        items: section.items.filter(sItem => {
-          if (isBacklogItem(sItem) && sItem.id === itemId) {
-            return false;
-          }
-          return true;
-        }),
+        items: section.items.filter(sItem =>
+          !(isBacklogItem(sItem) && sItem.id === itemId)
+        ),
       }));
 
-      // 3. Find target section for new type
-      // Strategy 1: Find section with existing items of same type
-      let targetSectionIndex = sectionsWithoutItem.findIndex(section =>
-        section.items.some(sItem => isBacklogItem(sItem) && sItem.type === targetType)
-      );
+      // Use centralized placement logic
+      const targetSectionIndex = findTargetSectionIndex(sectionsWithoutItem, targetType);
 
-      // Strategy 2: Match section by title/label
-      if (targetSectionIndex === -1) {
-        const TYPE_LABEL_MAP: Record<string, string[]> = {
-          'BUG': ['BUGS', 'BUG'],
-          'CT': ['COURT TERME', 'CT', 'COURT-TERME'],
-          'LT': ['LONG TERME', 'LT', 'LONG-TERME'],
-          'AUTRE': ['AUTRES', 'AUTRE', 'IDÉES', 'IDEES', 'AUTRES IDÉES'],
-          'TEST': ['TESTS', 'TEST'],
-          'DFA': ['DADA', 'DFA'],
-        };
-        const matchLabels = TYPE_LABEL_MAP[targetType] || [targetType];
-
-        targetSectionIndex = sectionsWithoutItem.findIndex(section => {
-          const titleUpper = section.title.toUpperCase();
-          return matchLabels.some(label => titleUpper.includes(label));
-        });
-      }
-
-      // Strategy 3: Check for HTML comment marker
-      if (targetSectionIndex === -1) {
-        targetSectionIndex = sectionsWithoutItem.findIndex(section =>
-          section.items.some(sItem => {
-            if ('rawMarkdown' in sItem) {
-              const marker = `<!-- Type: ${targetType} -->`;
-              return sItem.rawMarkdown.includes(marker);
-            }
-            return false;
-          })
-        );
-      }
-
-      // Fallback: first non-raw section
-      if (targetSectionIndex === -1) {
-        for (let i = 0; i < sectionsWithoutItem.length; i++) {
-          const section = sectionsWithoutItem[i];
-          const isRawSection = section.items.length > 0 &&
-            section.items[0] &&
-            'type' in section.items[0] &&
-            section.items[0].type === 'raw-section';
-          if (!isRawSection) {
-            targetSectionIndex = i;
-            break;
-          }
-        }
-      }
-
-      // Ultimate fallback: section 0
-      if (targetSectionIndex === -1) {
-        targetSectionIndex = 0;
-      }
-
-      // 4. Add item to target section
       const newSections = sectionsWithoutItem.map((section, index) => {
         if (index === targetSectionIndex) {
-          return {
-            ...section,
-            items: [...section.items, movedItem],
-          };
+          return { ...section, items: [...section.items, movedItem] };
         }
         return section;
       });
@@ -670,7 +488,6 @@ export function useBacklog(): UseBacklogReturn {
       return { ...prev, sections: newSections };
     });
 
-    // Clear selection after move
     setSelectedItem(null);
   }, [backlog, allItems, pushToHistory]);
 
@@ -823,17 +640,7 @@ export function useBacklog(): UseBacklogReturn {
       if (!prev) return prev;
 
       const typeIdUpper = typeId.toUpperCase();
-
-      // Mapping of type IDs to possible section labels
-      const TYPE_TO_LABELS: Record<string, string[]> = {
-        'BUG': ['BUGS', 'BUG'],
-        'CT': ['COURT TERME', 'COURT-TERME', 'CT'],
-        'LT': ['LONG TERME', 'LONG-TERME', 'LT'],
-        'AUTRE': ['AUTRES IDÉES', 'AUTRES IDEES', 'AUTRES', 'AUTRE'],
-        'TEST': ['TESTS', 'TEST'],
-      };
-
-      const possibleLabels = TYPE_TO_LABELS[typeIdUpper] || [typeIdUpper, typeId.replace(/_/g, ' ')];
+      const possibleLabels = TYPE_TO_SECTION_LABELS[typeIdUpper] || [typeIdUpper, typeId.replace(/_/g, ' ')];
 
       // Find section to remove
       const sectionIndex = prev.sections.findIndex(s => {
@@ -1014,8 +821,8 @@ export function useBacklog(): UseBacklogReturn {
     reset,
 
     // History (Undo/Redo)
-    canUndo,
-    canRedo,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
     undo,
     redo,
   };

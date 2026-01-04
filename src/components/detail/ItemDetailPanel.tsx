@@ -6,7 +6,15 @@ import { useEffect, useRef } from 'react';
 import type { BacklogItem } from '../../types/backlog';
 import { ItemBadge, SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 import { ScreenshotGallery } from './ScreenshotGallery';
-import { SparklesIcon } from '../ui/Icons';
+import {
+  SparklesIcon,
+  CloseIcon,
+  EditIcon,
+  TrashIcon,
+  ArchiveIcon,
+  CheckCircleIcon,
+  ExportIcon,
+} from '../ui/Icons';
 
 interface ItemDetailPanelProps {
   item: BacklogItem | null;
@@ -83,8 +91,9 @@ export function ItemDetailPanel({
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              aria-label="Fermer le panneau"
             >
-              <CloseIcon />
+              <CloseIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -217,7 +226,7 @@ export function ItemDetailPanel({
           {/* Completion indicator */}
           {item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked) && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircleIcon />
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
               <span className="text-sm font-medium text-green-700">
                 Item complété à 100%
               </span>
@@ -229,9 +238,10 @@ export function ItemDetailPanel({
             {onEdit && (
               <button
                 onClick={() => onEdit(item)}
+                aria-label="Éditer cet item"
                 className="flex-1 py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
               >
-                <EditIcon />
+                <EditIcon className="w-4 h-4" />
                 Éditer
               </button>
             )}
@@ -240,8 +250,9 @@ export function ItemDetailPanel({
                 onClick={() => onArchive(item)}
                 className="py-2.5 px-4 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-all flex items-center justify-center gap-2"
                 title="Archiver cet item"
+                aria-label="Archiver cet item"
               >
-                <ArchiveIcon />
+                <ArchiveIcon className="w-4 h-4" />
               </button>
             )}
             {(onDeleteRequest || onDelete) && (
@@ -255,8 +266,9 @@ export function ItemDetailPanel({
                 }}
                 className="py-2.5 px-4 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-all flex items-center justify-center gap-2"
                 title="Supprimer cet item"
+                aria-label="Supprimer cet item"
               >
-                <TrashIcon />
+                <TrashIcon className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -265,6 +277,7 @@ export function ItemDetailPanel({
           {onRefineWithAI && (
             <button
               onClick={() => onRefineWithAI(item)}
+              aria-label="Affiner avec l'IA"
               className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
             >
               <SparklesIcon className="w-5 h-5" />
@@ -276,24 +289,16 @@ export function ItemDetailPanel({
           {onExport && (
             <button
               onClick={() => onExport(item)}
+              aria-label="Exporter le ticket"
               className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 font-medium rounded-lg hover:bg-teal-200 transition-all flex items-center justify-center gap-2"
             >
-              <ExportIcon />
+              <ExportIcon className="w-4 h-4" />
               Exporter le ticket
             </button>
           )}
         </div>
       </div>
 
-      <style>{`
-        @keyframes slide-in {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.2s ease-out;
-        }
-      `}</style>
     </>
   );
 }
@@ -342,62 +347,5 @@ function CriteriaProgress({ criteria }: { criteria: { checked: boolean }[] }) {
         {completed} sur {total} critères complétés
       </div>
     </div>
-  );
-}
-
-// ============================================================
-// ICONS
-// ============================================================
-
-function CloseIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function EditIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-  );
-}
-
-function ArchiveIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-    </svg>
-  );
-}
-
-function CheckCircleIcon() {
-  return (
-    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
-
-function ExportIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-    </svg>
   );
 }

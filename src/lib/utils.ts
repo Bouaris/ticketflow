@@ -5,6 +5,59 @@
  */
 
 // ============================================================
+// FUNCTION UTILITIES
+// ============================================================
+
+/**
+ * Creates a throttled function that only invokes the provided function at most once per wait period.
+ * Unlike debounce, throttle guarantees the function executes at regular intervals.
+ *
+ * @param fn The function to throttle
+ * @param wait Minimum time between invocations in milliseconds
+ * @returns Throttled function
+ */
+export function throttle<T extends (...args: Parameters<T>) => ReturnType<T>>(
+  fn: T,
+  wait: number
+): (...args: Parameters<T>) => ReturnType<T> | undefined {
+  let lastCall = 0;
+
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      return fn(...args);
+    }
+    return undefined;
+  };
+}
+
+/**
+ * Creates a debounced function that delays invoking the provided function until after
+ * wait milliseconds have elapsed since the last time it was invoked.
+ *
+ * @param fn The function to debounce
+ * @param wait Delay in milliseconds
+ * @returns Debounced function
+ */
+export function debounce<T extends (...args: Parameters<T>) => void>(
+  fn: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  return (...args: Parameters<T>) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      fn(...args);
+      timeoutId = null;
+    }, wait);
+  };
+}
+
+// ============================================================
 // COLOR UTILITIES
 // ============================================================
 

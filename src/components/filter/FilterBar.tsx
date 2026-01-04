@@ -6,6 +6,7 @@ import type { BacklogFilters } from '../../hooks/useBacklog';
 import type { Priority, Effort, Severity } from '../../types/backlog';
 import { PRIORITY_LABELS, SEVERITY_LABELS } from '../../constants/labels';
 import type { TypeDefinition } from '../../types/typeConfig';
+import { SearchIcon, ChevronDownIcon } from '../ui/Icons';
 
 interface FilterBarProps {
   filters: BacklogFilters;
@@ -95,6 +96,7 @@ export function FilterBar({
           {hasActiveFilters && (
             <button
               onClick={onReset}
+              aria-label="Réinitialiser les filtres"
               className="text-sm text-gray-500 hover:text-gray-700 underline"
             >
               Réinitialiser
@@ -125,6 +127,8 @@ function TypeVisibilityDropdown({ types, onToggle }: TypeVisibilityDropdownProps
   return (
     <div className="relative group">
       <button
+        aria-label="Filtrer par type"
+        aria-haspopup="true"
         className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
           hasHidden
             ? 'bg-blue-50 border-blue-200 text-blue-700'
@@ -190,6 +194,8 @@ function FilterDropdown({ label, options, selected, onChange }: FilterDropdownPr
   return (
     <div className="relative group">
       <button
+        aria-label={`Filtrer par ${label.toLowerCase()}`}
+        aria-haspopup="true"
         className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
           isActive
             ? 'bg-blue-50 border-blue-200 text-blue-700'
@@ -227,26 +233,5 @@ function FilterDropdown({ label, options, selected, onChange }: FilterDropdownPr
         </div>
       </div>
     </div>
-  );
-}
-
-// ============================================================
-// ICONS
-// ============================================================
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
   );
 }

@@ -7,6 +7,7 @@
 import type { ItemType, Severity, Priority, Effort } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_SHORT_LABELS } from '../../constants/labels';
+import { TYPE_COLORS } from '../../constants/colors';
 import { hexToRgba } from '../../lib/utils';
 
 // ============================================================
@@ -22,24 +23,13 @@ interface ItemBadgeProps {
   size?: 'sm' | 'md';
 }
 
-/**
- * Legacy color mapping for backward compatibility.
- * Used when no TypeConfig is provided.
- */
-const LEGACY_TYPE_COLORS: Record<string, string> = {
-  BUG: '#ef4444',
-  CT: '#3b82f6',
-  LT: '#8b5cf6',
-  AUTRE: '#6b7280',
-};
-
 export function ItemBadge({ type, typeConfig, size = 'md' }: ItemBadgeProps) {
   const sizeClasses = size === 'sm'
     ? 'text-xs px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
-  // Use dynamic color from typeConfig, fallback to legacy
-  const color = typeConfig?.color || LEGACY_TYPE_COLORS[type] || '#6b7280';
+  // Use dynamic color from typeConfig, fallback to TYPE_COLORS constant
+  const color = typeConfig?.color || TYPE_COLORS[type as keyof typeof TYPE_COLORS] || '#6b7280';
   const label = typeConfig?.label || type;
 
   // Calculate rgba background from hex
