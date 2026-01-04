@@ -23,6 +23,7 @@ import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } fr
 import { ListEditor } from '../ui/ListEditor';
 import { Spinner } from '../ui/Spinner';
 import { ScreenshotEditor } from './ScreenshotEditor';
+import { AIContextIndicator } from '../ui/AIContextIndicator';
 
 // ============================================================
 // TYPES
@@ -68,6 +69,7 @@ interface ItemEditorModalProps {
   existingIds: string[];
   screenshotOps?: ScreenshotOperations;
   types: TypeDefinition[];
+  projectPath?: string;
 }
 
 // ============================================================
@@ -118,6 +120,7 @@ export function ItemEditorModal({
   existingIds,
   screenshotOps,
   types,
+  projectPath,
 }: ItemEditorModalProps) {
   const isNew = !item;
   const [form, setForm] = useState<ItemFormData>(createEmptyForm());
@@ -275,7 +278,10 @@ export function ItemEditorModal({
       sectionIndex: 0,
     };
 
-    const result = await refineItem(tempItem, selectedProvider);
+    const result = await refineItem(tempItem, {
+      provider: selectedProvider,
+      projectPath,
+    });
     setIsRefining(false);
 
     if (result.success && result.refinedItem) {
@@ -309,7 +315,10 @@ export function ItemEditorModal({
 
     setIsGenerating(true);
 
-    const result = await generateItemFromDescription(aiPrompt, selectedProvider);
+    const result = await generateItemFromDescription(aiPrompt, {
+      provider: selectedProvider,
+      projectPath,
+    });
     setIsGenerating(false);
 
     if (result.success && result.item) {
@@ -536,13 +545,14 @@ export function ItemEditorModal({
               </div>
 
               <div className="space-y-4">
-                {/* Provider Toggle */}
-                <div className="flex justify-center">
+                {/* Provider Toggle + Context Indicator */}
+                <div className="flex items-center justify-center gap-3">
                   <ProviderToggle
                     value={selectedProvider}
                     onChange={setSelectedProvider}
                     size="md"
                   />
+                  {projectPath && <AIContextIndicator projectPath={projectPath} />}
                 </div>
 
                 <textarea

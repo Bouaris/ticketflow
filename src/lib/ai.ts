@@ -16,6 +16,10 @@ import {
   SuggestionsResponseSchema,
   safeParseAIResponse,
 } from '../types/ai';
+import { buildPromptWithContext, type AIOptions } from './ai-context';
+
+// Re-export for consumers
+export type { AIOptions } from './ai-context';
 
 // ============================================================
 // TYPES
@@ -174,9 +178,9 @@ RÉPONDS EN JSON avec ce format exact:
 
 Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
 
-export async function refineItem(item: BacklogItem, provider?: AIProvider): Promise<RefinementResult> {
+export async function refineItem(item: BacklogItem, options?: AIOptions): Promise<RefinementResult> {
   try {
-    let prompt = REFINE_PROMPT
+    let basePrompt = REFINE_PROMPT
       .replace('{id}', item.id)
       .replace('{type}', item.type)
       .replace('{title}', item.title);
@@ -190,13 +194,14 @@ export async function refineItem(item: BacklogItem, provider?: AIProvider): Prom
       ? `Critères d'acceptation:\n${item.criteria.map(c => `- [${c.checked ? 'x' : ' '}] ${c.text}`).join('\n')}`
       : '';
 
-    prompt = prompt
+    basePrompt = basePrompt
       .replace('{description_section}', descSection)
       .replace('{user_story_section}', userStorySection)
       .replace('{specs_section}', specsSection)
       .replace('{criteria_section}', criteriaSection);
 
-    const text = await generateCompletion(prompt, provider);
+    const prompt = await buildPromptWithContext(basePrompt, options);
+    const text = await generateCompletion(prompt, options?.provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -319,10 +324,11 @@ RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
   "emoji": "🐛|🚀|⚡|🔒|🎨|📦|🔧"
 }`;
 
-export async function generateItemFromDescription(description: string, provider?: AIProvider): Promise<GenerateItemResult> {
+export async function generateItemFromDescription(description: string, options?: AIOptions): Promise<GenerateItemResult> {
   try {
-    const prompt = GENERATE_ITEM_PROMPT.replace('{user_description}', description);
-    const text = await generateCompletion(prompt, provider);
+    const basePrompt = GENERATE_ITEM_PROMPT.replace('{user_description}', description);
+    const prompt = await buildPromptWithContext(basePrompt, options);
+    const text = await generateCompletion(prompt, options?.provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -382,15 +388,16 @@ Réponds en JSON:
   ]
 }`;
 
-export async function suggestImprovements(items: BacklogItem[], provider?: AIProvider): Promise<RefinementResult> {
+export async function suggestImprovements(items: BacklogItem[], options?: AIOptions): Promise<RefinementResult> {
   try {
     const itemsList = items
       .slice(0, 20)
       .map(item => `- ${item.id}: ${item.title} (${item.type}, ${item.priority || 'N/A'})`)
       .join('\n');
 
-    const prompt = BULK_SUGGEST_PROMPT.replace('{items_list}', itemsList);
-    const text = await generateCompletion(prompt, provider);
+    const basePrompt = BULK_SUGGEST_PROMPT.replace('{items_list}', itemsList);
+    const prompt = await buildPromptWithContext(basePrompt, options);
+    const text = await generateCompletion(prompt, options?.provider);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

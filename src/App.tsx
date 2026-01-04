@@ -25,7 +25,7 @@ import { exportItemForClipboard, buildItemMarkdown } from './lib/serializer';
 import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
-import { joinPath, isTauri, getDirFromPath, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
+import { joinPath, isTauri, getDirFromPath, getFolderName, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { UpdateModal } from './components/ui/UpdateModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -87,6 +87,18 @@ function App() {
   useEffect(() => {
     initSecureStorage();
   }, []);
+
+  // Update window title based on project
+  useEffect(() => {
+    const projectPath = typeConfig.projectPath;
+
+    if (projectPath) {
+      const projectName = getFolderName(projectPath);
+      document.title = `Ticketflow - ${projectName}`;
+    } else {
+      document.title = 'Ticketflow';
+    }
+  }, [typeConfig.projectPath]);
 
   // Auto-dismiss error notifications after 5 seconds
   useEffect(() => {
@@ -224,7 +236,9 @@ function App() {
     }
 
     setIsRefining(true);
-    const result = await refineItem(item);
+    const result = await refineItem(item, {
+      projectPath: typeConfig.projectPath || undefined,
+    });
     setIsRefining(false);
 
     if (result.success && result.refinedItem) {
@@ -237,7 +251,7 @@ function App() {
     } else {
       setErrorNotification(`Erreur IA: ${result.error}`);
     }
-  }, []);
+  }, [typeConfig.projectPath]);
 
   // Confirm AI refinement
   const confirmAiRefinement = useCallback(() => {
@@ -509,6 +523,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
       {!shouldShowTauriWelcome && (
         <Header
           fileName={fileAccess.fileName}
+          projectName={typeConfig.projectPath ? getFolderName(typeConfig.projectPath) : null}
           isDirty={fileAccess.isDirty}
           isLoading={fileAccess.isLoading || backlog.isLoading}
           viewMode={backlog.viewMode}
@@ -621,6 +636,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         existingIds={backlog.existingIds}
         types={typeConfig.sortedTypes}
         screenshotOps={screenshotOps}
+        projectPath={typeConfig.projectPath || undefined}
       />
 
       {/* Settings modal */}

@@ -6,6 +6,7 @@ import type { ViewMode } from '../../hooks/useBacklog';
 
 interface HeaderProps {
   fileName: string | null;
+  projectName: string | null;
   isDirty: boolean;
   isLoading: boolean;
   viewMode: ViewMode;
@@ -17,6 +18,7 @@ interface HeaderProps {
 
 export function Header({
   fileName,
+  projectName,
   isDirty,
   isLoading,
   viewMode,
@@ -44,10 +46,10 @@ export function Header({
             Ticketflow
           </h1>
 
-          {fileName && (
+          {(projectName || fileName) && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">|</span>
-              <span className="text-gray-700 font-medium">{fileName}</span>
+              <span className="text-gray-700 font-medium">{projectName || fileName}</span>
               {isDirty && (
                 <span className="text-amber-500" title="Unsaved changes">
                   •
