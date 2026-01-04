@@ -45,3 +45,15 @@ coverage/
 ~/.tauri/
 *.key
 *.pem
+
+# Personal/local files (not for public repo)
+.backlog-assets/
+TICKETFLOW_Backlog.md
+*.bat
+.claude/
+CLAUDE.md
+AGENTS.md
+
+# Internal docs
+docs/PLAN_*.md
+docs/REFACTORING_*.md
