@@ -53,6 +53,7 @@ TICKETFLOW_Backlog.md
 .claude/
 CLAUDE.md
 AGENTS.md
+claude-auto.ps1
 
 # Internal docs
 docs/PLAN_*.md
