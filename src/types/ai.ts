@@ -24,6 +24,8 @@ export const RefineResponseSchema = z.object({
   specs: z.array(z.string()).optional(),
   criteria: z.array(CriterionSchema).optional(),
   suggestions: z.array(z.string()).optional(),
+  dependencies: z.array(z.string()).optional(),
+  constraints: z.array(z.string()).optional(),
 });
 
 /**
@@ -41,6 +43,8 @@ export const GenerateItemResponseSchema = z.object({
   suggestedEffort: z.enum(['XS', 'S', 'M', 'L', 'XL']).nullable().optional(),
   suggestedModule: z.string().nullable().optional(),
   emoji: z.string().nullable().optional(),
+  dependencies: z.array(z.string()).optional().default([]),
+  constraints: z.array(z.string()).optional().default([]),
 });
 
 /**

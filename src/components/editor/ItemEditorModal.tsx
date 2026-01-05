@@ -295,6 +295,8 @@ export function ItemEditorModal({
         userStory: result.refinedItem?.userStory || f.userStory,
         specs: result.refinedItem?.specs || f.specs,
         criteria: result.refinedItem?.criteria || f.criteria,
+        dependencies: result.refinedItem?.dependencies || f.dependencies,
+        constraints: result.refinedItem?.constraints || f.constraints,
       }));
     } else {
       alert(`Erreur ${getProviderLabel(selectedProvider)}: ${result.error}`);
@@ -340,8 +342,8 @@ export function ItemEditorModal({
         module: result.item.suggestedModule,
         component: suggestedType === 'BUG' ? result.item.suggestedModule : undefined,
         reproduction: [],
-        dependencies: [],
-        constraints: [],
+        dependencies: result.item.dependencies || [],
+        constraints: result.item.constraints || [],
         screenshots: form.screenshots, // Preserve screenshots from AI mode
       });
 

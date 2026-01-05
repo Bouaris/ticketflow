@@ -158,6 +158,8 @@ Titre: {title}
 {user_story_section}
 {specs_section}
 {criteria_section}
+{dependencies_section}
+{constraints_section}
 
 INSTRUCTIONS:
 1. Reformule le titre pour qu'il soit plus clair et actionnable
@@ -165,6 +167,8 @@ INSTRUCTIONS:
 3. Affine les spécifications pour qu'elles soient plus précises
 4. Propose des critères d'acceptation SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporels)
 5. Identifie les dépendances ou risques potentiels
+6. Affine ou suggère des dépendances pertinentes (autres tickets, APIs, services, composants)
+7. Identifie les contraintes techniques ou business (compatibilité, performance, sécurité, budget)
 
 RÉPONDS EN JSON avec ce format exact:
 {
@@ -175,7 +179,9 @@ RÉPONDS EN JSON avec ce format exact:
     {"text": "Critère 1 SMART", "checked": false},
     {"text": "Critère 2 SMART", "checked": false}
   ],
-  "suggestions": ["Suggestion 1", "Suggestion 2"]
+  "suggestions": ["Suggestion 1", "Suggestion 2"],
+  "dependencies": ["Dépendance affinée 1", "Dépendance affinée 2"],
+  "constraints": ["Contrainte affinée 1", "Contrainte affinée 2"]
 }
 
 Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
@@ -195,12 +201,20 @@ export async function refineItem(item: BacklogItem, options?: AIOptions): Promis
     const criteriaSection = item.criteria?.length
       ? `Critères d'acceptation:\n${item.criteria.map(c => `- [${c.checked ? 'x' : ' '}] ${c.text}`).join('\n')}`
       : '';
+    const dependenciesSection = item.dependencies?.length
+      ? `Dépendances:\n${item.dependencies.map(d => `- ${d}`).join('\n')}`
+      : '';
+    const constraintsSection = item.constraints?.length
+      ? `Contraintes:\n${item.constraints.map(c => `- ${c}`).join('\n')}`
+      : '';
 
     basePrompt = basePrompt
       .replace('{description_section}', descSection)
       .replace('{user_story_section}', userStorySection)
       .replace('{specs_section}', specsSection)
-      .replace('{criteria_section}', criteriaSection);
+      .replace('{criteria_section}', criteriaSection)
+      .replace('{dependencies_section}', dependenciesSection)
+      .replace('{constraints_section}', constraintsSection);
 
     const prompt = await buildPromptWithContext(basePrompt, options);
     const text = await generateCompletion(prompt, options?.provider);
@@ -222,6 +236,8 @@ export async function refineItem(item: BacklogItem, options?: AIOptions): Promis
         userStory: parsed.userStory || undefined,
         specs: parsed.specs,
         criteria: parsed.criteria,
+        dependencies: parsed.dependencies,
+        constraints: parsed.constraints,
       },
       suggestions: parsed.suggestions,
     };
@@ -251,6 +267,8 @@ export interface GenerateItemResult {
     suggestedEffort?: 'XS' | 'S' | 'M' | 'L' | 'XL';
     suggestedModule?: string;
     emoji?: string;
+    dependencies?: string[];
+    constraints?: string[];
   };
   error?: string;
 }
@@ -306,6 +324,15 @@ STANDARDS DE QUALITÉ:
    - L: 3-5 jours (feature complexe, refactoring)
    - XL: 1-2 semaines (système nouveau, investigation requise)
 
+7. DÉPENDANCES (optionnel): Éléments dont ce ticket dépend.
+   - Autres tickets (ex: "BUG-003 corrigé")
+   - APIs ou services (ex: "API d'authentification fonctionnelle")
+   - Composants ou modules (ex: "Module de paiement déployé")
+
+8. CONTRAINTES (optionnel): Limitations techniques ou business.
+   - Contraintes techniques (ex: "Compatible IE11", "Temps de réponse < 200ms")
+   - Contraintes business (ex: "RGPD compliant", "Budget max 2j")
+
 ---
 
 RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
@@ -323,7 +350,9 @@ RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
   "suggestedSeverity": "P0|P1|P2|P3|P4" ou null,
   "suggestedEffort": "XS|S|M|L|XL",
   "suggestedModule": "Module ou composant concerné" ou null,
-  "emoji": "🐛|🚀|⚡|🔒|🎨|📦|🔧"
+  "emoji": "🐛|🚀|⚡|🔒|🎨|📦|🔧",
+  "dependencies": ["Dépendance 1", "Dépendance 2"] ou [],
+  "constraints": ["Contrainte 1", "Contrainte 2"] ou []
 }`;
 
 export async function generateItemFromDescription(description: string, options?: AIOptions): Promise<GenerateItemResult> {
@@ -356,6 +385,8 @@ export async function generateItemFromDescription(description: string, options?:
         suggestedEffort: parsed.suggestedEffort || undefined,
         suggestedModule: parsed.suggestedModule || undefined,
         emoji: parsed.emoji || undefined,
+        dependencies: parsed.dependencies || [],
+        constraints: parsed.constraints || [],
       },
     };
   } catch (error) {
