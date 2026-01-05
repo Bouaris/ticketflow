@@ -745,3 +745,355 @@ describe('useBacklog - Additional Edge Cases', () => {
     expect(result.current.filteredItems.length).toBe(5);
   });
 });
+
+// ============================================================
+// PHASE 1: GUARD CLAUSES - NULL BACKLOG (37-43)
+// ============================================================
+
+describe('useBacklog - Guard Clauses (null backlog)', () => {
+  test('37. updateItemById returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    // Backlog is null initially
+    expect(result.current.backlog).toBeNull();
+
+    // Should not throw, just return early
+    act(() => {
+      result.current.updateItemById('BUG-001', { title: 'Updated' });
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+
+  test('38. toggleItemCriterion returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    act(() => {
+      result.current.toggleItemCriterion('BUG-001', 0);
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+
+  test('39. addItem returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    const newItem = createMockItem('BUG-001', 'BUG', 'Test Bug');
+
+    act(() => {
+      result.current.addItem(newItem);
+    });
+
+    expect(result.current.backlog).toBeNull();
+    expect(result.current.allItems.length).toBe(0);
+  });
+
+  test('40. deleteItem returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    act(() => {
+      result.current.deleteItem('BUG-001');
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+
+  test('41. moveItemToType returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    act(() => {
+      result.current.moveItemToType('BUG-001', 'CT');
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+
+  test('42. addSection returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    act(() => {
+      result.current.addSection('BUG', 'Bugs');
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+
+  test('43. removeSection returns early if backlog is null', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    expect(result.current.backlog).toBeNull();
+
+    act(() => {
+      result.current.removeSection('BUG');
+    });
+
+    expect(result.current.backlog).toBeNull();
+  });
+});
+
+// ============================================================
+// PHASE 2: SEARCH FILTER FALLBACK (44-45)
+// ============================================================
+
+describe('useBacklog - Search Filter Fallback', () => {
+  test('44. search fallback finds items by ID when search engine returns empty', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    // Search for exact ID prefix - should use fallback if engine returns empty
+    act(() => {
+      result.current.setFilters({ search: 'BUG-001' });
+    });
+
+    // Should find by ID in fallback search
+    expect(result.current.filteredItems.some(i => i.id === 'BUG-001')).toBe(true);
+  });
+
+  test('45. search fallback finds items by description', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    // Search for text in description
+    act(() => {
+      result.current.setFilters({ search: 'test bug' });
+    });
+
+    // Should find by description
+    expect(result.current.filteredItems.some(i => i.id === 'BUG-001')).toBe(true);
+  });
+});
+
+// ============================================================
+// PHASE 3: MOVE ITEM TO TYPE EDGE CASES (46-47)
+// ============================================================
+
+describe('useBacklog - moveItemToType Edge Cases', () => {
+  test('46. moveItemToType returns early if item not found', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    const initialCount = result.current.allItems.length;
+
+    act(() => {
+      result.current.moveItemToType('NONEXISTENT-001', 'CT');
+    });
+
+    // Should not change anything
+    expect(result.current.allItems.length).toBe(initialCount);
+  });
+
+  test('47. moveItemToType returns early if target type equals current type', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    const initialCount = result.current.allItems.length;
+
+    act(() => {
+      result.current.moveItemToType('BUG-001', 'BUG'); // Same type
+    });
+
+    // Should not change anything - item still exists with same ID
+    expect(result.current.allItems.find(i => i.id === 'BUG-001')).toBeDefined();
+    expect(result.current.allItems.length).toBe(initialCount);
+  });
+});
+
+// ============================================================
+// PHASE 4: ADD ITEM EDGE CASES (48)
+// ============================================================
+
+const BACKLOG_NO_ITEMS = `# Test Project
+
+> Description
+
+---
+
+## Table des matières
+1. [Bugs](#1-bugs)
+
+---
+
+## 1. BUGS
+
+---
+
+## 2. Légende
+
+Content
+`;
+
+describe('useBacklog - addItem Edge Cases', () => {
+  test('48. addItem works when section has no items', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(BACKLOG_NO_ITEMS);
+    });
+
+    expect(result.current.allItems.length).toBe(0);
+
+    const newItem = createMockItem('BUG-001', 'BUG', 'First Bug');
+
+    act(() => {
+      result.current.addItem(newItem);
+    });
+
+    expect(result.current.allItems.length).toBe(1);
+    expect(result.current.allItems[0].id).toBe('BUG-001');
+  });
+});
+
+// ============================================================
+// PHASE 5: ADD SECTION COMPLEX STATES (49-51)
+// ============================================================
+
+describe('useBacklog - addSection Complex States', () => {
+  test('49. addSection returns early if section already exists with TOC entry', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    const initialSectionCount = result.current.backlog?.sections.length;
+
+    // BUGS section already exists in MINIMAL_BACKLOG
+    act(() => {
+      result.current.addSection('BUG', 'Bugs');
+    });
+
+    // Should not add duplicate section
+    expect(result.current.backlog?.sections.length).toBe(initialSectionCount);
+  });
+
+  test('50. addSection creates new section for new type', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    const initialSectionCount = result.current.backlog?.sections.length ?? 0;
+
+    // Add a new type that doesn't exist
+    act(() => {
+      result.current.addSection('LT', 'Long Terme');
+    });
+
+    // Should add new section
+    expect(result.current.backlog?.sections.length).toBeGreaterThan(initialSectionCount);
+  });
+
+  test('51. addSection updates TOC when adding new section', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    act(() => {
+      result.current.addSection('LT', 'Long Terme');
+    });
+
+    // Check that markdown contains the new section
+    const markdown = result.current.toMarkdown();
+    expect(markdown).toContain('LONG TERME');
+  });
+});
+
+// ============================================================
+// PHASE 6: PARSE ERROR HANDLING (52)
+// ============================================================
+
+describe('useBacklog - Error Handling', () => {
+  test('52. loadFromMarkdown handles empty markdown gracefully', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown('');
+    });
+
+    // Should not crash, just have empty backlog or error
+    // The parser may return an empty backlog or set an error
+    expect(result.current.allItems.length).toBe(0);
+  });
+});
+
+// ============================================================
+// PHASE 7: SYNC TOC EDGE CASES (53)
+// ============================================================
+
+describe('useBacklog - syncToc Edge Cases', () => {
+  test('53. TOC is properly synced after section operations', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MINIMAL_BACKLOG);
+    });
+
+    // Verify initial TOC exists
+    expect(result.current.toMarkdown()).toContain('Table des matières');
+
+    // Add and remove a section to trigger TOC sync
+    act(() => {
+      result.current.addSection('LT', 'Long Terme');
+    });
+
+    act(() => {
+      result.current.removeSection('LT');
+    });
+
+    // TOC should be consistent
+    const finalMarkdown = result.current.toMarkdown();
+    expect(finalMarkdown).toContain('Table des matières');
+  });
+});
+
+// ============================================================
+// PHASE 8: SECTION MANAGEMENT (54)
+// ============================================================
+
+describe('useBacklog - Section Management', () => {
+  test('54. removeSection removes section and updates TOC', () => {
+    const { result } = renderHook(() => useBacklog());
+
+    act(() => {
+      result.current.loadFromMarkdown(MULTI_TYPE_BACKLOG);
+    });
+
+    const initialSectionCount = result.current.backlog?.sections.length ?? 0;
+
+    // Remove LONG TERME section
+    act(() => {
+      result.current.removeSection('LT');
+    });
+
+    // Should have fewer sections
+    expect(result.current.backlog?.sections.length).toBeLessThan(initialSectionCount);
+
+    // Items in that section should be gone
+    expect(result.current.allItems.find(i => i.type === 'LT')).toBeUndefined();
+  });
+});

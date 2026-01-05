@@ -332,3 +332,437 @@ describe('useFileAccess - Tauri Mode', () => {
     expect(localStorage.getItem('ticketflow-last-file')).toBe('/new/path/NEWFILE.md');
   });
 });
+
+// ============================================================
+// TAURI OPENFILE TESTS (17-19)
+// ============================================================
+
+import { openMarkdownFileDialog } from '../lib/tauri-bridge';
+
+describe('useFileAccess - Tauri openFile', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(true);
+  });
+
+  test('17. openFile returns null when dialog is cancelled', async () => {
+    vi.mocked(openMarkdownFileDialog).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.fileName).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  test('18. openFile loads file and stores path in localStorage', async () => {
+    vi.mocked(openMarkdownFileDialog).mockResolvedValue('/path/to/BACKLOG.md');
+    vi.mocked(readTextFileContents).mockResolvedValue('# Test Content');
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBe('# Test Content');
+    expect(result.current.content).toBe('# Test Content');
+    expect(result.current.filePath).toBe('/path/to/BACKLOG.md');
+    expect(result.current.fileName).toBe('BACKLOG.md');
+    expect(result.current.isDirty).toBe(false);
+    expect(localStorage.getItem('ticketflow-last-file')).toBe('/path/to/BACKLOG.md');
+  });
+
+  test('19. openFile sets error on failure', async () => {
+    vi.mocked(openMarkdownFileDialog).mockRejectedValue(new Error('Dialog error'));
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('Dialog error');
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// TAURI LOADSTOREDFILE TESTS (20-23)
+// ============================================================
+
+describe('useFileAccess - Tauri loadStoredFile', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(true);
+  });
+
+  test('20. loadStoredFile returns null when no stored path', async () => {
+    // No localStorage item set
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.hasStoredHandle).toBe(false);
+  });
+
+  test('21. loadStoredFile loads from stored path', async () => {
+    localStorage.setItem('ticketflow-last-file', '/stored/path/FILE.md');
+    vi.mocked(readTextFileContents).mockResolvedValue('# Stored Content');
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBe('# Stored Content');
+    expect(result.current.filePath).toBe('/stored/path/FILE.md');
+    expect(result.current.fileName).toBe('FILE.md');
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test('22. loadStoredFile clears localStorage on error', async () => {
+    localStorage.setItem('ticketflow-last-file', '/invalid/path.md');
+    vi.mocked(readTextFileContents).mockRejectedValue(new Error('File not found'));
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('File not found');
+    expect(localStorage.getItem('ticketflow-last-file')).toBeNull();
+    expect(result.current.hasStoredHandle).toBe(false);
+  });
+
+  test('23. loadStoredFile returns null when not supported', async () => {
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(false);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+  });
+});
+
+// ============================================================
+// WEB OPENFILE TESTS (24-26)
+// ============================================================
+
+import {
+  openMarkdownFile,
+  readFile,
+  storeHandle,
+  getStoredHandle,
+  verifyPermission,
+  clearStoredHandle,
+  saveFile,
+  saveAsMarkdownFile,
+} from '../lib/fileSystem';
+
+describe('useFileAccess - Web openFile', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(true);
+  });
+
+  test('24. openFile returns null when dialog is cancelled (Web)', async () => {
+    vi.mocked(openMarkdownFile).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.fileName).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  test('25. openFile loads file and stores handle (Web)', async () => {
+    const mockHandle = { name: 'WEBFILE.md' } as FileSystemFileHandle;
+    vi.mocked(openMarkdownFile).mockResolvedValue(mockHandle);
+    vi.mocked(readFile).mockResolvedValue('# Web Content');
+    vi.mocked(storeHandle).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBe('# Web Content');
+    expect(result.current.content).toBe('# Web Content');
+    expect(result.current.fileHandle).toBe(mockHandle);
+    expect(result.current.fileName).toBe('WEBFILE.md');
+    expect(result.current.isDirty).toBe(false);
+    expect(vi.mocked(storeHandle)).toHaveBeenCalledWith(mockHandle);
+  });
+
+  test('26. openFile sets error on failure (Web)', async () => {
+    vi.mocked(openMarkdownFile).mockRejectedValue(new Error('User aborted'));
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.openFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('User aborted');
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// WEB LOADSTOREDFILE TESTS (27-30)
+// ============================================================
+
+describe('useFileAccess - Web loadStoredFile', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(true);
+  });
+
+  test('27. loadStoredFile returns null when no stored handle (Web)', async () => {
+    vi.mocked(getStoredHandle).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.hasStoredHandle).toBe(false);
+  });
+
+  test('28. loadStoredFile returns null when permission denied (Web)', async () => {
+    const mockHandle = { name: 'STORED.md' } as FileSystemFileHandle;
+    vi.mocked(getStoredHandle).mockResolvedValue(mockHandle);
+    vi.mocked(verifyPermission).mockResolvedValue(false);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('Permission refusée pour accéder au fichier');
+  });
+
+  test('29. loadStoredFile loads from stored handle (Web)', async () => {
+    const mockHandle = { name: 'STORED.md' } as FileSystemFileHandle;
+    vi.mocked(getStoredHandle).mockResolvedValue(mockHandle);
+    vi.mocked(verifyPermission).mockResolvedValue(true);
+    vi.mocked(readFile).mockResolvedValue('# Stored Web Content');
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBe('# Stored Web Content');
+    expect(result.current.fileHandle).toBe(mockHandle);
+    expect(result.current.fileName).toBe('STORED.md');
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test('30. loadStoredFile clears handle on error (Web)', async () => {
+    const mockHandle = { name: 'BROKEN.md' } as FileSystemFileHandle;
+    vi.mocked(getStoredHandle).mockResolvedValue(mockHandle);
+    vi.mocked(verifyPermission).mockResolvedValue(true);
+    vi.mocked(readFile).mockRejectedValue(new Error('Read error'));
+    vi.mocked(clearStoredHandle).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let content;
+    await act(async () => {
+      content = await result.current.loadStoredFile();
+    });
+
+    expect(content).toBeNull();
+    expect(result.current.error).toBe('Read error');
+    expect(vi.mocked(clearStoredHandle)).toHaveBeenCalled();
+    expect(result.current.hasStoredHandle).toBe(false);
+  });
+});
+
+// ============================================================
+// WEB SAVE/SAVEAS TESTS (31-34)
+// ============================================================
+
+describe('useFileAccess - Web save/saveAs', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(true);
+  });
+
+  test('31. save returns false when no file open (Web)', async () => {
+    const { result } = renderHook(() => useFileAccess());
+
+    let success;
+    await act(async () => {
+      success = await result.current.save('# Content');
+    });
+
+    expect(success).toBe(false);
+    expect(result.current.error).toBe('No file open');
+  });
+
+  test('32. save writes to file handle (Web)', async () => {
+    const mockHandle = { name: 'WEBFILE.md' } as FileSystemFileHandle;
+    vi.mocked(openMarkdownFile).mockResolvedValue(mockHandle);
+    vi.mocked(readFile).mockResolvedValue('# Original');
+    vi.mocked(storeHandle).mockResolvedValue(undefined);
+    vi.mocked(saveFile).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    // First open a file
+    await act(async () => {
+      await result.current.openFile();
+    });
+
+    // Mark dirty and save
+    act(() => {
+      result.current.setDirty(true);
+    });
+
+    let success;
+    await act(async () => {
+      success = await result.current.save('# Updated Web Content');
+    });
+
+    expect(success).toBe(true);
+    expect(vi.mocked(saveFile)).toHaveBeenCalledWith(mockHandle, '# Updated Web Content');
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.content).toBe('# Updated Web Content');
+  });
+
+  test('33. saveAs opens dialog and saves (Web)', async () => {
+    const mockHandle = { name: 'NEWWEB.md' } as FileSystemFileHandle;
+    vi.mocked(saveAsMarkdownFile).mockResolvedValue(mockHandle);
+    vi.mocked(storeHandle).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let success;
+    await act(async () => {
+      success = await result.current.saveAs('# New Web Content', 'NEWWEB.md');
+    });
+
+    expect(success).toBe(true);
+    expect(vi.mocked(saveAsMarkdownFile)).toHaveBeenCalledWith('# New Web Content', 'NEWWEB.md');
+    expect(result.current.fileHandle).toBe(mockHandle);
+    expect(result.current.fileName).toBe('NEWWEB.md');
+    expect(vi.mocked(storeHandle)).toHaveBeenCalledWith(mockHandle);
+  });
+
+  test('34. saveAs returns false when cancelled (Web)', async () => {
+    vi.mocked(saveAsMarkdownFile).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    let success;
+    await act(async () => {
+      success = await result.current.saveAs('# Content', 'FILE.md');
+    });
+
+    expect(success).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// CLOSE FILE WEB MODE (35)
+// ============================================================
+
+describe('useFileAccess - Close File Web', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(true);
+  });
+
+  test('35. closeFile clears handle in Web mode', async () => {
+    vi.mocked(clearStoredHandle).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    await act(async () => {
+      result.current.closeFile();
+    });
+
+    expect(vi.mocked(clearStoredHandle)).toHaveBeenCalled();
+    expect(result.current.fileHandle).toBeNull();
+  });
+});
+
+// ============================================================
+// USEEFFECT WEB MODE (36)
+// ============================================================
+
+describe('useFileAccess - useEffect Web Mode', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  test('36. detects stored handle in Web mode on mount', async () => {
+    vi.mocked(isTauri).mockReturnValue(false);
+    vi.mocked(isFileSystemAccessSupported).mockReturnValue(true);
+    const mockHandle = { name: 'STORED.md' } as FileSystemFileHandle;
+    vi.mocked(getStoredHandle).mockResolvedValue(mockHandle);
+
+    const { result } = renderHook(() => useFileAccess());
+
+    // Wait for useEffect to run
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    });
+
+    expect(result.current.hasStoredHandle).toBe(true);
+  });
+});

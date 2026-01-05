@@ -206,3 +206,5 @@ describe('useScreenshotFolder - Core Operations', () => {
     expect(count).toBe(0);
   });
 });
+
+

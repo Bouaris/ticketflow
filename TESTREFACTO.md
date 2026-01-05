@@ -3,7 +3,7 @@
 > **Derniere mise a jour:** 2026-01-05
 > **Version:** 1.1.3
 > **Objectif initial:** 50% coverage
-> **Status:** ATTEINT (53.6%)
+> **Status:** DEPASSE (62.27%)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metrique | Valeur | Objectif | Status |
 |----------|--------|----------|--------|
-| **Coverage Global** | 53.6% | 50% | ATTEINT |
-| **Tests Total** | 419 | - | - |
+| **Coverage Global** | 62.27% | 50% | DEPASSE |
+| **Tests Total** | 510 | - | - |
 | **Fichiers Test** | 22 | - | - |
 | **Build** | PASS | - | OK |
 
@@ -20,7 +20,42 @@
 
 ## HISTORIQUE SESSIONS
 
-### Session 2026-01-05
+### Session 2026-01-05 (6)
+- **Focus:** useProjects.ts coverage improvement
+- **Debut:** 492 tests, 61.04% coverage
+- **Fin:** 510 tests, 62.27% coverage
+- **Delta:** +18 tests, +1.23% coverage global
+- **useProjects.ts:** 56.6% → 96.7% (+40.1%)
+
+### Session 2026-01-05 (5)
+- **Focus:** tauri-bridge.ts coverage improvement
+- **Debut:** 473 tests, 59.45% coverage
+- **Fin:** 492 tests, 61.04% coverage
+- **Delta:** +19 tests, +1.59% coverage global
+- **tauri-bridge.ts:** 19% → 87.59% (+68.6%)
+
+### Session 2026-01-05 (4)
+- **Focus:** screenshots.ts coverage improvement
+- **Debut:** 457 tests, 57.61% coverage
+- **Fin:** 473 tests, 59.45% coverage
+- **Delta:** +16 tests, +1.84% coverage global
+- **screenshots.ts:** 17.5% → 83.13% (+65.6%)
+
+### Session 2026-01-05 (3)
+- **Focus:** useFileAccess.ts coverage improvement
+- **Debut:** 437 tests, 55.67% coverage
+- **Fin:** 457 tests, 57.61% coverage
+- **Delta:** +20 tests, +1.94% coverage global
+- **useFileAccess.ts:** 49.8% → 94.9% (+45.1%)
+
+### Session 2026-01-05 (2)
+- **Focus:** useBacklog.ts coverage improvement
+- **Debut:** 419 tests, 53.6% coverage
+- **Fin:** 437 tests, 55.67% coverage
+- **Delta:** +18 tests, +2.07% coverage global
+- **useBacklog.ts:** 59% → 84.06% (+25.06%)
+
+### Session 2026-01-05 (1)
 - **Debut:** 45 tests, ~15% coverage
 - **Fin:** 419 tests, 53.6% coverage
 - **Delta:** +374 tests, +38.6% coverage
@@ -46,18 +81,18 @@
 | ErrorBoundary.tsx | 86.79% | OK | Reset key non teste |
 | index.ts | 0% | N/A | Exports uniquement |
 
-### hooks (60.49%)
+### hooks (79.8%)
 
 | Fichier | Coverage | Status | Notes |
 |---------|----------|--------|-------|
 | useKeyboardShortcuts.ts | 100% | COMPLET | - |
 | useBacklogHistory.ts | 100% | COMPLET | - |
+| useProjects.ts | 96.7% | OK | Tauri + Web modes testes |
 | useHistory.ts | 96.96% | OK | - |
 | useKanbanColumnWidths.ts | 95.29% | OK | - |
+| useFileAccess.ts | 94.9% | OK | Web + Tauri modes testes |
+| useBacklog.ts | 84.06% | OK | Guard clauses + edge cases testes |
 | useTypeConfig.ts | 82.02% | OK | - |
-| useBacklog.ts | 59.76% | PARTIEL | Fonctions async non testees |
-| useProjects.ts | 56.59% | PARTIEL | Tauri calls non testes |
-| useFileAccess.ts | 49.8% | PARTIEL | Web/Tauri modes |
 | useScreenshotFolder.ts | 46.81% | PARTIEL | - |
 | useUpdater.ts | 46.79% | PARTIEL | Tauri updater |
 | index.ts | 0% | N/A | Exports uniquement |
@@ -71,8 +106,8 @@
 | parser.ts | 88.07% | OK | - |
 | serializer.ts | 94.49% | OK | - |
 | utils.ts | 100% | COMPLET | - |
-| screenshots.ts | 17.46% | FAIBLE | Fonctions Tauri |
-| tauri-bridge.ts | 18.97% | FAIBLE | APIs Tauri natives |
+| screenshots.ts | 83.13% | OK | FileSystemDirectoryHandle mocks |
+| tauri-bridge.ts | 87.59% | OK | APIs Tauri mockees |
 | ai.ts | 0% | BLOQUE | API Groq/Gemini externes |
 | ai-context.ts | 0% | BLOQUE | Tauri file system |
 | fileSystem.ts | 0% | BLOQUE | Web File System API |
@@ -99,24 +134,24 @@
 | Fichier | Tests | Description |
 |---------|-------|-------------|
 | components.test.tsx | 84 | Composants UI |
-| useBacklog.test.ts | 36 | Hook central backlog |
+| useBacklog.test.ts | 54 | Hook central backlog |
 | parser.test.ts | 28 | Parsing Markdown |
 | serializer.test.ts | 25 | Serialisation items |
 | persistence.test.ts | 20 | localStorage |
 | ItemEditorModal.test.tsx | 18 | Modal edition |
 | backlogSchemas.test.ts | 18 | Schemas Zod |
-| useFileAccess.test.ts | 16 | Acces fichiers |
-| tauriBridge.test.ts | 16 | Path utilities |
+| useFileAccess.test.ts | 36 | Acces fichiers |
+| tauriBridge.test.ts | 35 | Path utilities + Tauri mocks |
 | guards.test.ts | 15 | Type guards |
 | search.test.ts | 15 | Moteur recherche |
 | useTypeConfig.test.ts | 15 | Config types |
 | KanbanBoard.test.tsx | 15 | Kanban view |
 | itemPlacement.test.ts | 12 | Placement items |
-| screenshots.test.ts | 12 | Screenshots utils |
+| screenshots.test.ts | 28 | Screenshots utils |
 | useHistory.test.ts | 12 | Undo/redo |
 | useScreenshotFolder.test.ts | 12 | Dossier screenshots |
 | useBacklogHistory.test.ts | 10 | Historique backlog |
-| useProjects.test.ts | 10 | Gestion projets |
+| useProjects.test.ts | 28 | Gestion projets Tauri/Web |
 | useUpdater.test.ts | 10 | Auto-updater |
 | otherHooks.test.ts | 10 | Autres hooks |
 | utils.test.ts | 10 | Utilitaires |
@@ -140,13 +175,13 @@ Ces modules necessitent des mocks complexes d'APIs externes:
 ## PROCHAINES ETAPES
 
 ### Priorite Haute
-- [ ] Ameliorer useBacklog.ts (59% -> 80%)
-- [ ] Ameliorer useFileAccess.ts (49% -> 70%)
-- [ ] Ameliorer useProjects.ts (56% -> 70%)
+- [x] Ameliorer useBacklog.ts (59% -> 80%) ✅ 84.06%
+- [x] Ameliorer useFileAccess.ts (49% -> 70%) ✅ 94.9%
+- [x] Ameliorer useProjects.ts (56% -> 70%) ✅ 96.7%
 
 ### Priorite Moyenne
-- [ ] Tester screenshots.ts fonctions pures (17% -> 50%)
-- [ ] Tester tauri-bridge.ts fonctions pures (18% -> 50%)
+- [x] Tester screenshots.ts fonctions pures (17% -> 50%) ✅ 83.13%
+- [x] Tester tauri-bridge.ts fonctions pures (18% -> 50%) ✅ 87.59%
 
 ### Priorite Basse (Refactoring requis)
 - [ ] Extraire ModalManager de App.tsx
