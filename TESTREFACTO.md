@@ -3,7 +3,7 @@
 > **Derniere mise a jour:** 2026-01-05
 > **Version:** 1.1.3
 > **Objectif initial:** 50% coverage
-> **Status:** DEPASSE (62.27%)
+> **Status:** DEPASSE (63.63%)
 
 ---
 
@@ -11,14 +11,21 @@
 
 | Metrique | Valeur | Objectif | Status |
 |----------|--------|----------|--------|
-| **Coverage Global** | 62.27% | 50% | DEPASSE |
-| **Tests Total** | 510 | - | - |
+| **Coverage Global** | 63.63% | 50% | DEPASSE |
+| **Tests Total** | 524 | - | - |
 | **Fichiers Test** | 22 | - | - |
 | **Build** | PASS | - | OK |
 
 ---
 
 ## HISTORIQUE SESSIONS
+
+### Session 2026-01-05 (7)
+- **Focus:** useUpdater.ts coverage improvement
+- **Debut:** 510 tests, 62.27% coverage
+- **Fin:** 524 tests, 63.63% coverage
+- **Delta:** +14 tests, +1.36% coverage global
+- **useUpdater.ts:** 46.8% → 98.07% (+51.3%)
 
 ### Session 2026-01-05 (6)
 - **Focus:** useProjects.ts coverage improvement
@@ -94,7 +101,7 @@
 | useBacklog.ts | 84.06% | OK | Guard clauses + edge cases testes |
 | useTypeConfig.ts | 82.02% | OK | - |
 | useScreenshotFolder.ts | 46.81% | PARTIEL | - |
-| useUpdater.ts | 46.79% | PARTIEL | Tauri updater |
+| useUpdater.ts | 98.07% | OK | Tauri updater mocks complets |
 | index.ts | 0% | N/A | Exports uniquement |
 
 ### lib (34.25%)
@@ -152,7 +159,7 @@
 | useScreenshotFolder.test.ts | 12 | Dossier screenshots |
 | useBacklogHistory.test.ts | 10 | Historique backlog |
 | useProjects.test.ts | 28 | Gestion projets Tauri/Web |
-| useUpdater.test.ts | 10 | Auto-updater |
+| useUpdater.test.ts | 24 | Auto-updater Tauri |
 | otherHooks.test.ts | 10 | Autres hooks |
 | utils.test.ts | 10 | Utilitaires |
 
