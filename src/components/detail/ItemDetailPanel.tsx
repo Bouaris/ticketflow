@@ -3,10 +3,12 @@
  * Uses Modal component with variant='panel' for consistent behavior.
  */
 
+import { useState } from 'react';
 import type { BacklogItem } from '../../types/backlog';
 import { Modal } from '../ui/Modal';
 import { ItemBadge, SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 import { ScreenshotGallery } from './ScreenshotGallery';
+import { AIRefineModal } from '../editor/AIRefineModal';
 import {
   SparklesIcon,
   CloseIcon,
@@ -21,27 +23,39 @@ interface ItemDetailPanelProps {
   item: BacklogItem | null;
   onClose: () => void;
   onToggleCriterion: (itemId: string, criterionIndex: number) => void;
-  onRefineWithAI?: (item: BacklogItem) => void;
+  onUpdate?: (itemId: string, updates: Partial<BacklogItem>) => void;
   onEdit?: (item: BacklogItem) => void;
   onDelete?: (item: BacklogItem) => void;
   onDeleteRequest?: (item: BacklogItem) => void;
   onArchive?: (item: BacklogItem) => void;
   onExport?: (item: BacklogItem) => void;
   getScreenshotUrl?: (filename: string) => Promise<string | null>;
+  projectPath?: string;
 }
 
 export function ItemDetailPanel({
   item,
   onClose,
   onToggleCriterion,
-  onRefineWithAI,
+  onUpdate,
   onEdit,
   onDelete,
   onDeleteRequest,
   onArchive,
   onExport,
   getScreenshotUrl,
+  projectPath,
 }: ItemDetailPanelProps) {
+  const [showRefineModal, setShowRefineModal] = useState(false);
+
+  // Handle refinement acceptance
+  const handleAcceptRefinement = (refinedItem: Partial<BacklogItem>) => {
+    if (item && onUpdate) {
+      onUpdate(item.id, refinedItem);
+    }
+    setShowRefineModal(false);
+  };
+
   return (
     <Modal
       isOpen={!!item}
@@ -249,14 +263,14 @@ export function ItemDetailPanel({
           </div>
 
           {/* AI button */}
-          {onRefineWithAI && (
+          {onUpdate && (
             <button
-              onClick={() => onRefineWithAI(item)}
+              onClick={() => setShowRefineModal(true)}
               aria-label="Affiner avec l'IA"
               className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
             >
               <SparklesIcon className="w-5 h-5" />
-              Affiner avec Gemini
+              Affiner avec IA
             </button>
           )}
 
@@ -273,6 +287,17 @@ export function ItemDetailPanel({
           )}
         </div>
         </>
+      )}
+
+      {/* AI Refine Modal */}
+      {item && (
+        <AIRefineModal
+          isOpen={showRefineModal}
+          onClose={() => setShowRefineModal(false)}
+          item={item}
+          onAccept={handleAcceptRefinement}
+          projectPath={projectPath}
+        />
       )}
     </Modal>
   );

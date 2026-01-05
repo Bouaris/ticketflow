@@ -22,7 +22,7 @@ import { ItemEditorModal, type ItemFormData } from './components/editor/ItemEdit
 import { WelcomePage } from './components/welcome/WelcomePage';
 import { WelcomeScreen } from './components/welcome/WelcomeScreen';
 import { ExportModal } from './components/export/ExportModal';
-import { hasApiKey, refineItem, initSecureStorage } from './lib/ai';
+import { initSecureStorage } from './lib/ai';
 import { exportItemForClipboard, buildItemMarkdown } from './lib/serializer';
 import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
@@ -54,7 +54,6 @@ function App() {
   const [isTypeConfigOpen, setIsTypeConfigOpen] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
-  const [isRefining, setIsRefining] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [exportModal, setExportModal] = useState<{
     isOpen: boolean;
@@ -63,13 +62,6 @@ function App() {
   } | null>(null);
   const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
   const [showHomeConfirmModal, setShowHomeConfirmModal] = useState(false);
-
-  // AI refinement confirmation state
-  const [aiConfirmModal, setAiConfirmModal] = useState<{
-    isOpen: boolean;
-    item: BacklogItem | null;
-    refinedItem: Partial<BacklogItem> | null;
-  }>({ isOpen: false, item: null, refinedItem: null });
 
   // Archive confirmation state
   const [archiveConfirmModal, setArchiveConfirmModal] = useState<{
@@ -223,39 +215,11 @@ function App() {
     fileAccess.setDirty(true);
   }, [backlog, fileAccess]);
 
-  // Handle AI refinement
-  const handleRefineWithAI = useCallback(async (item: BacklogItem) => {
-    if (!hasApiKey()) {
-      setIsSettingsOpen(true);
-      return;
-    }
-
-    setIsRefining(true);
-    const result = await refineItem(item, {
-      projectPath: typeConfig.projectPath || undefined,
-    });
-    setIsRefining(false);
-
-    if (result.success && result.refinedItem) {
-      // Show confirmation modal
-      setAiConfirmModal({
-        isOpen: true,
-        item,
-        refinedItem: result.refinedItem,
-      });
-    } else {
-      setErrorNotification(`Erreur IA: ${result.error}`);
-    }
-  }, [typeConfig.projectPath]);
-
-  // Confirm AI refinement
-  const confirmAiRefinement = useCallback(() => {
-    if (aiConfirmModal.item && aiConfirmModal.refinedItem) {
-      backlog.updateItemById(aiConfirmModal.item.id, aiConfirmModal.refinedItem);
-      fileAccess.setDirty(true);
-    }
-    setAiConfirmModal({ isOpen: false, item: null, refinedItem: null });
-  }, [aiConfirmModal, backlog, fileAccess]);
+  // Handle update item (for AI refinement from detail panel)
+  const handleUpdateItem = useCallback((itemId: string, updates: Partial<BacklogItem>) => {
+    backlog.updateItemById(itemId, updates);
+    fileAccess.setDirty(true);
+  }, [backlog, fileAccess]);
 
   // Handle load stored file
   const handleLoadStoredFile = useCallback(async () => {
@@ -629,12 +593,13 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         item={backlog.selectedItem}
         onClose={handleCloseDetail}
         onToggleCriterion={handleToggleCriterion}
-        onRefineWithAI={handleRefineWithAI}
+        onUpdate={handleUpdateItem}
         onEdit={handleEditItem}
         onDeleteRequest={handleDeleteRequest}
         onArchive={handleArchiveItem}
         onExport={handleExportItem}
         getScreenshotUrl={screenshotFolder.isReady ? screenshotFolder.getScreenshotUrl : undefined}
+        projectPath={typeConfig.projectPath || undefined}
       />
 
       {/* Item Editor Modal */}
@@ -677,16 +642,6 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         />
       )}
 
-      {/* Loading overlay for AI */}
-      {isRefining && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 shadow-xl flex items-center gap-4">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
-            <span className="text-gray-700">Analyse en cours avec Gemini...</span>
-          </div>
-        </div>
-      )}
-
       {/* Error display */}
       {(fileAccess.error || backlog.error) && (
         <div className="fixed bottom-4 left-4 right-24 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg z-30">
@@ -706,18 +661,6 @@ ${item.description ? `**Description:** ${item.description}` : ''}
           </button>
         </div>
       )}
-
-      {/* AI refinement confirmation modal */}
-      <ConfirmModal
-        isOpen={aiConfirmModal.isOpen}
-        title="Appliquer les suggestions IA ?"
-        message="L'IA propose des améliorations pour cet item. Voulez-vous les appliquer ?"
-        confirmLabel="Appliquer"
-        cancelLabel="Annuler"
-        variant="primary"
-        onConfirm={confirmAiRefinement}
-        onCancel={() => setAiConfirmModal({ isOpen: false, item: null, refinedItem: null })}
-      />
 
       {/* Archive confirmation modal */}
       <ConfirmModal

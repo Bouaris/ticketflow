@@ -16,14 +16,14 @@ import type {
 } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { SEVERITY_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from '../../constants/labels';
-import { refineItem, hasApiKey, generateItemFromDescription, getProvider, type AIProvider } from '../../lib/ai';
+import { hasApiKey, generateItemFromDescription, getProvider, type AIProvider } from '../../lib/ai';
 import { getProviderLabel } from '../ui/ProviderToggle';
 import { extractImageFromClipboard } from '../../lib/screenshots';
 import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } from '../ui/Icons';
 import { ListEditor } from '../ui/ListEditor';
-import { Spinner } from '../ui/Spinner';
 import { ScreenshotEditor } from './ScreenshotEditor';
 import { AIGenerationMode } from './AIGenerationMode';
+import { AIRefineModal } from './AIRefineModal';
 
 // ============================================================
 // TYPES
@@ -125,7 +125,7 @@ export function ItemEditorModal({
   const isNew = !item;
   const [form, setForm] = useState<ItemFormData>(createEmptyForm());
   const [activeTab, setActiveTab] = useState<'general' | 'details' | 'criteria' | 'screenshots'>('general');
-  const [isRefining, setIsRefining] = useState(false);
+  const [showRefineModal, setShowRefineModal] = useState(false);
   const [geminiSuggestions, setGeminiSuggestions] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -262,45 +262,18 @@ export function ItemEditorModal({
     }
   };
 
-  // AI refinement
-  const handleRefineWithAI = async () => {
-    if (!hasApiKey(selectedProvider)) {
-      alert(`Configurez votre clé API ${getProviderLabel(selectedProvider)} dans les paramètres`);
-      return;
-    }
-
-    setIsRefining(true);
-
-    // Create a temporary BacklogItem for the API
-    const tempItem: BacklogItem = {
-      ...form,
-      rawMarkdown: '',
-      sectionIndex: 0,
-    };
-
-    const result = await refineItem(tempItem, {
-      provider: selectedProvider,
-      projectPath,
-    });
-    setIsRefining(false);
-
-    if (result.success && result.refinedItem) {
-      // Show suggestions
-      setGeminiSuggestions(result.suggestions || []);
-
-      // Apply refinements with confirmation
-      setForm(f => ({
-        ...f,
-        title: result.refinedItem?.title || f.title,
-        userStory: result.refinedItem?.userStory || f.userStory,
-        specs: result.refinedItem?.specs || f.specs,
-        criteria: result.refinedItem?.criteria || f.criteria,
-        dependencies: result.refinedItem?.dependencies || f.dependencies,
-        constraints: result.refinedItem?.constraints || f.constraints,
-      }));
-    } else {
-      alert(`Erreur ${getProviderLabel(selectedProvider)}: ${result.error}`);
-    }
+  // AI refinement - now uses modal
+  const handleAcceptRefinement = (refinedItem: Partial<BacklogItem>, suggestions: string[]) => {
+    setGeminiSuggestions(suggestions);
+    setForm(f => ({
+      ...f,
+      title: refinedItem.title || f.title,
+      userStory: refinedItem.userStory || f.userStory,
+      specs: refinedItem.specs || f.specs,
+      criteria: refinedItem.criteria || f.criteria,
+      dependencies: refinedItem.dependencies || f.dependencies,
+      constraints: refinedItem.constraints || f.constraints,
+    }));
   };
 
   // Generate item from AI description
@@ -447,21 +420,12 @@ export function ItemEditorModal({
               {/* AI Refine Button (only in form mode) */}
               {!aiMode && (
                 <button
-                  onClick={handleRefineWithAI}
-                  disabled={isRefining || !form.title}
+                  onClick={() => setShowRefineModal(true)}
+                  disabled={!form.title}
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                 >
-                  {isRefining ? (
-                    <>
-                      <Spinner size="sm" color="white" />
-                      Analyse...
-                    </>
-                  ) : (
-                    <>
-                      <SparklesIcon />
-                      Affiner
-                    </>
-                  )}
+                  <SparklesIcon />
+                  Affiner
                 </button>
               )}
               <button
@@ -882,6 +846,19 @@ export function ItemEditorModal({
           </div>
         )}
       </div>
+
+      {/* AI Refine Modal */}
+      <AIRefineModal
+        isOpen={showRefineModal}
+        onClose={() => setShowRefineModal(false)}
+        item={{
+          ...form,
+          rawMarkdown: '',
+          sectionIndex: 0,
+        }}
+        onAccept={handleAcceptRefinement}
+        projectPath={projectPath}
+      />
     </>
   );
 }

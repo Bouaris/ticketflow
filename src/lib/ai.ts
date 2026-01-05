@@ -148,6 +148,10 @@ export interface RefinementResult {
   error?: string;
 }
 
+export interface RefineOptions extends AIOptions {
+  additionalPrompt?: string;
+}
+
 const REFINE_PROMPT = `Tu es un Product Owner expert en méthodologie Agile. Analyse cet item de backlog et propose des améliorations.
 
 ITEM ACTUEL:
@@ -160,6 +164,7 @@ Titre: {title}
 {criteria_section}
 {dependencies_section}
 {constraints_section}
+{additional_prompt_section}
 
 INSTRUCTIONS:
 1. Reformule le titre pour qu'il soit plus clair et actionnable
@@ -186,7 +191,7 @@ RÉPONDS EN JSON avec ce format exact:
 
 Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
 
-export async function refineItem(item: BacklogItem, options?: AIOptions): Promise<RefinementResult> {
+export async function refineItem(item: BacklogItem, options?: RefineOptions): Promise<RefinementResult> {
   try {
     let basePrompt = REFINE_PROMPT
       .replace('{id}', item.id)
@@ -207,6 +212,9 @@ export async function refineItem(item: BacklogItem, options?: AIOptions): Promis
     const constraintsSection = item.constraints?.length
       ? `Contraintes:\n${item.constraints.map(c => `- ${c}`).join('\n')}`
       : '';
+    const additionalPromptSection = options?.additionalPrompt
+      ? `\nINSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR:\n${options.additionalPrompt}`
+      : '';
 
     basePrompt = basePrompt
       .replace('{description_section}', descSection)
@@ -214,7 +222,8 @@ export async function refineItem(item: BacklogItem, options?: AIOptions): Promis
       .replace('{specs_section}', specsSection)
       .replace('{criteria_section}', criteriaSection)
       .replace('{dependencies_section}', dependenciesSection)
-      .replace('{constraints_section}', constraintsSection);
+      .replace('{constraints_section}', constraintsSection)
+      .replace('{additional_prompt_section}', additionalPromptSection);
 
     const prompt = await buildPromptWithContext(basePrompt, options);
     const text = await generateCompletion(prompt, options?.provider);
