@@ -15,9 +15,10 @@ import {
 } from '../../lib/ai';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 import type { useUpdater } from '../../hooks/useUpdater';
-import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon } from '../ui/Icons';
+import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon, SparklesIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 import { MaintenanceModal } from './MaintenanceModal';
+import { WhatsNewModal } from '../ui/WhatsNewModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApp
   const [saved, setSaved] = useState(false);
   const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [showChangelogModal, setShowChangelogModal] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -294,6 +296,23 @@ export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApp
               )}
             </div>
           )}
+
+          {/* Changelog section */}
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Nouveautés</h4>
+                <p className="text-xs text-gray-500">Voir l'historique des changements</p>
+              </div>
+              <button
+                onClick={() => setShowChangelogModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <SparklesIcon className="w-4 h-4" />
+                Changelog
+              </button>
+            </div>
+          </div>
       </div>
 
       {/* Maintenance Modal */}
@@ -305,6 +324,13 @@ export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApp
           onApplyCorrections={onApplyCorrections}
         />
       )}
+
+      {/* Changelog Modal */}
+      <WhatsNewModal
+        isOpen={showChangelogModal}
+        onClose={() => setShowChangelogModal(false)}
+        sinceVersion={null}
+      />
     </Modal>
   );
 }

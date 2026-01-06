@@ -4,6 +4,31 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.2.0] - 2026-01-06
+
+### Ajouté
+- **AIRefineModal**: Affinage IA avec prompt personnalisé et prévisualisation
+- **WhatsNewModal**: Affichage des nouveautés après mise à jour (CT-003)
+- Bouton "Changelog" dans les paramètres pour consulter l'historique
+- Dépendances et contraintes dans la génération IA
+- Parsing automatique du CHANGELOG.md embarqué au build
+
+### Corrigé
+- Largeur colonnes Kanban persistée par projet
+- Positionnement modal définitif + layout dynamique
+- Prop name CheckboxListEditor (onUpdateText)
+
+### Refactoring
+- Audit architecture: god objects split + accessibilité
+- Phase 4.3 audit + tests hooks
+
+### Tests
+- Coverage étendu de 27% à 62.27% (375+ tests)
+- useUpdater: coverage 46.8% → 98.07%
+- Infrastructure test-utils complète
+
+---
+
 ## [1.1.3] - 2026-01-04
 
 ### Ajouté

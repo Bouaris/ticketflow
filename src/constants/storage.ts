@@ -15,6 +15,7 @@ export const STORAGE_KEYS = {
 
   // UI Preferences
   COLUMN_WIDTHS: 'ticketflow-column-widths',
+  TEXTAREA_HEIGHTS: 'ticketflow-textarea-heights',
 
   // AI Configuration
   AI_PROVIDER: 'ai-provider',
@@ -23,6 +24,9 @@ export const STORAGE_KEYS = {
 
   // Tauri-specific
   TAURI_LAST_FILE: 'ticketflow-last-file',
+
+  // Version tracking
+  LAST_SEEN_VERSION: 'ticketflow-last-seen-version',
 } as const;
 
 // ============================================================

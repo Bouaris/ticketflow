@@ -30,7 +30,10 @@ import { isFileSystemAccessSupported } from './lib/fileSystem';
 import { joinPath, isTauri, getDirFromPath, getFolderName, forceQuit, listenTrayQuitRequested } from './lib/tauri-bridge';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { UpdateModal } from './components/ui/UpdateModal';
+import { WhatsNewModal } from './components/ui/WhatsNewModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { shouldShowWhatsNew, getLastSeenVersion } from './lib/changelog';
+import { APP_VERSION } from './lib/version';
 import { PlusIcon, SettingsIcon, TagIcon } from './components/ui/Icons';
 
 function App() {
@@ -78,9 +81,22 @@ function App() {
   // Error notification state
   const [errorNotification, setErrorNotification] = useState<string | null>(null);
 
+  // What's New modal state
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [whatsNewSinceVersion, setWhatsNewSinceVersion] = useState<string | null>(null);
+
   // Initialize secure storage for API keys on startup
   useEffect(() => {
     initSecureStorage();
+  }, []);
+
+  // Check if we should show What's New modal after update
+  useEffect(() => {
+    if (shouldShowWhatsNew(APP_VERSION)) {
+      const lastSeen = getLastSeenVersion();
+      setWhatsNewSinceVersion(lastSeen);
+      setShowWhatsNew(true);
+    }
   }, []);
 
   // Update window title based on project
@@ -720,6 +736,13 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onInstall={updater.installUpdate}
         onDismiss={updater.dismissUpdate}
         onClearError={updater.clearError}
+      />
+
+      {/* What's New Modal */}
+      <WhatsNewModal
+        isOpen={showWhatsNew}
+        onClose={() => setShowWhatsNew(false)}
+        sinceVersion={whatsNewSinceVersion}
       />
     </div>
     </ErrorBoundary>

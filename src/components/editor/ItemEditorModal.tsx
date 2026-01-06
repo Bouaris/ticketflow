@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTextareaHeight } from '../../hooks/useTextareaHeight';
 import type {
   BacklogItem,
   ItemType,
@@ -134,6 +135,10 @@ export function ItemEditorModal({
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => getProvider());
+
+  // Textarea resizable heights (persisted globally)
+  const descriptionHeight = useTextareaHeight({ fieldId: 'description' });
+  const userStoryHeight = useTextareaHeight({ fieldId: 'userStory' });
 
   // Initialize form when modal opens
   useEffect(() => {
@@ -376,8 +381,9 @@ export function ItemEditorModal({
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden">
+      {/* Modal - Centre avec largeur adaptee */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+        <div className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden w-full max-w-4xl min-h-[70vh] max-h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center justify-between">
@@ -518,42 +524,12 @@ export function ItemEditorModal({
             />
           )}
 
-          {/* General Tab */}
+          {/* General Tab - Layout 2 colonnes responsive */}
           {!aiMode && activeTab === 'general' && (
-            <div className="space-y-6 max-w-3xl">
-              {/* Type & ID */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                  <select
-                    value={form.type}
-                    onChange={e => handleTypeChange(e.target.value as ItemType)}
-                    disabled={!isNew}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    {types.map(t => (
-                      <option key={t.id} value={t.id}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">ID</label>
-                  <input
-                    type="text"
-                    value={form.id}
-                    onChange={e => setForm(f => ({ ...f, id: e.target.value.toUpperCase() }))}
-                    disabled={!isNew}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      errors.id ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.id && <p className="mt-1 text-sm text-red-600">{errors.id}</p>}
-                </div>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div>
+              {/* Title - Full width en haut */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Titre <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
@@ -562,7 +538,7 @@ export function ItemEditorModal({
                     value={form.emoji || ''}
                     onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))}
                     placeholder="🔥"
-                    className="w-16 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-xl"
+                    className="w-14 px-2 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-xl"
                   />
                   <input
                     type="text"
@@ -577,101 +553,147 @@ export function ItemEditorModal({
                 {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
               </div>
 
-              {/* Priority/Severity/Effort */}
-              <div className="grid grid-cols-3 gap-4">
-                {form.type === 'BUG' ? (
+              {/* Grid 2 colonnes: Gauche (contenu) / Droite (metadata) */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+                {/* Colonne gauche: Description + User Story (60%) */}
+                <div className="lg:col-span-3 space-y-6">
+                  {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sévérité</label>
-                    <select
-                      value={form.severity || ''}
-                      onChange={e => setForm(f => ({ ...f, severity: e.target.value as Severity || undefined }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Non définie</option>
-                      {(['P0', 'P1', 'P2', 'P3', 'P4'] as Severity[]).map(s => (
-                        <option key={s} value={s}>{s} - {SEVERITY_LABELS[s]}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Description</label>
+                    <textarea
+                      ref={descriptionHeight.ref}
+                      value={form.description || ''}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value || undefined }))}
+                      onInput={descriptionHeight.onInput}
+                      onMouseUp={descriptionHeight.onMouseUp}
+                      style={descriptionHeight.style}
+                      placeholder="Description détaillée du ticket..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y transition-all"
+                    />
                   </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
-                    <select
-                      value={form.priority || ''}
-                      onChange={e => setForm(f => ({ ...f, priority: e.target.value as Priority || undefined }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Non définie</option>
-                      {(['Haute', 'Moyenne', 'Faible'] as Priority[]).map(p => (
-                        <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Effort</label>
-                  <select
-                    value={form.effort || ''}
-                    onChange={e => setForm(f => ({ ...f, effort: e.target.value as Effort || undefined }))}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Non défini</option>
-                    {(['XS', 'S', 'M', 'L', 'XL'] as Effort[]).map(e => (
-                      <option key={e} value={e}>{e} - {EFFORT_LABELS[e]}</option>
-                    ))}
-                  </select>
+                  {/* User Story */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      User Story
+                      <span className="ml-2 text-xs font-normal text-gray-400">En tant que... je veux... afin de...</span>
+                    </label>
+                    <textarea
+                      ref={userStoryHeight.ref}
+                      value={form.userStory || ''}
+                      onChange={e => setForm(f => ({ ...f, userStory: e.target.value || undefined }))}
+                      onInput={userStoryHeight.onInput}
+                      onMouseUp={userStoryHeight.onMouseUp}
+                      style={userStoryHeight.style}
+                      placeholder="En tant qu'utilisateur, je veux..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y italic transition-all"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {form.type === 'BUG' ? 'Composant' : 'Module'}
-                  </label>
-                  <input
-                    type="text"
-                    value={form.type === 'BUG' ? (form.component || '') : (form.module || '')}
-                    onChange={e => setForm(f => ({
-                      ...f,
-                      [form.type === 'BUG' ? 'component' : 'module']: e.target.value || undefined,
-                    }))}
-                    placeholder={form.type === 'BUG' ? 'Composant affecté...' : 'Module concerné...'}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                {/* Colonne droite: Metadata (40%) */}
+                <div className="lg:col-span-2 space-y-4">
+                  {/* Type & ID */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Type</label>
+                      <select
+                        value={form.type}
+                        onChange={e => handleTypeChange(e.target.value as ItemType)}
+                        disabled={!isNew}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                      >
+                        {types.map(t => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">ID</label>
+                      <input
+                        type="text"
+                        value={form.id}
+                        onChange={e => setForm(f => ({ ...f, id: e.target.value.toUpperCase() }))}
+                        disabled={!isNew}
+                        className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                          errors.id ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.id && <p className="mt-1 text-xs text-red-600">{errors.id}</p>}
+                    </div>
+                  </div>
+
+                  {/* Severity/Priority & Effort */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {form.type === 'BUG' ? (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">Sévérité</label>
+                        <select
+                          value={form.severity || ''}
+                          onChange={e => setForm(f => ({ ...f, severity: e.target.value as Severity || undefined }))}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        >
+                          <option value="">Non définie</option>
+                          {(['P0', 'P1', 'P2', 'P3', 'P4'] as Severity[]).map(s => (
+                            <option key={s} value={s}>{s} - {SEVERITY_LABELS[s]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">Priorité</label>
+                        <select
+                          value={form.priority || ''}
+                          onChange={e => setForm(f => ({ ...f, priority: e.target.value as Priority || undefined }))}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        >
+                          <option value="">Non définie</option>
+                          {(['Haute', 'Moyenne', 'Faible'] as Priority[]).map(p => (
+                            <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-2">Effort</label>
+                      <select
+                        value={form.effort || ''}
+                        onChange={e => setForm(f => ({ ...f, effort: e.target.value as Effort || undefined }))}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      >
+                        <option value="">Non défini</option>
+                        {(['XS', 'S', 'M', 'L', 'XL'] as Effort[]).map(e => (
+                          <option key={e} value={e}>{e} - {EFFORT_LABELS[e]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Composant/Module */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      {form.type === 'BUG' ? 'Composant' : 'Module'}
+                    </label>
+                    <input
+                      type="text"
+                      value={form.type === 'BUG' ? (form.component || '') : (form.module || '')}
+                      onChange={e => setForm(f => ({
+                        ...f,
+                        [form.type === 'BUG' ? 'component' : 'module']: e.target.value || undefined,
+                      }))}
+                      placeholder={form.type === 'BUG' ? 'Composant affecté...' : 'Module concerné...'}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={form.description || ''}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value || undefined }))}
-                  rows={3}
-                  placeholder="Description détaillée..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
-              </div>
-
-              {/* User Story */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  User Story
-                  <span className="ml-2 text-xs text-gray-400">En tant que... je veux... afin de...</span>
-                </label>
-                <textarea
-                  value={form.userStory || ''}
-                  onChange={e => setForm(f => ({ ...f, userStory: e.target.value || undefined }))}
-                  rows={2}
-                  placeholder="En tant qu'utilisateur, je veux..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none italic"
-                />
               </div>
             </div>
           )}
 
           {/* Details Tab */}
           {!aiMode && activeTab === 'details' && (
-            <div className="space-y-6 max-w-3xl">
+            <div className="space-y-6">
               {/* Specs */}
               <ListEditor
                 label="Spécifications"
@@ -719,7 +741,7 @@ export function ItemEditorModal({
 
           {/* Criteria Tab */}
           {!aiMode && activeTab === 'criteria' && (
-            <div className="space-y-4 max-w-3xl">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-gray-700">
                   Critères d'acceptation
@@ -780,7 +802,7 @@ export function ItemEditorModal({
 
           {/* Screenshots Tab */}
           {!aiMode && activeTab === 'screenshots' && (
-            <div className="max-w-3xl">
+            <div>
               {screenshotOps ? (
                 <ScreenshotEditor
                   ticketId={form.id || 'NEW'}
@@ -845,6 +867,7 @@ export function ItemEditorModal({
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* AI Refine Modal */}

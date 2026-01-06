@@ -1,10 +1,13 @@
 /**
- * App Version - Centralized version constant
+ * App Version & Build Constants
  *
- * The version is injected at build time by Vite from package.json.
- * This ensures the displayed version always matches the package version.
+ * These values are injected at build time by Vite:
+ * - APP_VERSION: from package.json version
+ * - CHANGELOG_CONTENT: raw content of CHANGELOG.md
  */
 
 declare const __APP_VERSION__: string;
+declare const __CHANGELOG_CONTENT__: string;
 
 export const APP_VERSION = __APP_VERSION__;
+export const CHANGELOG_CONTENT = __CHANGELOG_CONTENT__;

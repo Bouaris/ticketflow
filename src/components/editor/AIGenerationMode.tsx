@@ -11,6 +11,7 @@ import { SparklesIcon, CameraIcon, CloseIcon } from '../ui/Icons';
 import { ProviderToggle, getProviderLabel } from '../ui/ProviderToggle';
 import { AIContextIndicator } from '../ui/AIContextIndicator';
 import { Spinner } from '../ui/Spinner';
+import { useTextareaHeight } from '../../hooks/useTextareaHeight';
 import type { AIProvider } from '../../lib/ai';
 
 // ============================================================
@@ -69,6 +70,9 @@ export function AIGenerationMode({
   getScreenshotUrl,
   onRemoveScreenshot,
 }: AIGenerationModeProps) {
+  // Textarea resizable height (persisted globally)
+  const aiPromptHeight = useTextareaHeight({ fieldId: 'aiPrompt' });
+
   return (
     <div className="max-w-2xl mx-auto py-8">
       {/* Header */}
@@ -98,11 +102,14 @@ export function AIGenerationMode({
 
         {/* Prompt Textarea */}
         <textarea
+          ref={aiPromptHeight.ref}
           value={prompt}
           onChange={e => onPromptChange(e.target.value)}
+          onInput={aiPromptHeight.onInput}
+          onMouseUp={aiPromptHeight.onMouseUp}
+          style={aiPromptHeight.style}
           placeholder="Ex: Je voudrais ajouter un bouton pour exporter les données en PDF. L'utilisateur doit pouvoir choisir les colonnes à inclure et le format (portrait/paysage)..."
-          rows={6}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-gray-900 placeholder:text-gray-400"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y text-gray-900 placeholder:text-gray-400 transition-all"
           autoFocus
           aria-label="Description de votre idée"
         />
