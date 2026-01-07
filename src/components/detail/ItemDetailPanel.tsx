@@ -56,13 +56,92 @@ export function ItemDetailPanel({
     setShowRefineModal(false);
   };
 
+  // Footer content - rendered outside scrollable area via Modal's footer prop
+  const footerContent = item ? (
+    <div className="space-y-3">
+      {/* Completion indicator */}
+      {item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked) && (
+        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <CheckCircleIcon className="w-5 h-5 text-green-600" />
+          <span className="text-sm font-medium text-green-700">
+            Item complété à 100%
+          </span>
+        </div>
+      )}
+
+      {/* Edit & Delete row */}
+      <div className="flex gap-3">
+        {onEdit && (
+          <button
+            onClick={() => onEdit(item)}
+            aria-label="Éditer cet item"
+            className="flex-1 py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+          >
+            <EditIcon className="w-4 h-4" />
+            Éditer
+          </button>
+        )}
+        {onArchive && (
+          <button
+            onClick={() => onArchive(item)}
+            className="py-2.5 px-4 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-all flex items-center justify-center gap-2"
+            title="Archiver cet item"
+            aria-label="Archiver cet item"
+          >
+            <ArchiveIcon className="w-4 h-4" />
+          </button>
+        )}
+        {(onDeleteRequest || onDelete) && (
+          <button
+            onClick={() => {
+              if (onDeleteRequest) {
+                onDeleteRequest(item);
+              } else if (onDelete) {
+                onDelete(item);
+              }
+            }}
+            className="py-2.5 px-4 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-all flex items-center justify-center gap-2"
+            title="Supprimer cet item"
+            aria-label="Supprimer cet item"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* AI button */}
+      {onUpdate && (
+        <button
+          onClick={() => setShowRefineModal(true)}
+          aria-label="Affiner avec l'IA"
+          className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
+        >
+          <SparklesIcon className="w-5 h-5" />
+          Affiner avec IA
+        </button>
+      )}
+
+      {/* Export button */}
+      {onExport && (
+        <button
+          onClick={() => onExport(item)}
+          aria-label="Exporter le ticket"
+          className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 font-medium rounded-lg hover:bg-teal-200 transition-all flex items-center justify-center gap-2"
+        >
+          <ExportIcon className="w-4 h-4" />
+          Exporter le ticket
+        </button>
+      )}
+    </div>
+  ) : undefined;
+
   return (
     <Modal
       isOpen={!!item}
       onClose={onClose}
       variant="panel"
       showCloseButton={false}
-      className="overflow-y-auto"
+      footer={footerContent}
     >
       {item && (
         <>
@@ -207,83 +286,6 @@ export function ItemDetailPanel({
                 getUrl={getScreenshotUrl}
               />
             </Section>
-          )}
-        </div>
-
-        {/* Footer with action buttons */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 space-y-3">
-          {/* Completion indicator */}
-          {item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked) && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircleIcon className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-green-700">
-                Item complété à 100%
-              </span>
-            </div>
-          )}
-
-          {/* Edit & Delete row */}
-          <div className="flex gap-3">
-            {onEdit && (
-              <button
-                onClick={() => onEdit(item)}
-                aria-label="Éditer cet item"
-                className="flex-1 py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-              >
-                <EditIcon className="w-4 h-4" />
-                Éditer
-              </button>
-            )}
-            {onArchive && (
-              <button
-                onClick={() => onArchive(item)}
-                className="py-2.5 px-4 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-all flex items-center justify-center gap-2"
-                title="Archiver cet item"
-                aria-label="Archiver cet item"
-              >
-                <ArchiveIcon className="w-4 h-4" />
-              </button>
-            )}
-            {(onDeleteRequest || onDelete) && (
-              <button
-                onClick={() => {
-                  if (onDeleteRequest) {
-                    onDeleteRequest(item);
-                  } else if (onDelete) {
-                    onDelete(item);
-                  }
-                }}
-                className="py-2.5 px-4 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-all flex items-center justify-center gap-2"
-                title="Supprimer cet item"
-                aria-label="Supprimer cet item"
-              >
-                <TrashIcon className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* AI button */}
-          {onUpdate && (
-            <button
-              onClick={() => setShowRefineModal(true)}
-              aria-label="Affiner avec l'IA"
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
-            >
-              <SparklesIcon className="w-5 h-5" />
-              Affiner avec IA
-            </button>
-          )}
-
-          {/* Export button */}
-          {onExport && (
-            <button
-              onClick={() => onExport(item)}
-              aria-label="Exporter le ticket"
-              className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 font-medium rounded-lg hover:bg-teal-200 transition-all flex items-center justify-center gap-2"
-            >
-              <ExportIcon className="w-4 h-4" />
-              Exporter le ticket
-            </button>
           )}
         </div>
         </>
