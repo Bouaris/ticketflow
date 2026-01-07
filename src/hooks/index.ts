@@ -22,3 +22,7 @@ export { useScreenshotFolder } from './useScreenshotFolder';
 // Type configuration
 export type { UseTypeConfigReturn } from './useTypeConfig';
 export { useTypeConfig } from './useTypeConfig';
+
+// AI context files configuration
+export type { UseContextFilesReturn } from './useContextFiles';
+export { useContextFiles } from './useContextFiles';

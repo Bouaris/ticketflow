@@ -6,15 +6,20 @@
  */
 
 import { isTauri, fileExists, readTextFileContents, joinPath, getDirFromPath } from './tauri-bridge';
+import { getContextFilesKey } from '../constants/storage';
 import type { AIProvider } from './ai';
 
 // ============================================================
 // TYPES
 // ============================================================
 
+export interface ContextFileEntry {
+  filename: string;
+  content: string;
+}
+
 export interface ProjectContext {
-  claudeMd: string | null;
-  agentsMd: string | null;
+  files: ContextFileEntry[];
   loadedAt: number;
   projectPath: string;
 }
@@ -26,23 +31,56 @@ export interface AIOptions {
 
 export interface ContextStatus {
   loaded: boolean;
-  hasClaude: boolean;
-  hasAgents: boolean;
-  claudeChars: number;
-  agentsChars: number;
+  files: Array<{ filename: string; chars: number }>;
+  totalChars: number;
+}
+
+export interface ContextFilesConfig {
+  files: string[];
+  version: number;
 }
 
 // ============================================================
 // CONFIGURATION
 // ============================================================
 
-const CONTEXT_FILES = {
-  CLAUDE: 'CLAUDE.md',
-  AGENTS: 'AGENTS.md',
-} as const;
-
+const DEFAULT_CONTEXT_FILES = ['CLAUDE.md', 'AGENTS.md'];
 const MAX_CONTEXT_LENGTH = 4000;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// ============================================================
+// CONFIG PERSISTENCE
+// ============================================================
+
+/**
+ * Load context files configuration from localStorage
+ */
+export function loadContextFilesConfig(projectPath: string): string[] {
+  try {
+    const key = getContextFilesKey(projectPath);
+    const stored = localStorage.getItem(key);
+    if (!stored) {
+      return DEFAULT_CONTEXT_FILES;
+    }
+    const config: ContextFilesConfig = JSON.parse(stored);
+    return config.files;
+  } catch {
+    return DEFAULT_CONTEXT_FILES;
+  }
+}
+
+/**
+ * Save context files configuration to localStorage
+ */
+export function saveContextFilesConfig(projectPath: string, files: string[]): void {
+  try {
+    const key = getContextFilesKey(projectPath);
+    const config: ContextFilesConfig = { files, version: 1 };
+    localStorage.setItem(key, JSON.stringify(config));
+  } catch (error) {
+    console.warn('[AI Context] Failed to save config:', error);
+  }
+}
 
 // ============================================================
 // CACHE
@@ -122,17 +160,16 @@ function truncateContent(content: string, maxLength: number): string {
 // ============================================================
 
 /**
- * Load project context from CLAUDE.md and AGENTS.md
+ * Load project context from configured files
  *
  * @param projectPath Path to project directory (or backlog file path)
- * @returns ProjectContext with file contents or null values
+ * @returns ProjectContext with file contents
  */
 export async function loadProjectContext(projectPath: string): Promise<ProjectContext> {
   // Not available in web mode
   if (!isTauri()) {
     return {
-      claudeMd: null,
-      agentsMd: null,
+      files: [],
       loadedAt: Date.now(),
       projectPath,
     };
@@ -149,15 +186,24 @@ export async function loadProjectContext(projectPath: string): Promise<ProjectCo
     return cached;
   }
 
-  // Load files in parallel
-  const [claudeMd, agentsMd] = await Promise.all([
-    readContextFile(dirPath, CONTEXT_FILES.CLAUDE),
-    readContextFile(dirPath, CONTEXT_FILES.AGENTS),
-  ]);
+  // Get configured files (or defaults)
+  const configuredFiles = loadContextFilesConfig(dirPath);
+
+  // Load all configured files in parallel
+  const fileResults = await Promise.all(
+    configuredFiles.map(async (filename) => {
+      const content = await readContextFile(dirPath, filename);
+      return { filename, content };
+    })
+  );
+
+  // Filter out missing files (content is null)
+  const files: ContextFileEntry[] = fileResults
+    .filter((f): f is { filename: string; content: string } => f.content !== null)
+    .map(({ filename, content }) => ({ filename, content }));
 
   const context: ProjectContext = {
-    claudeMd,
-    agentsMd,
+    files,
     loadedAt: Date.now(),
     projectPath: dirPath,
   };
@@ -166,10 +212,8 @@ export async function loadProjectContext(projectPath: string): Promise<ProjectCo
   contextCache.set(dirPath, context);
 
   // Log status
-  const status = [];
-  if (claudeMd) status.push(`CLAUDE.md (${claudeMd.length} chars)`);
-  if (agentsMd) status.push(`AGENTS.md (${agentsMd.length} chars)`);
-  if (status.length > 0) {
+  if (files.length > 0) {
+    const status = files.map(f => `${f.filename} (${f.content.length} chars)`);
     console.log(`[AI Context] Loaded: ${status.join(', ')}`);
   }
 
@@ -190,19 +234,20 @@ export function getContextStatus(projectPath: string): ContextStatus {
   if (!cached) {
     return {
       loaded: false,
-      hasClaude: false,
-      hasAgents: false,
-      claudeChars: 0,
-      agentsChars: 0,
+      files: [],
+      totalChars: 0,
     };
   }
 
+  const files = cached.files.map(f => ({
+    filename: f.filename,
+    chars: f.content.length,
+  }));
+
   return {
     loaded: true,
-    hasClaude: !!cached.claudeMd,
-    hasAgents: !!cached.agentsMd,
-    claudeChars: cached.claudeMd?.length || 0,
-    agentsChars: cached.agentsMd?.length || 0,
+    files,
+    totalChars: files.reduce((sum, f) => sum + f.chars, 0),
   };
 }
 
@@ -214,21 +259,14 @@ export function getContextStatus(projectPath: string): ContextStatus {
  * Format context for injection into prompt
  */
 function formatContextBlock(context: ProjectContext): string {
-  const sections: string[] = [];
-
-  if (context.claudeMd) {
-    const content = truncateContent(context.claudeMd, MAX_CONTEXT_LENGTH);
-    sections.push(`## CLAUDE.md\n${content}`);
-  }
-
-  if (context.agentsMd) {
-    const content = truncateContent(context.agentsMd, MAX_CONTEXT_LENGTH);
-    sections.push(`## AGENTS.md\n${content}`);
-  }
-
-  if (sections.length === 0) {
+  if (context.files.length === 0) {
     return '';
   }
+
+  const sections = context.files.map(({ filename, content }) => {
+    const truncated = truncateContent(content, MAX_CONTEXT_LENGTH);
+    return `## ${filename}\n${truncated}`;
+  });
 
   return `<project-context>\n${sections.join('\n\n')}\n</project-context>\n\n`;
 }
@@ -264,8 +302,8 @@ export async function buildPromptWithContext(
     }
 
     console.log('[AI Context] Injecting context into prompt:', {
-      claudeChars: context.claudeMd?.length || 0,
-      agentsChars: context.agentsMd?.length || 0,
+      files: context.files.map(f => f.filename),
+      totalChars: context.files.reduce((sum, f) => sum + f.content.length, 0),
     });
 
     return contextBlock + basePrompt;

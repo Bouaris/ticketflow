@@ -15,7 +15,8 @@ import {
 } from '../../lib/ai';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 import type { useUpdater } from '../../hooks/useUpdater';
-import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon, SparklesIcon } from '../ui/Icons';
+import { useContextFiles } from '../../hooks/useContextFiles';
+import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon, SparklesIcon, FileIcon, CloseIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 import { MaintenanceModal } from './MaintenanceModal';
 import { WhatsNewModal } from '../ui/WhatsNewModal';
@@ -24,6 +25,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   updater: ReturnType<typeof useUpdater>;
+  projectPath?: string;
   markdownContent?: string;
   onApplyCorrections?: (correctedMarkdown: string) => Promise<void>;
 }
@@ -45,7 +47,7 @@ const PROVIDERS: { id: AIProvider; name: string; description: string; url: strin
   },
 ];
 
-export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApplyCorrections }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownContent, onApplyCorrections }: SettingsModalProps) {
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('groq');
   const [apiKey, setApiKeyState] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -53,6 +55,14 @@ export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApp
   const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
+
+  // Context files management
+  const {
+    contextFiles,
+    availableFiles,
+    addFile,
+    removeFile,
+  } = useContextFiles(projectPath || null);
 
   useEffect(() => {
     if (isOpen) {
@@ -264,6 +274,63 @@ export function SettingsModal({ isOpen, onClose, updater, markdownContent, onApp
                   Analyser
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Context Files section (Tauri only) */}
+          {isTauri() && projectPath && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-700">Fichiers de Contexte IA</h4>
+                <p className="text-xs text-gray-500">
+                  Fichiers Markdown injectés dans les prompts IA
+                </p>
+              </div>
+
+              {/* Selected files list */}
+              <div className="space-y-2 mb-3">
+                {contextFiles.map(file => (
+                  <div key={file} className="flex items-center justify-between bg-emerald-50 px-3 py-2 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileIcon className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm text-emerald-700">{file}</span>
+                    </div>
+                    <button
+                      onClick={() => removeFile(file)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <CloseIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {contextFiles.length === 0 && (
+                  <p className="text-sm text-gray-400 italic">Aucun fichier de contexte</p>
+                )}
+              </div>
+
+              {/* Add file dropdown */}
+              {availableFiles.filter(f => !contextFiles.includes(f)).length > 0 && (
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addFile(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  defaultValue=""
+                >
+                  <option value="" disabled>+ Ajouter un fichier...</option>
+                  {availableFiles
+                    .filter(f => !contextFiles.includes(f))
+                    .map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              )}
+
+              {/* Hint */}
+              <p className="mt-3 text-xs text-gray-400 italic">
+                Astuce: Vous pouvez créer un architecture.md et le rajouter afin de donner plus de contexte à votre IA Ticketflow.
+              </p>
             </div>
           )}
 

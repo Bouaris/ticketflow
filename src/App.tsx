@@ -635,6 +635,7 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         updater={updater}
+        projectPath={typeConfig.projectPath || undefined}
         markdownContent={backlog.allItems.length > 0 ? backlog.toMarkdown() : undefined}
         onApplyCorrections={handleApplyMaintenanceCorrections}
       />

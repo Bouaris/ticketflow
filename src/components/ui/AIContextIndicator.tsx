@@ -1,7 +1,7 @@
 /**
  * AIContextIndicator - Badge showing AI context loading status
  *
- * Displays which project context files (CLAUDE.md, AGENTS.md) are loaded
+ * Displays which project context files are loaded
  * and being used to enrich AI prompts.
  */
 
@@ -55,25 +55,19 @@ export function AIContextIndicator({ projectPath }: AIContextIndicatorProps) {
     );
   }
 
-  // No context loaded or not available
-  if (!status || (!status.hasClaude && !status.hasAgents)) {
+  // No context loaded or no files
+  if (!status || status.files.length === 0) {
     return null;
   }
 
   // Build tooltip text
-  const files: string[] = [];
-  if (status.hasClaude) {
-    files.push(`CLAUDE.md (${formatSize(status.claudeChars)})`);
-  }
-  if (status.hasAgents) {
-    files.push(`AGENTS.md (${formatSize(status.agentsChars)})`);
-  }
-  const tooltip = `Contexte projet: ${files.join(', ')}`;
+  const tooltipFiles = status.files.map(f => `${f.filename} (${formatSize(f.chars)})`);
+  const tooltip = `Contexte projet: ${tooltipFiles.join(', ')}`;
 
-  // Build display text
-  const displayFiles: string[] = [];
-  if (status.hasClaude) displayFiles.push('CLAUDE');
-  if (status.hasAgents) displayFiles.push('AGENTS');
+  // Build display text - show first 3 files max, then "+N"
+  const maxDisplay = 3;
+  const displayFiles = status.files.slice(0, maxDisplay).map(f => f.filename.replace('.md', ''));
+  const moreCount = status.files.length - maxDisplay;
 
   return (
     <div
@@ -81,7 +75,10 @@ export function AIContextIndicator({ projectPath }: AIContextIndicatorProps) {
       title={tooltip}
     >
       <DocumentIcon className="w-3 h-3" />
-      <span>{displayFiles.join(' + ')}</span>
+      <span>
+        {displayFiles.join(' + ')}
+        {moreCount > 0 && ` +${moreCount}`}
+      </span>
     </div>
   );
 }
