@@ -1,7 +1,7 @@
 # AGENTS.md - Contexte Projet Ticketflow
 
 > Document de référence pour les agents IA travaillant sur ce projet
-> Dernière mise à jour: 2026-01-06 | Version: 1.2.0
+> Dernière mise à jour: 2026-01-06 | Version: 1.3.0
 
 ---
 
@@ -143,7 +143,7 @@ La release doit être faite **manuellement**.
 
 Utiliser le skill `/release`:
 ```
-/release 1.2.0
+/release 1.3.0
 ```
 
 #### Étapes clés du processus

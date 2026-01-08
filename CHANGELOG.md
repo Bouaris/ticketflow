@@ -4,6 +4,22 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.3.0] - 2026-01-08
+
+### Ajouté
+- **OpenAI Provider**: 3e provider IA (GPT-4o, GPT-4o-mini, o1-mini, o3-mini) (LT-003)
+- **Config IA par projet**: Choix du provider, modèle et température par projet
+- **ProjectSettingsModal**: Interface de configuration projet avec override IA
+- **Fichiers contexte configurables**: Sélection des fichiers inclus dans le contexte IA (CT-001)
+- Hook `useProjectAIConfig` pour la gestion de l'état IA projet
+
+### Modifié
+- Bouton "Paramètres Projet" déplacé du FAB vers le header (style rectangulaire indigo)
+- Providers non configurés masqués dans les paramètres projet
+
+### Corrigé
+- Footer du panneau de détail correctement positionné dans le slot Modal
+
 ## [1.2.0] - 2026-01-06
 
 ### Ajouté
