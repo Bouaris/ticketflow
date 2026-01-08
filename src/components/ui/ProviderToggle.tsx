@@ -1,7 +1,7 @@
 /**
  * ProviderToggle - Toggle button for AI provider selection
  *
- * Displays Groq/Gemini toggle with availability status.
+ * Displays Groq/Gemini/OpenAI toggle with availability status.
  */
 
 import { type AIProvider, hasApiKey } from '../../lib/ai';
@@ -29,6 +29,7 @@ export function ProviderToggle({
 }: ProviderToggleProps) {
   const groqAvailable = hasApiKey('groq');
   const geminiAvailable = hasApiKey('gemini');
+  const openaiAvailable = hasApiKey('openai');
 
   const sizeClasses = size === 'sm'
     ? 'px-2 py-1 text-xs'
@@ -66,6 +67,19 @@ export function ProviderToggle({
         >
           Gemini
         </button>
+        <button
+          type="button"
+          onClick={() => openaiAvailable && onChange('openai')}
+          disabled={!openaiAvailable}
+          className={`${sizeClasses} font-medium transition-colors border-l border-gray-300 ${
+            value === 'openai'
+              ? 'bg-emerald-500 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100'
+          } ${!openaiAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={openaiAvailable ? 'Utiliser OpenAI' : 'Clé API OpenAI non configurée'}
+        >
+          OpenAI
+        </button>
       </div>
     </div>
   );
@@ -76,5 +90,9 @@ export function ProviderToggle({
 // ============================================================
 
 export function getProviderLabel(provider: AIProvider): string {
-  return provider === 'groq' ? 'Groq' : 'Gemini';
+  switch (provider) {
+    case 'groq': return 'Groq';
+    case 'gemini': return 'Gemini';
+    case 'openai': return 'OpenAI';
+  }
 }

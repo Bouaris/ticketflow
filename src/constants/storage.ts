@@ -21,7 +21,9 @@ export const STORAGE_KEYS = {
   AI_PROVIDER: 'ai-provider',
   GROQ_API_KEY: 'groq-api-key',
   GEMINI_API_KEY: 'gemini-api-key',
+  OPENAI_API_KEY: 'openai-api-key',
   AI_CONTEXT_FILES_PREFIX: 'ticketflow-ai-context-files',
+  PROJECT_AI_CONFIG_PREFIX: 'ticketflow-project-ai-config',
 
   // Tauri-specific
   TAURI_LAST_FILE: 'ticketflow-last-file',
@@ -60,9 +62,25 @@ export function getTypeConfigKey(projectId: string): string {
  */
 export function getContextFilesKey(projectPath: string): string {
   // Simple hash of the path to avoid special characters in localStorage key
-  const hash = projectPath.split('').reduce((acc, char) => {
+  const hash = hashPath(projectPath);
+  return `${STORAGE_KEYS.AI_CONTEXT_FILES_PREFIX}-${hash}`;
+}
+
+/**
+ * Build a project AI config key for a specific project path
+ */
+export function getProjectAIConfigKey(projectPath: string): string {
+  const hash = hashPath(projectPath);
+  return `${STORAGE_KEYS.PROJECT_AI_CONFIG_PREFIX}-${hash}`;
+}
+
+/**
+ * Simple hash function for path strings
+ */
+function hashPath(path: string): number {
+  const hash = path.split('').reduce((acc, char) => {
     acc = ((acc << 5) - acc) + char.charCodeAt(0);
     return acc & acc;
   }, 0);
-  return `${STORAGE_KEYS.AI_CONTEXT_FILES_PREFIX}-${Math.abs(hash)}`;
+  return Math.abs(hash);
 }

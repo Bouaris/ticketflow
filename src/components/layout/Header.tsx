@@ -3,7 +3,7 @@
  */
 
 import type { ViewMode } from '../../hooks/useBacklog';
-import { HomeIcon, KanbanIcon, ListIcon, FolderIcon, FloppyDiskIcon } from '../ui/Icons';
+import { HomeIcon, KanbanIcon, ListIcon, FolderIcon, FloppyDiskIcon, SettingsIcon } from '../ui/Icons';
 
 interface HeaderProps {
   fileName: string | null;
@@ -11,9 +11,11 @@ interface HeaderProps {
   isDirty: boolean;
   isLoading: boolean;
   viewMode: ViewMode;
+  hasProject: boolean;
   onOpenFile: () => void;
   onSave: () => void;
   onViewModeChange: (mode: ViewMode) => void;
+  onOpenProjectSettings: () => void;
   onGoHome?: () => void;
 }
 
@@ -23,9 +25,11 @@ export function Header({
   isDirty,
   isLoading,
   viewMode,
+  hasProject,
   onOpenFile,
   onSave,
   onViewModeChange,
+  onOpenProjectSettings,
   onGoHome,
 }: HeaderProps) {
   return (
@@ -97,6 +101,19 @@ export function Header({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
+          {hasProject && (
+            <button
+              onClick={onOpenProjectSettings}
+              aria-label="Paramètres du projet"
+              className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <SettingsIcon className="w-4 h-4" />
+                Paramètres Projet
+              </span>
+            </button>
+          )}
+
           <button
             onClick={onOpenFile}
             disabled={isLoading}

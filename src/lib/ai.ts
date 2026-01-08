@@ -1,13 +1,14 @@
 /**
  * AI Integration - Multi-provider support
  *
- * Supports: Groq (default, free), Gemini
+ * Supports: Groq (default, free), Gemini, OpenAI
  */
 
 import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import type { BacklogItem } from '../types/backlog';
-import { STORAGE_KEYS } from '../constants/storage';
+import { STORAGE_KEYS, getProjectAIConfigKey } from '../constants/storage';
 import { AI_CONFIG } from '../constants/config';
 import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
 import {
@@ -19,6 +20,12 @@ import {
   type MaintenanceIssue,
 } from '../types/ai';
 import { buildPromptWithContext, type AIOptions } from './ai-context';
+import {
+  type ProjectAIConfig,
+  ProjectAIConfigSchema,
+  DEFAULT_PROJECT_AI_CONFIG,
+  DEFAULT_MODELS,
+} from '../types/projectAIConfig';
 
 // Re-export for consumers
 export type { AIOptions } from './ai-context';
@@ -27,7 +34,7 @@ export type { AIOptions } from './ai-context';
 // TYPES
 // ============================================================
 
-export type AIProvider = 'groq' | 'gemini';
+export type AIProvider = 'groq' | 'gemini' | 'openai';
 
 interface AIClientConfig {
   provider: AIProvider;
@@ -46,19 +53,27 @@ export function setProvider(provider: AIProvider): void {
   localStorage.setItem(STORAGE_KEYS.AI_PROVIDER, provider);
 }
 
+function getApiKeyStorageKey(provider: AIProvider): string {
+  switch (provider) {
+    case 'groq': return STORAGE_KEYS.GROQ_API_KEY;
+    case 'gemini': return STORAGE_KEYS.GEMINI_API_KEY;
+    case 'openai': return STORAGE_KEYS.OPENAI_API_KEY;
+  }
+}
+
 export function getApiKey(provider?: AIProvider): string | null {
   const p = provider || getProvider();
-  return getSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
+  return getSecureItem(getApiKeyStorageKey(p));
 }
 
 export function setApiKey(key: string, provider?: AIProvider): void {
   const p = provider || getProvider();
-  setSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY, key);
+  setSecureItem(getApiKeyStorageKey(p), key);
 }
 
 export function clearApiKey(provider?: AIProvider): void {
   const p = provider || getProvider();
-  removeSecureItem(p === 'groq' ? STORAGE_KEYS.GROQ_API_KEY : STORAGE_KEYS.GEMINI_API_KEY);
+  removeSecureItem(getApiKeyStorageKey(p));
 }
 
 /**
@@ -69,6 +84,7 @@ export function initSecureStorage(): void {
   migrateToSecureStorage([
     STORAGE_KEYS.GROQ_API_KEY,
     STORAGE_KEYS.GEMINI_API_KEY,
+    STORAGE_KEYS.OPENAI_API_KEY,
   ]);
 }
 
@@ -89,6 +105,7 @@ export function getClientConfig(overrideProvider?: AIProvider): AIClientConfig |
 
 let groqClient: Groq | null = null;
 let geminiClient: GoogleGenerativeAI | null = null;
+let openaiClient: OpenAI | null = null;
 
 function getGroqClient(apiKey: string): Groq {
   if (!groqClient) {
@@ -104,36 +121,136 @@ function getGeminiClient(apiKey: string): GoogleGenerativeAI {
   return geminiClient;
 }
 
+function getOpenAIClient(apiKey: string): OpenAI {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+  }
+  return openaiClient;
+}
+
 export function resetClient(): void {
   groqClient = null;
   geminiClient = null;
+  openaiClient = null;
+}
+
+// ============================================================
+// PROJECT AI CONFIGURATION
+// ============================================================
+
+/**
+ * Load project-specific AI configuration from localStorage
+ */
+export function loadProjectAIConfig(projectPath: string): ProjectAIConfig {
+  try {
+    const key = getProjectAIConfigKey(projectPath);
+    const stored = localStorage.getItem(key);
+    if (!stored) return DEFAULT_PROJECT_AI_CONFIG;
+
+    const parsed = JSON.parse(stored);
+    const result = ProjectAIConfigSchema.safeParse(parsed);
+    return result.success ? result.data : DEFAULT_PROJECT_AI_CONFIG;
+  } catch {
+    return DEFAULT_PROJECT_AI_CONFIG;
+  }
+}
+
+/**
+ * Save project-specific AI configuration to localStorage
+ */
+export function saveProjectAIConfig(projectPath: string, config: ProjectAIConfig): void {
+  try {
+    const key = getProjectAIConfigKey(projectPath);
+    localStorage.setItem(key, JSON.stringify(config));
+  } catch (error) {
+    console.warn('[ProjectAIConfig] Failed to save:', error);
+  }
+}
+
+/**
+ * Get effective AI configuration for a project.
+ * Resolves 'global' provider to actual global settings.
+ */
+export function getEffectiveAIConfig(projectPath?: string): {
+  provider: AIProvider;
+  modelId: string;
+} {
+  if (projectPath) {
+    const projectConfig = loadProjectAIConfig(projectPath);
+    if (projectConfig.provider !== 'global') {
+      const provider = projectConfig.provider as AIProvider;
+      return {
+        provider,
+        modelId: projectConfig.modelId || DEFAULT_MODELS[provider],
+      };
+    }
+  }
+
+  // Fallback to global settings
+  const globalProvider = getProvider();
+  const defaultModel = globalProvider === 'groq'
+    ? AI_CONFIG.GROQ_MODEL
+    : globalProvider === 'gemini'
+      ? AI_CONFIG.GEMINI_MODEL
+      : AI_CONFIG.OPENAI_MODEL;
+
+  return {
+    provider: globalProvider,
+    modelId: defaultModel,
+  };
+}
+
+/**
+ * Get display name for a provider
+ */
+export function getProviderDisplayName(provider: AIProvider): string {
+  switch (provider) {
+    case 'groq': return 'Groq';
+    case 'gemini': return 'Gemini';
+    case 'openai': return 'OpenAI';
+  }
 }
 
 // ============================================================
 // UNIFIED COMPLETION API
 // ============================================================
 
-async function generateCompletion(prompt: string, provider?: AIProvider): Promise<string> {
+interface CompletionOptions {
+  provider?: AIProvider;
+  modelId?: string;
+}
+
+async function generateCompletion(prompt: string, options?: CompletionOptions): Promise<string> {
+  const provider = options?.provider || getProvider();
   const config = getClientConfig(provider);
   if (!config) {
-    const providerName = provider || getProvider();
-    throw new Error(`Clé API ${providerName === 'groq' ? 'Groq' : 'Gemini'} non configurée`);
+    throw new Error(`Clé API ${getProviderDisplayName(provider)} non configurée`);
   }
 
   if (config.provider === 'groq') {
     const client = getGroqClient(config.apiKey);
     const response = await client.chat.completions.create({
-      model: AI_CONFIG.GROQ_MODEL,
+      model: options?.modelId || AI_CONFIG.GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: AI_CONFIG.TEMPERATURE,
       max_tokens: AI_CONFIG.MAX_TOKENS,
     });
     return response.choices[0]?.message?.content || '';
-  } else {
+  } else if (config.provider === 'gemini') {
     const client = getGeminiClient(config.apiKey);
-    const model = client.getGenerativeModel({ model: AI_CONFIG.GEMINI_MODEL });
+    const model = client.getGenerativeModel({ model: options?.modelId || AI_CONFIG.GEMINI_MODEL });
     const result = await model.generateContent(prompt);
     return result.response.text();
+  } else {
+    // OpenAI
+    const client = getOpenAIClient(config.apiKey);
+    const response = await client.chat.completions.create({
+      model: options?.modelId || AI_CONFIG.OPENAI_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: AI_CONFIG.TEMPERATURE,
+      max_tokens: AI_CONFIG.MAX_TOKENS,
+    });
+    return response.choices[0]?.message?.content || '';
   }
 }
 
@@ -193,6 +310,10 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni explication.`;
 
 export async function refineItem(item: BacklogItem, options?: RefineOptions): Promise<RefinementResult> {
   try {
+    // Get effective AI config for this project
+    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const effectiveProvider = options?.provider || provider;
+
     let basePrompt = REFINE_PROMPT
       .replace('{id}', item.id)
       .replace('{type}', item.type)
@@ -226,7 +347,7 @@ export async function refineItem(item: BacklogItem, options?: RefineOptions): Pr
       .replace('{additional_prompt_section}', additionalPromptSection);
 
     const prompt = await buildPromptWithContext(basePrompt, options);
-    const text = await generateCompletion(prompt, options?.provider);
+    const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -366,9 +487,13 @@ RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
 
 export async function generateItemFromDescription(description: string, options?: AIOptions): Promise<GenerateItemResult> {
   try {
+    // Get effective AI config for this project
+    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const effectiveProvider = options?.provider || provider;
+
     const basePrompt = GENERATE_ITEM_PROMPT.replace('{user_description}', description);
     const prompt = await buildPromptWithContext(basePrompt, options);
-    const text = await generateCompletion(prompt, options?.provider);
+    const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -432,6 +557,10 @@ Réponds en JSON:
 
 export async function suggestImprovements(items: BacklogItem[], options?: AIOptions): Promise<RefinementResult> {
   try {
+    // Get effective AI config for this project
+    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const effectiveProvider = options?.provider || provider;
+
     const itemsList = items
       .slice(0, 20)
       .map(item => `- ${item.id}: ${item.title} (${item.type}, ${item.priority || 'N/A'})`)
@@ -439,7 +568,7 @@ export async function suggestImprovements(items: BacklogItem[], options?: AIOpti
 
     const basePrompt = BULK_SUGGEST_PROMPT.replace('{items_list}', itemsList);
     const prompt = await buildPromptWithContext(basePrompt, options);
-    const text = await generateCompletion(prompt, options?.provider);
+    const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -584,6 +713,10 @@ export async function analyzeBacklogFormat(
   options?: AIOptions
 ): Promise<BacklogMaintenanceResult> {
   try {
+    // Get effective AI config for this project
+    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const effectiveProvider = options?.provider || provider;
+
     // Limit content size to avoid token limits
     const truncatedContent = markdownContent.length > 50000
       ? markdownContent.slice(0, 50000) + '\n\n[...contenu tronqué...]'
@@ -591,7 +724,7 @@ export async function analyzeBacklogFormat(
 
     const basePrompt = MAINTENANCE_PROMPT.replace('{backlog_content}', truncatedContent);
     const prompt = await buildPromptWithContext(basePrompt, options);
-    const text = await generateCompletion(prompt, options?.provider);
+    const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -631,6 +764,10 @@ export async function correctBacklogFormat(
       return { success: true, correctedMarkdown: markdownContent };
     }
 
+    // Get effective AI config for this project
+    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const effectiveProvider = options?.provider || provider;
+
     // Build issues list for the prompt
     const issuesList = issues
       .map((issue, i) => `${i + 1}. [${issue.type}] ${issue.description} (${issue.location}) → ${issue.suggestion}`)
@@ -645,7 +782,7 @@ export async function correctBacklogFormat(
       .replace('{backlog_content}', truncatedContent);
 
     const prompt = await buildPromptWithContext(basePrompt, options);
-    const text = await generateCompletion(prompt, options?.provider);
+    const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 
     // The response should be the corrected markdown directly
     // Clean up any potential wrapper text

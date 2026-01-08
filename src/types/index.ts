@@ -70,3 +70,13 @@ export {
   isValidItemType,
   hasProperty,
 } from './guards';
+
+// Project AI Configuration
+export type { AIModel, ProjectAIConfig, ProjectAIProvider } from './projectAIConfig';
+export {
+  AIModelSchema,
+  ProjectAIConfigSchema,
+  DEFAULT_PROJECT_AI_CONFIG,
+  AVAILABLE_MODELS,
+  DEFAULT_MODELS,
+} from './projectAIConfig';

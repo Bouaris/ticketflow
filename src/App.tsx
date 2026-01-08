@@ -18,6 +18,7 @@ import { KanbanBoard } from './components/kanban/KanbanBoard';
 import { ItemDetailPanel } from './components/detail/ItemDetailPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { TypeConfigModal } from './components/settings/TypeConfigModal';
+import { ProjectSettingsModal } from './components/settings/ProjectSettingsModal';
 import { ItemEditorModal, type ItemFormData } from './components/editor/ItemEditorModal';
 import { WelcomePage } from './components/welcome/WelcomePage';
 import { WelcomeScreen } from './components/welcome/WelcomeScreen';
@@ -55,6 +56,7 @@ function App() {
   // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTypeConfigOpen, setIsTypeConfigOpen] = useState(false);
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -514,9 +516,11 @@ ${item.description ? `**Description:** ${item.description}` : ''}
           isDirty={fileAccess.isDirty}
           isLoading={fileAccess.isLoading || backlog.isLoading}
           viewMode={backlog.viewMode}
+          hasProject={!!typeConfig.projectPath}
           onOpenFile={handleOpenFile}
           onSave={handleSave}
           onViewModeChange={backlog.setViewMode}
+          onOpenProjectSettings={() => setIsProjectSettingsOpen(true)}
           onGoHome={isTauri() ? handleGoHome : undefined}
         />
       )}
@@ -648,6 +652,17 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         onDeleteType={handleDeleteType}
         onCancel={() => setIsTypeConfigOpen(false)}
       />
+
+      {/* Project Settings modal */}
+      {typeConfig.projectPath && (
+        <ProjectSettingsModal
+          isOpen={isProjectSettingsOpen}
+          onClose={() => setIsProjectSettingsOpen(false)}
+          projectPath={typeConfig.projectPath}
+          projectName={getFolderName(typeConfig.projectPath)}
+          onOpenTypeConfig={() => setIsTypeConfigOpen(true)}
+        />
+      )}
 
       {/* Export modal */}
       {exportModal && (

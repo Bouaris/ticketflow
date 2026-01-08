@@ -16,7 +16,7 @@ import {
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 import type { useUpdater } from '../../hooks/useUpdater';
 import { useContextFiles } from '../../hooks/useContextFiles';
-import { CheckIcon, GroqIcon, GeminiIcon, RefreshIcon, WrenchIcon, SparklesIcon, FileIcon, CloseIcon } from '../ui/Icons';
+import { CheckIcon, GroqIcon, GeminiIcon, OpenAIIcon, RefreshIcon, WrenchIcon, SparklesIcon, FileIcon, CloseIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 import { MaintenanceModal } from './MaintenanceModal';
 import { WhatsNewModal } from '../ui/WhatsNewModal';
@@ -44,6 +44,13 @@ const PROVIDERS: { id: AIProvider; name: string; description: string; url: strin
     description: '15 req/min, 1M tokens/jour (Gemini 1.5 Flash)',
     url: 'https://makersuite.google.com/app/apikey',
     placeholder: 'AIza...',
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    description: 'GPT-4o et GPT-3.5 Turbo, payant',
+    url: 'https://platform.openai.com/api-keys',
+    placeholder: 'sk-...',
   },
 ];
 
@@ -147,7 +154,7 @@ export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownC
       isOpen={isOpen}
       onClose={onClose}
       title="Paramètres IA"
-      size="sm"
+      size="md"
       footer={footerContent}
     >
       <div className="space-y-5">
@@ -156,10 +163,17 @@ export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownC
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Fournisseur IA par défaut
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {PROVIDERS.map(provider => {
                   const isConfigured = hasApiKey(provider.id);
                   const isActive = selectedProvider === provider.id;
+
+                  // Provider-specific colors
+                  const colors = {
+                    groq: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600' },
+                    gemini: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600' },
+                    openai: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-600' },
+                  }[provider.id];
 
                   return (
                     <button
@@ -167,9 +181,7 @@ export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownC
                       onClick={() => handleProviderChange(provider.id)}
                       className={`p-3 rounded-xl border-2 text-left transition-all relative ${
                         isActive
-                          ? provider.id === 'groq'
-                            ? 'border-orange-500 bg-orange-50'
-                            : 'border-blue-500 bg-blue-50'
+                          ? `${colors.border} ${colors.bg}`
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -179,29 +191,24 @@ export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownC
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {isConfigured ? 'Configuré' : 'Non configuré'}
+                        {isConfigured ? 'OK' : '...'}
                       </div>
 
                       <div className="flex items-center gap-2 mb-1">
-                        {provider.id === 'groq' ? (
-                          <GroqIcon className={`w-5 h-5 ${isActive ? 'text-orange-600' : 'text-gray-500'}`} />
-                        ) : (
-                          <GeminiIcon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
+                        {provider.id === 'groq' && (
+                          <GroqIcon className={`w-5 h-5 ${isActive ? colors.icon : 'text-gray-500'}`} />
                         )}
-                        <span className={`font-medium ${
-                          isActive
-                            ? provider.id === 'groq' ? 'text-orange-700' : 'text-blue-700'
-                            : 'text-gray-700'
-                        }`}>
+                        {provider.id === 'gemini' && (
+                          <GeminiIcon className={`w-5 h-5 ${isActive ? colors.icon : 'text-gray-500'}`} />
+                        )}
+                        {provider.id === 'openai' && (
+                          <OpenAIIcon className={`w-5 h-5 ${isActive ? colors.icon : 'text-gray-500'}`} />
+                        )}
+                        <span className={`font-medium ${isActive ? colors.text : 'text-gray-700'}`}>
                           {provider.name}
                         </span>
-                        {isActive && (
-                          <span className="text-xs bg-white/80 px-1.5 py-0.5 rounded text-gray-600">
-                            Par défaut
-                          </span>
-                        )}
                       </div>
-                      <p className="text-xs text-gray-500 leading-tight">
+                      <p className="text-xs text-gray-500 leading-tight line-clamp-2">
                         {provider.description}
                       </p>
                     </button>
@@ -229,7 +236,7 @@ export function SettingsModal({ isOpen, onClose, updater, projectPath, markdownC
                     }
                   }}
                 >
-                  {selectedProvider === 'groq' ? 'Groq Console' : 'Google AI Studio'}
+                  {selectedProvider === 'groq' ? 'Groq Console' : selectedProvider === 'gemini' ? 'Google AI Studio' : 'OpenAI Platform'}
                 </button>
               </p>
               <div className="relative">

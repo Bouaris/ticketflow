@@ -44,6 +44,9 @@ importers:
       minisearch:
         specifier: ^7.2.0
         version: 7.2.0
+      openai:
+        specifier: ^6.15.0
+        version: 6.15.0(ws@8.18.3)(zod@4.3.4)
       react:
         specifier: ^19.2.0
         version: 19.2.3
@@ -2025,6 +2028,18 @@ packages:
 
   nwsapi@2.2.23:
     resolution: {integrity: sha512-7wfH4sLbt4M0gCDzGE6vzQBo0bfTKjU7Sfpqy/7gs1qBfYz2vEJH6vXcBKpO3+6Yu1telwd0t9HpyOoLEQQbIQ==}
+
+  openai@6.15.0:
+    resolution: {integrity: sha512-F1Lvs5BoVvmZtzkUEVyh8mDQPPFolq4F+xdsx/DO8Hee8YF3IGAlZqUIsF+DVGhqf4aU0a3bTghsxB6OIsRy1g==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -4455,6 +4470,11 @@ snapshots:
   node-releases@2.0.27: {}
 
   nwsapi@2.2.23: {}
+
+  openai@6.15.0(ws@8.18.3)(zod@4.3.4):
+    optionalDependencies:
+      ws: 8.18.3
+      zod: 4.3.4
 
   optionator@0.9.4:
     dependencies:
