@@ -1,9 +1,9 @@
 /**
- * Header component with file controls and view toggle.
+ * Header component with file controls, undo/redo, and view toggle.
  */
 
 import type { ViewMode } from '../../hooks/useBacklog';
-import { HomeIcon, KanbanIcon, ListIcon, FolderIcon, FloppyDiskIcon, SettingsIcon } from '../ui/Icons';
+import { HomeIcon, KanbanIcon, ListIcon, FolderIcon, FloppyDiskIcon, SettingsIcon, ArrowLeftIcon, ArrowRightIcon } from '../ui/Icons';
 
 interface HeaderProps {
   fileName: string | null;
@@ -17,6 +17,11 @@ interface HeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   onOpenProjectSettings: () => void;
   onGoHome?: () => void;
+  // Undo/Redo
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export function Header({
@@ -31,11 +36,15 @@ export function Header({
   onViewModeChange,
   onOpenProjectSettings,
   onGoHome,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Left: Logo & File info */}
+        {/* Left: Logo, Undo/Redo & File info */}
         <div className="flex items-center gap-4">
           {/* Home button (only in Tauri mode) */}
           {onGoHome && (
@@ -48,6 +57,39 @@ export function Header({
               <HomeIcon className="w-5 h-5" />
             </button>
           )}
+
+          {/* Undo/Redo buttons - only show when handlers are provided */}
+          {(onUndo || onRedo) && (
+            <div className="flex items-center gap-1 border-r border-gray-200 pr-4">
+              <button
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`p-2 rounded-lg transition-colors ${
+                  canUndo
+                    ? 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                title="Annuler (Ctrl+Z)"
+                aria-label="Annuler"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onRedo}
+                disabled={!canRedo}
+                className={`p-2 rounded-lg transition-colors ${
+                  canRedo
+                    ? 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                title="Rétablir (Ctrl+Y)"
+                aria-label="Rétablir"
+              >
+                <ArrowRightIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <h1 className="text-xl font-bold text-gray-900">
             Ticketflow
           </h1>

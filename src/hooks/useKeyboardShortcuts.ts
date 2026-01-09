@@ -31,12 +31,14 @@ export function useKeyboardShortcuts({ onUndo, onRedo }: UseKeyboardShortcutsOpt
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         onUndo();
+        return;
       }
 
       // Ctrl+Y or Ctrl+Shift+Z = Redo
       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
         onRedo();
+        return;
       }
     };
 

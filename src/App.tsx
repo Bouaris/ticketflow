@@ -122,7 +122,10 @@ function App() {
   }, [errorNotification]);
 
   // Keyboard shortcuts for undo/redo
-  useKeyboardShortcuts({ onUndo: backlog.undo, onRedo: backlog.redo });
+  useKeyboardShortcuts({
+    onUndo: backlog.undo,
+    onRedo: backlog.redo,
+  });
 
   // Tray quit listener (Tauri only)
   useEffect(() => {
@@ -522,6 +525,10 @@ ${item.description ? `**Description:** ${item.description}` : ''}
           onViewModeChange={backlog.setViewMode}
           onOpenProjectSettings={() => setIsProjectSettingsOpen(true)}
           onGoHome={isTauri() ? handleGoHome : undefined}
+          canUndo={backlog.canUndo}
+          canRedo={backlog.canRedo}
+          onUndo={backlog.undo}
+          onRedo={backlog.redo}
         />
       )}
 
