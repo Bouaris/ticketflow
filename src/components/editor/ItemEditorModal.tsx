@@ -298,11 +298,18 @@ export function ItemEditorModal({
     const result = await generateItemFromDescription(aiPrompt, {
       provider: selectedProvider,
       projectPath,
+      availableTypes: types,
     });
     setIsGenerating(false);
 
     if (result.success && result.item) {
-      const suggestedType = result.item.suggestedType;
+      // Validate that the suggested type exists in available types
+      let suggestedType = result.item.suggestedType;
+      const typeExists = types.some(t => t.id === suggestedType);
+      if (!typeExists) {
+        console.warn(`[AI] Unknown suggested type: ${suggestedType}, falling back to first available type`);
+        suggestedType = types[0]?.id || 'CT';
+      }
       const newId = generateNextId(suggestedType);
 
       setForm({

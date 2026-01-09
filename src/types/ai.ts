@@ -37,7 +37,10 @@ export const GenerateItemResponseSchema = z.object({
   userStory: z.string().nullable().optional(),
   specs: z.array(z.string()).optional().default([]),
   criteria: z.array(CriterionSchema).optional().default([]),
-  suggestedType: z.enum(['BUG', 'CT', 'LT', 'AUTRE']).optional().default('CT'),
+  suggestedType: z.string()
+    .regex(/^[A-Z]+$/, 'Type must be uppercase letters only')
+    .optional()
+    .default('CT'),
   suggestedPriority: z.enum(['Haute', 'Moyenne', 'Faible']).nullable().optional(),
   suggestedSeverity: z.enum(['P0', 'P1', 'P2', 'P3', 'P4']).nullable().optional(),
   suggestedEffort: z.enum(['XS', 'S', 'M', 'L', 'XL']).nullable().optional(),

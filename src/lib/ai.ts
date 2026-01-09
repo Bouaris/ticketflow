@@ -8,6 +8,7 @@ import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import type { BacklogItem } from '../types/backlog';
+import type { TypeDefinition } from '../types/typeConfig';
 import { STORAGE_KEYS, getProjectAIConfigKey } from '../constants/storage';
 import { AI_CONFIG } from '../constants/config';
 import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
@@ -403,6 +404,50 @@ export interface GenerateItemResult {
   error?: string;
 }
 
+// ============================================================
+// DYNAMIC TYPE CLASSIFICATION HELPERS
+// ============================================================
+
+/**
+ * Default descriptions for legacy types (used when custom types don't have descriptions)
+ */
+const DEFAULT_TYPE_DESCRIPTIONS: Record<string, string> = {
+  BUG: 'Anomalie technique. Sévérité P0-P4. PAS de user story (le bug EST le problème).',
+  CT: 'Court Terme - Livrable dans le sprint. Impact immédiat mesurable.',
+  LT: 'Long Terme - Vision stratégique. Investissement architectural.',
+  AUTRE: 'Innovation, exploration, amélioration continue.',
+};
+
+/**
+ * Build the type classification section for the AI prompt
+ * Supports both default and custom types
+ */
+function buildTypeClassificationSection(types?: TypeDefinition[]): string {
+  if (!types || types.length === 0) {
+    // Fallback to default types
+    return Object.entries(DEFAULT_TYPE_DESCRIPTIONS)
+      .map(([id, desc]) => `- ${id}: ${desc}`)
+      .join('\n');
+  }
+
+  return types.map(t => {
+    const defaultDesc = DEFAULT_TYPE_DESCRIPTIONS[t.id];
+    // Use default description if known type, otherwise use label as description
+    const description = defaultDesc || `${t.label} - Type personnalisé du projet.`;
+    return `- ${t.id}: ${description}`;
+  }).join('\n');
+}
+
+/**
+ * Build the valid type enum string for the JSON schema in the prompt
+ */
+function buildTypeEnum(types?: TypeDefinition[]): string {
+  if (!types || types.length === 0) {
+    return 'BUG|CT|LT|AUTRE';
+  }
+  return types.map(t => t.id).join('|');
+}
+
 const GENERATE_ITEM_PROMPT = `Tu es un Staff Engineer d'élite, architecte de systèmes distribués et expert en ingénierie produit. Tu combines une vision technologique avant-gardiste avec une rigueur d'exécution absolue. Tu penses en termes de systèmes, d'impacts de second ordre, et de dette technique anticipée.
 
 Ta mission: transformer une idée brute en un item de backlog de qualité production - précis, actionnable, et aligné avec les standards d'excellence des équipes d'ingénierie de classe mondiale.
@@ -422,10 +467,7 @@ Avant de générer, pose-toi ces questions:
 - Cette solution est-elle la plus simple qui fonctionne (KISS)?
 
 CLASSIFICATION DES ITEMS:
-- BUG: Anomalie technique. Sévérité P0-P4. PAS de user story (le bug EST le problème).
-- CT: Court Terme - Livrable dans le sprint. Impact immédiat mesurable.
-- LT: Long Terme - Vision stratégique. Investissement architectural.
-- AUTRE: Innovation, exploration, amélioration continue.
+{type_classification}
 
 STANDARDS DE QUALITÉ:
 1. TITRE: Verbe d'action + contexte + impact. Maximum 60 caractères.
@@ -475,7 +517,7 @@ RÉPONDS UNIQUEMENT avec ce JSON (aucun texte avant/après):
     {"text": "Critère d'acceptation vérifiable 1", "checked": false},
     {"text": "Critère d'acceptation vérifiable 2", "checked": false}
   ],
-  "suggestedType": "BUG|CT|LT|AUTRE",
+  "suggestedType": "{type_enum}",
   "suggestedPriority": "Haute|Moyenne|Faible" ou null,
   "suggestedSeverity": "P0|P1|P2|P3|P4" ou null,
   "suggestedEffort": "XS|S|M|L|XL",
@@ -491,7 +533,10 @@ export async function generateItemFromDescription(description: string, options?:
     const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
 
-    const basePrompt = GENERATE_ITEM_PROMPT.replace('{user_description}', description);
+    const basePrompt = GENERATE_ITEM_PROMPT
+      .replace('{user_description}', description)
+      .replace('{type_classification}', buildTypeClassificationSection(options?.availableTypes))
+      .replace('{type_enum}', buildTypeEnum(options?.availableTypes));
     const prompt = await buildPromptWithContext(basePrompt, options);
     const text = await generateCompletion(prompt, { provider: effectiveProvider, modelId });
 

@@ -8,6 +8,7 @@
 import { isTauri, fileExists, readTextFileContents, joinPath, getDirFromPath } from './tauri-bridge';
 import { getContextFilesKey } from '../constants/storage';
 import type { AIProvider } from './ai';
+import type { TypeDefinition } from '../types/typeConfig';
 
 // ============================================================
 // TYPES
@@ -27,6 +28,8 @@ export interface ProjectContext {
 export interface AIOptions {
   provider?: AIProvider;
   projectPath?: string;
+  /** Available types for dynamic classification (custom types support) */
+  availableTypes?: TypeDefinition[];
 }
 
 export interface ContextStatus {
