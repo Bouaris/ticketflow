@@ -4,22 +4,31 @@
 
 import { useState } from 'react';
 import type { BacklogItem } from '../../types/backlog';
+import type { ItemPriorityScore, BlockingBug } from '../../types/ai';
 import { PRIORITY_LABELS } from '../../constants/labels';
 import { ItemBadge } from '../shared/ItemBadge';
 import { CriteriaProgress } from '../ui/Progress';
 import { CameraIcon } from '../ui/Icons';
+import { ScoreBadgeInline } from '../ai/AIPriorityScore';
+import { AIBlockingBadge } from '../ai/AIBlockingIndicator';
 
 interface ListViewProps {
   items: BacklogItem[];
   onItemClick: (item: BacklogItem) => void;
+  // AI Analysis getters (optional)
+  getItemScore?: (itemId: string) => ItemPriorityScore | null;
+  getBlockingInfo?: (itemId: string) => BlockingBug | null;
 }
 
-type SortField = 'id' | 'type' | 'title' | 'priority' | 'effort' | 'severity';
+type SortField = 'id' | 'type' | 'title' | 'priority' | 'effort' | 'severity' | 'aiScore';
 type SortDirection = 'asc' | 'desc';
 
-export function ListView({ items, onItemClick }: ListViewProps) {
+export function ListView({ items, onItemClick, getItemScore, getBlockingInfo }: ListViewProps) {
   const [sortField, setSortField] = useState<SortField>('id');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Check if AI analysis is available
+  const hasAIAnalysis = !!getItemScore;
 
   const sortedItems = [...items].sort((a, b) => {
     let comparison = 0;
@@ -51,6 +60,11 @@ export function ListView({ items, onItemClick }: ListViewProps) {
         const aSeverity = a.severity ? severityOrder[a.severity] : 5;
         const bSeverity = b.severity ? severityOrder[b.severity] : 5;
         comparison = aSeverity - bSeverity;
+        break;
+      case 'aiScore':
+        const aScore = getItemScore?.(a.id)?.score ?? -1;
+        const bScore = getItemScore?.(b.id)?.score ?? -1;
+        comparison = bScore - aScore; // Higher scores first by default
         break;
     }
 
@@ -101,80 +115,104 @@ export function ListView({ items, onItemClick }: ListViewProps) {
             <SortHeader field="priority">Priorité</SortHeader>
             <SortHeader field="effort">Effort</SortHeader>
             <SortHeader field="severity">Sévérité</SortHeader>
+            {hasAIAnalysis && (
+              <SortHeader field="aiScore">Score IA</SortHeader>
+            )}
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Critères
             </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {sortedItems.map(item => (
-            <tr
-              key={item.id}
-              onClick={() => onItemClick(item)}
-              className="hover:bg-gray-50 cursor-pointer transition-colors"
-            >
-              <td className="px-4 py-3 whitespace-nowrap">
-                <span className="text-sm font-mono text-gray-900">{item.id}</span>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <ItemBadge type={item.type} />
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  {item.emoji && <span>{item.emoji}</span>}
-                  <span className="text-sm text-gray-900 line-clamp-1">{item.title}</span>
-                  {item.screenshots && item.screenshots.length > 0 && (
-                    <span className="text-gray-400 flex-shrink-0" title={`${item.screenshots.length} capture(s)`}>
-                      <CameraIcon />
+          {sortedItems.map(item => {
+            // Extract AI data once per item to avoid multiple callback invocations
+            const aiScore = getItemScore?.(item.id);
+            const blockingInfo = getBlockingInfo?.(item.id);
+
+            return (
+              <tr
+                key={item.id}
+                onClick={() => onItemClick(item)}
+                className="hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-gray-900">{item.id}</span>
+                    {blockingInfo && (
+                      <AIBlockingBadge
+                        blocksCount={blockingInfo.blocksCount}
+                        severity={blockingInfo.severity}
+                      />
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <ItemBadge type={item.type} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {item.emoji && <span>{item.emoji}</span>}
+                    <span className="text-sm text-gray-900 line-clamp-1">{item.title}</span>
+                    {item.screenshots && item.screenshots.length > 0 && (
+                      <span className="text-gray-400 flex-shrink-0" title={`${item.screenshots.length} capture(s)`}>
+                        <CameraIcon />
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {item.priority && (
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${
+                      item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
+                      item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {PRIORITY_LABELS[item.priority]}
                     </span>
                   )}
-                </div>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                {item.priority && (
-                  <span className={`text-xs font-medium px-2 py-1 rounded ${
-                    item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
-                    item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {PRIORITY_LABELS[item.priority]}
-                  </span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {item.effort && (
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${
+                      item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
+                      item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {item.effort}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {item.severity && (
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${
+                      item.severity === 'P0' ? 'bg-red-100 text-red-700' :
+                      item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
+                      item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {item.severity}
+                    </span>
+                  )}
+                </td>
+                {hasAIAnalysis && (
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {aiScore && (
+                      <ScoreBadgeInline score={aiScore.score} />
+                    )}
+                  </td>
                 )}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                {item.effort && (
-                  <span className={`text-xs font-medium px-2 py-1 rounded ${
-                    item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
-                    item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
-                    {item.effort}
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                {item.severity && (
-                  <span className={`text-xs font-medium px-2 py-1 rounded ${
-                    item.severity === 'P0' ? 'bg-red-100 text-red-700' :
-                    item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
-                    item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {item.severity}
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                {item.criteria && item.criteria.length > 0 && (
-                  <CriteriaProgress
-                    completed={item.criteria.filter(c => c.checked).length}
-                    total={item.criteria.length}
-                    size="sm"
-                  />
-                )}
-              </td>
-            </tr>
-          ))}
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {item.criteria && item.criteria.length > 0 && (
+                    <CriteriaProgress
+                      completed={item.criteria.filter(c => c.checked).length}
+                      total={item.criteria.length}
+                      size="sm"
+                    />
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

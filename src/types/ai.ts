@@ -74,6 +74,73 @@ export const MaintenanceResponseSchema = z.object({
 });
 
 // ============================================================
+// BACKLOG ANALYSIS SCHEMAS (LT-002)
+// ============================================================
+
+/**
+ * Priority score factors breakdown
+ */
+export const PriorityFactorsSchema = z.object({
+  severity: z.number().min(0).max(100),
+  urgency: z.number().min(0).max(100),
+  businessImpact: z.number().min(0).max(100),
+});
+
+/**
+ * Individual item priority score from AI analysis
+ */
+export const ItemPriorityScoreSchema = z.object({
+  itemId: z.string(),
+  score: z.number().min(0).max(100),
+  factors: PriorityFactorsSchema,
+  rationale: z.string(),
+  isBlocking: z.boolean().default(false),
+  blockedBy: z.array(z.string()).optional(),
+});
+
+/**
+ * Suggested item grouping from AI analysis
+ */
+export const ItemGroupSchema = z.object({
+  groupId: z.string(),
+  name: z.string(),
+  items: z.array(z.string()),
+  rationale: z.string(),
+  suggestedOrder: z.array(z.string()),
+});
+
+/**
+ * Blocking bug identified by AI
+ */
+export const BlockingBugSchema = z.object({
+  itemId: z.string(),
+  severity: z.enum(['P0', 'P1', 'P2', 'P3', 'P4']),
+  blocksCount: z.number(),
+  recommendation: z.string(),
+});
+
+/**
+ * Complete backlog analysis response from AI
+ */
+export const BacklogAnalysisResponseSchema = z.object({
+  priorities: z.array(ItemPriorityScoreSchema),
+  groups: z.array(ItemGroupSchema),
+  blockingBugs: z.array(BlockingBugSchema),
+  insights: z.array(z.string()),
+  analyzedAt: z.number(),
+});
+
+/**
+ * User decision on an AI suggestion
+ */
+export const SuggestionDecisionSchema = z.object({
+  suggestionId: z.string(),
+  decision: z.enum(['accepted', 'rejected', 'modified']),
+  modifiedValue: z.unknown().optional(),
+  decidedAt: z.number(),
+});
+
+// ============================================================
 // TYPES (inferred from schemas)
 // ============================================================
 
@@ -83,6 +150,14 @@ export type GenerateItemResponse = z.infer<typeof GenerateItemResponseSchema>;
 export type SuggestionsResponse = z.infer<typeof SuggestionsResponseSchema>;
 export type MaintenanceIssue = z.infer<typeof MaintenanceIssueSchema>;
 export type MaintenanceResponse = z.infer<typeof MaintenanceResponseSchema>;
+
+// Backlog Analysis Types (LT-002)
+export type PriorityFactors = z.infer<typeof PriorityFactorsSchema>;
+export type ItemPriorityScore = z.infer<typeof ItemPriorityScoreSchema>;
+export type ItemGroup = z.infer<typeof ItemGroupSchema>;
+export type BlockingBug = z.infer<typeof BlockingBugSchema>;
+export type BacklogAnalysisResponse = z.infer<typeof BacklogAnalysisResponseSchema>;
+export type SuggestionDecision = z.infer<typeof SuggestionDecisionSchema>;
 
 // ============================================================
 // VALIDATION HELPERS

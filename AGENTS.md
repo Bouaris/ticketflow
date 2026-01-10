@@ -1,7 +1,7 @@
 # AGENTS.md - Contexte Projet Ticketflow
 
 > Document de référence pour les agents IA travaillant sur ce projet
-> Dernière mise à jour: 2026-01-06 | Version: 1.3.0
+> Dernière mise à jour: 2026-01-10 | Version: 1.4.0
 
 ---
 
@@ -15,7 +15,7 @@
 | **Stack** | React 19 · TypeScript 5.9 · Vite 7 · Tailwind 4 · Tauri 2 |
 | **Plateformes** | Windows (Tauri) + Web (Chrome/Edge) |
 | **Stockage** | Fichiers Markdown locaux |
-| **IA** | Groq (Llama 3.3) + Gemini (1.5 Flash) |
+| **IA** | Groq (Llama 3.3) + Gemini (1.5 Flash) + OpenAI (GPT-4o) |
 | **Repository** | https://github.com/Bouaris/ticketflow |
 
 ---
@@ -27,6 +27,7 @@ ticketflow/
 ├── src/
 │   ├── components/
 │   │   ├── ui/              # Primitives (Modal, Icons, ConfirmModal, UpdateModal)
+│   │   ├── ai/              # Composants IA (ScoreBadge, AIAnalysisPanel, AIBlockingIndicator)
 │   │   ├── editor/          # ItemEditorModal (création/édition tickets)
 │   │   ├── kanban/          # Vue Kanban drag-drop
 │   │   ├── list/            # Vue liste
@@ -41,11 +42,14 @@ ticketflow/
 │   │   ├── useTypeConfig.ts # Types dynamiques
 │   │   ├── useProjects.ts   # Gestion projets
 │   │   ├── useUpdater.ts    # Mise à jour auto
+│   │   ├── useAIBacklogSuggestions.ts # Analyse IA backlog
 │   │   └── useScreenshotFolder.ts
 │   ├── lib/
 │   │   ├── parser.ts        # ⚠️ CRITIQUE - Markdown → JSON
 │   │   ├── serializer.ts    # ⚠️ CRITIQUE - JSON → Markdown
-│   │   ├── ai.ts            # Intégration Groq/Gemini
+│   │   ├── ai.ts            # Intégration Groq/Gemini/OpenAI + analyzeBacklog
+│   │   ├── ai-cache.ts      # Cache session analyse IA (30min TTL)
+│   │   ├── ai-decisions.ts  # Persistance décisions accept/reject
 │   │   ├── tauri-bridge.ts  # Bridge Tauri ↔ Web
 │   │   └── version.ts       # Constante APP_VERSION
 │   └── types/

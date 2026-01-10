@@ -25,6 +25,10 @@ export const STORAGE_KEYS = {
   AI_CONTEXT_FILES_PREFIX: 'ticketflow-ai-context-files',
   PROJECT_AI_CONFIG_PREFIX: 'ticketflow-project-ai-config',
 
+  // AI Analysis (LT-002)
+  AI_ANALYSIS_CACHE_PREFIX: 'ticketflow-ai-analysis',
+  AI_DECISIONS_PREFIX: 'ticketflow-ai-decisions',
+
   // Tauri-specific
   TAURI_LAST_FILE: 'ticketflow-last-file',
 
@@ -75,12 +79,37 @@ export function getProjectAIConfigKey(projectPath: string): string {
 }
 
 /**
+ * Build an AI analysis cache key for a specific project path
+ */
+export function getAIAnalysisCacheKey(projectPath: string): string {
+  const hash = hashPath(projectPath);
+  return `${STORAGE_KEYS.AI_ANALYSIS_CACHE_PREFIX}-${hash}`;
+}
+
+/**
+ * Build an AI decisions key for a specific project path
+ */
+export function getAIDecisionsKey(projectPath: string): string {
+  const hash = hashPath(projectPath);
+  return `${STORAGE_KEYS.AI_DECISIONS_PREFIX}-${hash}`;
+}
+
+/**
  * Simple hash function for path strings
  */
-function hashPath(path: string): number {
+export function hashPath(path: string): number {
   const hash = path.split('').reduce((acc, char) => {
     acc = ((acc << 5) - acc) + char.charCodeAt(0);
     return acc & acc;
   }, 0);
   return Math.abs(hash);
+}
+
+/**
+ * Hash function for backlog items array
+ * Used for cache invalidation when items change
+ */
+export function hashItems(items: { id: string; title: string }[]): string {
+  const content = items.map(i => `${i.id}:${i.title}`).join('|');
+  return String(hashPath(content));
 }

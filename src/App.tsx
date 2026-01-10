@@ -11,6 +11,7 @@ import { useScreenshotFolder } from './hooks/useScreenshotFolder';
 import { useTypeConfig } from './hooks/useTypeConfig';
 import { useUpdater } from './hooks/useUpdater';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAIBacklogSuggestions } from './hooks/useAIBacklogSuggestions';
 import { Header } from './components/layout/Header';
 import { FilterBar } from './components/filter/FilterBar';
 import { ListView } from './components/list/ListView';
@@ -35,7 +36,8 @@ import { WhatsNewModal } from './components/ui/WhatsNewModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { shouldShowWhatsNew, getLastSeenVersion } from './lib/changelog';
 import { APP_VERSION } from './lib/version';
-import { PlusIcon, SettingsIcon, TagIcon } from './components/ui/Icons';
+import { PlusIcon, SettingsIcon, TagIcon, SparklesIcon } from './components/ui/Icons';
+import { AIAnalysisPanel } from './components/ai/AIAnalysisPanel';
 
 function App() {
   // File access
@@ -53,7 +55,11 @@ function App() {
   // Auto-updater (Tauri only)
   const updater = useUpdater();
 
+  // AI Analysis
+  const aiSuggestions = useAIBacklogSuggestions(backlog.allItems, typeConfig.projectPath);
+
   // UI state
+  const [isAIAnalysisPanelOpen, setIsAIAnalysisPanelOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTypeConfigOpen, setIsTypeConfigOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
@@ -546,6 +552,21 @@ ${item.description ? `**Description:** ${item.description}` : ''}
             </button>
           )}
 
+          {/* AI Analysis button - only show when backlog is loaded */}
+          {backlog.backlog && (
+            <button
+              onClick={() => setIsAIAnalysisPanelOpen(true)}
+              className="relative p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              title="Analyse IA du backlog"
+            >
+              <SparklesIcon className="w-5 h-5 text-white" />
+              {/* Badge if analysis is available */}
+              {aiSuggestions.analysis && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white" />
+              )}
+            </button>
+          )}
+
           {/* Type config button - only show when backlog is loaded */}
           {backlog.backlog && (
             <button
@@ -605,11 +626,15 @@ ${item.description ? `**Description:** ${item.description}` : ''}
               onTypesReorder={typeConfig.reorderTypesAtIndex}
               onMoveItem={handleMoveItem}
               projectPath={typeConfig.projectPath || undefined}
+              getItemScore={aiSuggestions.analysis ? aiSuggestions.getItemScore : undefined}
+              getBlockingInfo={aiSuggestions.analysis ? aiSuggestions.getBlockingInfo : undefined}
             />
           ) : (
             <ListView
               items={backlog.filteredItems}
               onItemClick={handleItemClick}
+              getItemScore={aiSuggestions.analysis ? aiSuggestions.getItemScore : undefined}
+              getBlockingInfo={aiSuggestions.analysis ? aiSuggestions.getBlockingInfo : undefined}
             />
           )}
         </>
@@ -683,14 +708,14 @@ ${item.description ? `**Description:** ${item.description}` : ''}
 
       {/* Error display */}
       {(fileAccess.error || backlog.error) && (
-        <div className="fixed bottom-4 left-4 right-24 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg z-30">
+        <div className="fixed bottom-4 left-4 right-24 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg z-[100]">
           {fileAccess.error || backlog.error}
         </div>
       )}
 
       {/* Error notification toast */}
       {errorNotification && (
-        <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3">
+        <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-[999] flex items-center gap-3">
           <span>{errorNotification}</span>
           <button
             onClick={() => setErrorNotification(null)}
@@ -766,6 +791,14 @@ ${item.description ? `**Description:** ${item.description}` : ''}
         isOpen={showWhatsNew}
         onClose={() => setShowWhatsNew(false)}
         sinceVersion={whatsNewSinceVersion}
+      />
+
+      {/* AI Analysis Panel */}
+      <AIAnalysisPanel
+        isOpen={isAIAnalysisPanelOpen}
+        onClose={() => setIsAIAnalysisPanelOpen(false)}
+        aiSuggestions={aiSuggestions}
+        itemCount={backlog.allItems.length}
       />
     </div>
     </ErrorBoundary>

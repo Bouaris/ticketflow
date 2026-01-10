@@ -4,6 +4,29 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.4.0] - 2026-01-10
+
+### Ajouté
+- **LT-002 - Analyse IA du Backlog**: Priorisation automatique avec scores 0-100, regroupements intelligents, détection bugs bloquants
+- **Score Badges**: Badges colorés (vert/jaune/orange/rouge) affichés sur les cartes Kanban et ListView
+- **Panneau d'Analyse IA**: Interface slide-over avec insights, groupements suggérés, boutons accept/reject
+- **Cache Session**: Résultats d'analyse cachés 30 minutes avec invalidation intelligente par hash
+- **Indicateur Bugs Bloquants**: Badge pulsant rouge pour les bugs qui bloquent d'autres items
+
+### Corrigé
+- **BUG-001**: Analyse IA isolée par projet (plus de fuite de données inter-projets)
+- Tooltip Score IA: utilisation de React Portal pour z-index correct
+- DragOverlay conserve les badges IA pendant le drag & drop
+- Progress affiche correctement 1/3, 2/3, 3/3 (corrigé off-by-one)
+- Déduplication des résultats IA (priorities, groups, blockingBugs)
+- Callbacks ListView optimisés (extraction en variables, plus d'appels multiples)
+- Z-index des toasts d'erreur augmentés pour visibilité
+
+### Améliorations
+- Hash stable pour invalidation cache (basé sur IDs des items)
+- ARIA labels ajoutés pour accessibilité (ScoreBadge, AIBlockingIndicator, GroupPanel)
+- Architecture AI robuste avec isolation projet complète
+
 ## [1.3.0] - 2026-01-08
 
 ### Ajouté

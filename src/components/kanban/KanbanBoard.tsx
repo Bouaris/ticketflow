@@ -31,6 +31,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { BacklogItem } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
+import type { ItemPriorityScore, BlockingBug } from '../../types/ai';
 import { isColumnDrag, isCardDrag, type DragData } from '../../types/dnd';
 import { KanbanCard } from './KanbanCard';
 import { GripIcon } from '../ui/Icons';
@@ -47,9 +48,21 @@ interface KanbanBoardProps {
   onTypesReorder?: (fromIndex: number, toIndex: number) => void;
   onMoveItem?: (itemId: string, targetType: string) => void;
   projectPath?: string;
+  // AI Analysis getters (optional)
+  getItemScore?: (itemId: string) => ItemPriorityScore | null;
+  getBlockingInfo?: (itemId: string) => BlockingBug | null;
 }
 
-export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, onMoveItem, projectPath }: KanbanBoardProps) {
+export function KanbanBoard({
+  itemsByType,
+  types,
+  onItemClick,
+  onTypesReorder,
+  onMoveItem,
+  projectPath,
+  getItemScore,
+  getBlockingInfo,
+}: KanbanBoardProps) {
   const totalItems = Object.values(itemsByType).reduce((sum, items) => sum + items.length, 0);
   const { getMultiplier, getWidth, toggleWidth } = useKanbanColumnWidths(projectPath);
 
@@ -165,6 +178,8 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, o
                 multiplier={getMultiplier(type.id)}
                 onToggleWidth={() => toggleWidth(type.id)}
                 isDropTarget={activeDragType === 'card'}
+                getItemScore={getItemScore}
+                getBlockingInfo={getBlockingInfo}
               />
             ))}
           </div>
@@ -178,6 +193,8 @@ export function KanbanBoard({ itemsByType, types, onItemClick, onTypesReorder, o
                 item={activeItem}
                 onClick={() => {}}
                 isDragOverlay
+                aiScore={getItemScore?.(activeItem.id)}
+                blockingInfo={getBlockingInfo?.(activeItem.id)}
               />
             </div>
           )}
@@ -199,8 +216,20 @@ interface SortableKanbanColumnProps {
   multiplier: WidthMultiplier;
   onToggleWidth: () => void;
   isDropTarget?: boolean;
+  getItemScore?: (itemId: string) => ItemPriorityScore | null;
+  getBlockingInfo?: (itemId: string) => BlockingBug | null;
 }
-function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multiplier, onToggleWidth, isDropTarget = false }: SortableKanbanColumnProps) {
+function SortableKanbanColumnWithStyles({
+  type,
+  items,
+  onItemClick,
+  width,
+  multiplier,
+  onToggleWidth,
+  isDropTarget = false,
+  getItemScore,
+  getBlockingInfo,
+}: SortableKanbanColumnProps) {
   // Sortable for column reordering (header drag)
   const {
     attributes,
@@ -338,6 +367,8 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
                     item={item}
                     onClick={() => onItemClick(item)}
                     columnType={type.id}
+                    aiScore={getItemScore?.(item.id)}
+                    blockingInfo={getBlockingInfo?.(item.id)}
                   />
                 </div>
               );
@@ -352,6 +383,8 @@ function SortableKanbanColumnWithStyles({ type, items, onItemClick, width, multi
                 item={item}
                 onClick={() => onItemClick(item)}
                 columnType={type.id}
+                aiScore={getItemScore?.(item.id)}
+                blockingInfo={getBlockingInfo?.(item.id)}
               />
             ))}
           </div>

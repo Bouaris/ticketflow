@@ -7,18 +7,30 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { BacklogItem } from '../../types/backlog';
 import type { DragData } from '../../types/dnd';
+import type { ItemPriorityScore, BlockingBug } from '../../types/ai';
 import { SeverityBadge, PriorityBadge, EffortBadge } from '../shared/ItemBadge';
 import { CriteriaProgress } from '../ui/Progress';
 import { CameraIcon } from '../ui/Icons';
+import { ScoreBadge } from '../ai/AIPriorityScore';
+import { AIBlockingIndicator } from '../ai/AIBlockingIndicator';
 
 interface KanbanCardProps {
   item: BacklogItem;
   onClick: () => void;
   columnType?: string;      // Parent column type for drag data
   isDragOverlay?: boolean;  // True when rendered in DragOverlay (disables drag)
+  aiScore?: ItemPriorityScore | null;  // AI priority score
+  blockingInfo?: BlockingBug | null;   // Blocking bug info
 }
 
-export function KanbanCard({ item, onClick, columnType, isDragOverlay = false }: KanbanCardProps) {
+export function KanbanCard({
+  item,
+  onClick,
+  columnType,
+  isDragOverlay = false,
+  aiScore,
+  blockingInfo,
+}: KanbanCardProps) {
   // Drag data for cross-column movement
   const dragData: DragData = {
     type: 'card',
@@ -68,7 +80,7 @@ export function KanbanCard({ item, onClick, columnType, isDragOverlay = false }:
         isDragOverlay ? 'rotate-3 scale-105 shadow-xl' : ''
       }`}
     >
-      {/* Header: ID + Emoji + Screenshot indicator */}
+      {/* Header: ID + Emoji + Screenshot indicator + AI indicators */}
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-mono text-gray-500">{item.id}</span>
         {item.emoji && <span className="text-sm">{item.emoji}</span>}
@@ -77,6 +89,26 @@ export function KanbanCard({ item, onClick, columnType, isDragOverlay = false }:
             <CameraIcon />
           </span>
         )}
+
+        {/* AI indicators - pushed to the right */}
+        <div className="ml-auto flex items-center gap-1">
+          {blockingInfo && (
+            <AIBlockingIndicator
+              blocksCount={blockingInfo.blocksCount}
+              severity={blockingInfo.severity}
+              recommendation={blockingInfo.recommendation}
+              size="sm"
+            />
+          )}
+          {aiScore && (
+            <ScoreBadge
+              score={aiScore.score}
+              size="sm"
+              factors={aiScore.factors}
+              rationale={aiScore.rationale}
+            />
+          )}
+        </div>
       </div>
 
       {/* Title */}
