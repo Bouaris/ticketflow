@@ -1,7 +1,7 @@
 # AGENTS.md - Contexte Projet Ticketflow
 
 > Document de référence pour les agents IA travaillant sur ce projet
-> Dernière mise à jour: 2026-01-10 | Version: 1.4.0
+> Dernière mise à jour: 2026-01-14 | Version: 1.4.2
 
 ---
 
@@ -282,6 +282,32 @@ projet/
 | GitHub upload | Fichier pas remplacé | Vérifier tailles, `gh release delete-asset` si différent |
 | Repo privé | "Could not fetch release JSON" | Rendre le repo PUBLIC |
 | Signature invalide | Update échoue à l'install | Re-signer le ZIP, mettre à jour latest.json |
+| Sections vides disparues | Type custom absent du dropdown | Parser crée raw-section marker automatique (v1.4.2) |
+| Types avec espaces | "BUG V5" mappé à "BUG" | Match exact word boundary, pas `startsWith()` |
+| Export après raffinage IA | Ancienne version exportée | ExportModal récupère item depuis backlog (source de vérité) |
+
+---
+
+## Blindspots Documentés (v1.4.2)
+
+### Système de Types Dynamiques
+
+5 blindspots architecturaux identifiés et corrigés:
+
+| # | Blindspot | Cause | Fix |
+|---|-----------|-------|-----|
+| 1 | Sections vides non détectées | `detectTypesFromMarkdown()` ignorait sections sans items | Raw-section marker automatique dans parser |
+| 2 | Sync Section ↔ Type | `startsWith()` causait faux positifs | Match exact word boundary avec RegExp |
+| 3 | Persistance localStorage | Config stale après modifications externes | Détection types depuis Markdown à chaque ouverture |
+| 4 | raw-section incohérent | Parser ≠ UI pour sections vides | Marker unifié `<!-- Type: X -->` |
+| 5 | Race conditions init | Colonnes fantômes dans Kanban | Coordination backlog ↔ typeConfig |
+
+### Fichiers Impactés
+
+- `src/types/typeConfig.ts:143-201` - `detectTypesFromMarkdown()` avec word boundary
+- `src/types/backlog.ts:7-12` - `ItemTypeSchema` supporte underscores/chiffres
+- `src/lib/parser.ts:175-277` - `extractTypeFromSectionTitle()` + raw-section markers
+- `src/lib/itemPlacement.ts:27-143` - Strategies améliorées pour sections vides
 
 ---
 

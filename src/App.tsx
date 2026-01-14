@@ -25,7 +25,7 @@ import { WelcomePage } from './components/welcome/WelcomePage';
 import { WelcomeScreen } from './components/welcome/WelcomeScreen';
 import { ExportModal } from './components/export/ExportModal';
 import { initSecureStorage } from './lib/ai';
-import { exportItemForClipboard, buildItemMarkdown } from './lib/serializer';
+import { buildItemMarkdown } from './lib/serializer';
 import type { BacklogItem } from './types/backlog';
 import type { TypeDefinition } from './types/typeConfig';
 import { isFileSystemAccessSupported } from './lib/fileSystem';
@@ -66,9 +66,9 @@ function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  // FIX BUG-002: Store only itemId, generate content at render time
   const [exportModal, setExportModal] = useState<{
     isOpen: boolean;
-    content: string;
     itemId: string;
   } | null>(null);
   const [showQuitConfirmModal, setShowQuitConfirmModal] = useState(false);
@@ -411,24 +411,14 @@ ${item.description ? `**Description:** ${item.description}` : ''}
   }, [archiveConfirmModal, backlog, fileAccess, screenshotFolder]);
 
   // Handle export item (for clipboard)
+  // FIX BUG-002: Only store itemId, content is generated at render time in ExportModal
+  // This ensures the exported markdown always reflects the latest item state after AI refinement
   const handleExportItem = useCallback((item: BacklogItem) => {
-    const sourcePath = fileAccess.filePath || 'Unknown';
-
-    // Calculate absolute screenshot base path from file path
-    let screenshotBasePath: string | undefined;
-    if (fileAccess.filePath) {
-      const dir = getDirFromPath(fileAccess.filePath);
-      screenshotBasePath = `${dir}\\.backlog-assets\\screenshots`;
-    }
-
-    const content = exportItemForClipboard(item, sourcePath, screenshotBasePath);
-
     setExportModal({
       isOpen: true,
-      content,
       itemId: item.id,
     });
-  }, [fileAccess.filePath]);
+  }, []);
 
   // Handle save item (from editor modal)
   const handleSaveItem = useCallback((data: ItemFormData, isNew: boolean) => {
@@ -697,12 +687,14 @@ ${item.description ? `**Description:** ${item.description}` : ''}
       )}
 
       {/* Export modal */}
+      {/* FIX BUG-002: Item is fetched fresh from backlog at render time */}
       {exportModal && (
         <ExportModal
           isOpen={exportModal.isOpen}
           onClose={() => setExportModal(null)}
-          content={exportModal.content}
-          itemId={exportModal.itemId}
+          item={backlog.allItems.find(i => i.id === exportModal.itemId) || null}
+          sourcePath={fileAccess.filePath || 'Unknown'}
+          screenshotBasePath={fileAccess.filePath ? `${getDirFromPath(fileAccess.filePath)}\\.backlog-assets\\screenshots` : undefined}
         />
       )}
 

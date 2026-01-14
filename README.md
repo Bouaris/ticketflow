@@ -2,7 +2,7 @@
 
 Application de gestion de backlog produit avec génération IA.
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.2-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -17,8 +17,9 @@ Application de gestion de backlog produit avec génération IA.
 
 ### Génération IA
 - **Mode IA** - Décrivez votre idée en langage naturel, l'IA génère un ticket complet
-- **Affinage IA** - Améliorez un ticket existant avec Gemini
-- **Providers** - Support Groq (gratuit) et Gemini
+- **Affinage IA** - Améliorez un ticket existant avec un prompt personnalisé
+- **Analyse Backlog** - Priorisation automatique avec scores, regroupements et détection de bugs bloquants
+- **Providers** - Support Groq (gratuit), Gemini et OpenAI (GPT-4o)
 
 ### Captures d'écran
 - **CTRL+V** - Collez directement depuis le presse-papier
@@ -183,10 +184,11 @@ ticketflow/
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
-### Dernière version: v1.1.3
-- Injection automatique CLAUDE.md/AGENTS.md dans prompts IA
-- Affichage nom du projet dans le header
-- Toggle 1x/2x largeur colonnes Kanban
+### Dernière version: v1.4.2
+- **Analyse IA du Backlog**: Priorisation avec scores 0-100, regroupements intelligents
+- **Types personnalisés robustes**: Sections vides comme "BUG V5" maintenant supportées
+- **Export fiable**: Contenu toujours à jour après raffinage IA
+- **3 providers IA**: Groq, Gemini, OpenAI (GPT-4o)
 
 ## Roadmap
 

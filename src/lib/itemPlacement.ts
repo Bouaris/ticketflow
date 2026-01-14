@@ -25,6 +25,26 @@ const TYPE_LABEL_MAP: Record<string, string[]> = {
 };
 
 /**
+ * Convert a custom type ID back to possible section title labels.
+ * Examples:
+ *   "BUG_V5" → ["BUG V5", "BUG_V5"]
+ *   "EXT_CHROME" → ["EXT CHROME", "EXT_CHROME", "EXTENSION CHROME"]
+ */
+function getLabelsForCustomType(typeId: string): string[] {
+  const labels: string[] = [];
+
+  // Add the exact type ID
+  labels.push(typeId);
+
+  // Add version with spaces instead of underscores
+  if (typeId.includes('_')) {
+    labels.push(typeId.replace(/_/g, ' '));
+  }
+
+  return labels;
+}
+
+/**
  * Find the target section index for placing an item of a given type.
  * Uses multiple strategies in order of priority:
  *
@@ -54,11 +74,16 @@ export function findTargetSectionIndex(
   }
 
   // Strategy 2: Match section by title/label (for NEW types with no existing items)
-  const matchLabels = TYPE_LABEL_MAP[targetType] || [targetType];
+  // First try the standard mapping, then fall back to custom type conversion
+  const matchLabels = TYPE_LABEL_MAP[targetType] || getLabelsForCustomType(targetType);
   for (let i = 0; i < sections.length; i++) {
     const section = sections[i];
     const titleUpper = section.title.toUpperCase();
-    if (matchLabels.some(label => titleUpper.includes(label))) {
+    // Check if any label matches (exact or contains)
+    if (matchLabels.some(label => {
+      const labelUpper = label.toUpperCase();
+      return titleUpper === labelUpper || titleUpper.includes(labelUpper);
+    })) {
       return i;
     }
   }
@@ -78,7 +103,29 @@ export function findTargetSectionIndex(
     }
   }
 
-  // Strategy 4: Fallback to first non-raw section
+  // Strategy 4: Match empty sections by title (for custom types with empty sections)
+  // This catches sections that have no items but match by title
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    // Check if this is an empty section or has only raw-section marker
+    const isEmpty = section.items.length === 0 ||
+      (section.items.length === 1 &&
+       'type' in section.items[0] &&
+       section.items[0].type === 'raw-section');
+
+    if (isEmpty) {
+      const titleUpper = section.title.toUpperCase();
+      const customLabels = getLabelsForCustomType(targetType);
+      if (customLabels.some(label => {
+        const labelUpper = label.toUpperCase();
+        return titleUpper === labelUpper || titleUpper.includes(labelUpper);
+      })) {
+        return i;
+      }
+    }
+  }
+
+  // Strategy 5: Fallback to first non-raw section
   for (let i = 0; i < sections.length; i++) {
     const section = sections[i];
     const firstItem = section.items[0] as SectionItem | undefined;
@@ -91,7 +138,7 @@ export function findTargetSectionIndex(
     }
   }
 
-  // Strategy 5: Ultimate fallback - section 0
+  // Strategy 6: Ultimate fallback - section 0
   return 0;
 }
 

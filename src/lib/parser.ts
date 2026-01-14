@@ -172,6 +172,33 @@ function parseSection(lines: string[], sectionIndex: number): Section {
   const itemBoundaries = findItemBoundaries(lines);
   const items: (BacklogItem | TableGroup | RawSection)[] = [];
 
+  // CRITICAL FIX: For empty sections, create a raw-section marker
+  // This preserves empty custom sections like "## 6. BUG V5" (without items)
+  // and allows type detection from section headers
+  if (itemBoundaries.length === 0) {
+    // Extract content after header (comments, blank lines, etc.)
+    const contentLines = lines.slice(1);
+    const rawContent = contentLines.join('\n').trim();
+
+    // Detect type from section title for the marker
+    const typeId = extractTypeFromSectionTitle(sectionTitle);
+    const typeMarker = typeId ? `<!-- Type: ${typeId} -->` : '';
+
+    // Only add marker if there's content or we detected a custom type
+    if (rawContent || typeId) {
+      const markerContent = rawContent.includes('<!-- Type:')
+        ? rawContent
+        : (typeMarker ? `${typeMarker}\n${rawContent}` : rawContent);
+
+      items.push({
+        type: 'raw-section' as const,
+        title: sectionTitle,
+        rawMarkdown: markerContent || `<!-- Empty section: ${sectionTitle} -->`,
+        sectionIndex: 0,
+      });
+    }
+  }
+
   for (let i = 0; i < itemBoundaries.length; i++) {
     const boundary = itemBoundaries[i];
     const nextStart = itemBoundaries[i + 1]?.start ?? lines.length;
@@ -194,6 +221,59 @@ function parseSection(lines: string[], sectionIndex: number): Section {
     items,
     rawHeader: headerLine,
   };
+}
+
+/**
+ * Extract type ID from section title
+ * Examples:
+ *   "BUGS" → "BUG"
+ *   "BUG V5" → "BUG_V5"
+ *   "COURT TERME" → "CT"
+ *   "Custom Type" → "CUSTOM_TYPE"
+ */
+function extractTypeFromSectionTitle(title: string): string | null {
+  const titleUpper = title.trim().toUpperCase();
+
+  // Skip legend/special sections
+  if (titleUpper.includes('LÉGENDE') || titleUpper.includes('LEGENDE') ||
+      titleUpper.includes('TABLE DES MATIÈRES') || titleUpper.includes('TABLE DES MATIERES')) {
+    return null;
+  }
+
+  // Known mappings
+  const sectionToType: Record<string, string> = {
+    'BUGS': 'BUG',
+    'BUG': 'BUG',
+    'COURT TERME': 'CT',
+    'COURT-TERME': 'CT',
+    'CT': 'CT',
+    'LONG TERME': 'LT',
+    'LONG-TERME': 'LT',
+    'LT': 'LT',
+    'AUTRES IDÉES': 'AUTRE',
+    'AUTRES IDEES': 'AUTRE',
+    'AUTRES': 'AUTRE',
+    'AUTRE': 'AUTRE',
+  };
+
+  if (sectionToType[titleUpper]) {
+    return sectionToType[titleUpper];
+  }
+
+  // Check for exact word match followed by parenthesis/dash
+  for (const [key, value] of Object.entries(sectionToType)) {
+    const exactWordPattern = new RegExp(`^${key}(?:\\s*[\\(\\-\\:]|$)`);
+    if (exactWordPattern.test(titleUpper)) {
+      return value;
+    }
+  }
+
+  // Custom type: convert to uppercase with underscores
+  if (/^[A-ZÀ-ÿ0-9\s_-]+$/i.test(titleUpper)) {
+    return titleUpper.replace(/\s+/g, '_').replace(/-/g, '_');
+  }
+
+  return null;
 }
 
 function findItemBoundaries(lines: string[]): { start: number; id: string; title: string }[] {

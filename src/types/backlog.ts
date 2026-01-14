@@ -4,10 +4,11 @@ import { z } from 'zod';
 // ENUMS - Types primitifs du backlog
 // ============================================================
 
-// ItemType is now dynamic - any uppercase string is valid
+// ItemType is now dynamic - accepts uppercase letters, numbers, and underscores
+// Examples: "BUG", "CT", "BUG_V5", "EXT_CHROME", "ADM"
 export const ItemTypeSchema = z.string().refine(
-  (val) => /^[A-Z]+$/.test(val),
-  { message: 'Item type must be uppercase letters only' }
+  (val) => /^[A-Z][A-Z0-9_]*$/.test(val),
+  { message: 'Item type must start with uppercase letter, can contain uppercase letters, numbers, and underscores' }
 );
 export type ItemType = string;
 

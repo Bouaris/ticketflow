@@ -4,6 +4,31 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.4.2] - 2026-01-14
+
+### Corrigé
+- **BUG-003**: Sections vides personnalisées disparaissaient du dropdown de types (ex: "BUG V5" sans items)
+- Types personnalisés avec espaces maintenant correctement détectés (convertis en underscore: "BUG V5" → "BUG_V5")
+
+### Améliorations
+- `detectTypesFromMarkdown()`: Match exact au lieu de `startsWith()` pour éviter faux positifs ("BUG V5" n'est plus mappé à "BUG")
+- `ItemTypeSchema`: Support étendu pour underscores et chiffres dans les types personnalisés
+- Parser: Création automatique de raw-section markers pour sections vides (préservation de la structure)
+- `findTargetSectionIndex()`: Nouvelle stratégie pour matcher les sections vides par titre
+
+### Architecture
+- 5 blindspots identifiés et documentés dans le système de types dynamiques
+- Robustesse accrue: sections vides sont maintenant des citoyens de première classe
+
+## [1.4.1] - 2026-01-14
+
+### Corrigé
+- **BUG-002**: Export ticket après raffinage IA affichait l'ancienne version (race condition entre setState et re-render React)
+
+### Améliorations
+- ExportModal génère le contenu au moment du render (plus de snapshot stale)
+- Architecture plus robuste: l'item exporté est toujours récupéré depuis le backlog (source de vérité)
+
 ## [1.4.0] - 2026-01-10
 
 ### Ajouté

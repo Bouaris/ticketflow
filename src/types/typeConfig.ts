@@ -141,7 +141,7 @@ export function detectTypesFromMarkdown(markdown: string): string[] {
   }
 
   // 3. Detect from section headers (## 1. BUGS, ## 2. COURT TERME)
-  // Map section labels to their type IDs
+  // Map section labels to their type IDs (EXACT MATCH only)
   const sectionToType: Record<string, string> = {
     'BUGS': 'BUG',
     'BUG': 'BUG',
@@ -163,19 +163,27 @@ export function detectTypesFromMarkdown(markdown: string): string[] {
   while ((match = sectionPattern.exec(markdown)) !== null) {
     const sectionLabel = match[1].trim().toUpperCase();
 
-    // Skip legend/légende sections
-    if (sectionLabel.includes('LÉGENDE') || sectionLabel.includes('LEGENDE')) {
+    // Skip legend/légende sections and table of contents
+    if (sectionLabel.includes('LÉGENDE') || sectionLabel.includes('LEGENDE') ||
+        sectionLabel.includes('TABLE DES MATIÈRES') || sectionLabel.includes('TABLE DES MATIERES')) {
       continue;
     }
 
-    // Try direct mapping for known types
+    // Try EXACT mapping for known types
     if (sectionToType[sectionLabel]) {
       types.add(sectionToType[sectionLabel]);
     } else {
-      // Try partial match for labels like "BUGS (Hotfix)"
+      // CRITICAL FIX: Check if label is a CUSTOM type (contains spaces or special chars)
+      // DO NOT use startsWith() as it causes false positives like "BUG V5" → "BUG"
+      // Instead, only use exact word boundary matching for known prefixes
       let found = false;
+
+      // Only match if the section label is EXACTLY a known prefix followed by parenthesis
+      // e.g., "BUGS (Hotfix)" → "BUG", but NOT "BUG V5" → custom type
       for (const [key, value] of Object.entries(sectionToType)) {
-        if (sectionLabel.startsWith(key)) {
+        // Match: "BUGS (Hotfix)" or "BUGS - Priority" but NOT "BUG V5" or "BUGFIX"
+        const exactWordPattern = new RegExp(`^${key}(?:\\s*[\\(\\-\\:]|$)`);
+        if (exactWordPattern.test(sectionLabel)) {
           types.add(value);
           found = true;
           break;
@@ -183,10 +191,10 @@ export function detectTypesFromMarkdown(markdown: string): string[] {
       }
 
       // If no mapping found, treat the section label as a custom type
-      // Only if it looks like a valid type ID (uppercase letters, possibly with spaces)
-      if (!found && /^[A-ZÀ-ÿ\s]+$/.test(sectionLabel)) {
-        // Use the section label as type ID (remove spaces, keep uppercase)
-        const customTypeId = sectionLabel.replace(/\s+/g, '_');
+      // Accept any section label with letters, numbers, accents, spaces
+      if (!found && /^[A-ZÀ-ÿ0-9\s_-]+$/i.test(sectionLabel)) {
+        // Use the section label as type ID (replace spaces with underscore, uppercase)
+        const customTypeId = sectionLabel.replace(/\s+/g, '_').toUpperCase();
         types.add(customTypeId);
       }
     }

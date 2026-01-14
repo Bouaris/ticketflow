@@ -2,11 +2,17 @@
  * ExportModal - Modal for exporting ticket content as markdown
  *
  * Displays formatted markdown with a copy-to-clipboard button.
+ *
+ * FIX BUG-002: Content is now generated at render time (not at click time)
+ * to ensure the exported markdown always reflects the latest item state
+ * after AI refinement.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Modal, ModalFooter } from '../ui/Modal';
 import { CopyIcon, CheckIcon } from '../ui/Icons';
+import { exportItemForClipboard } from '../../lib/serializer';
+import type { BacklogItem } from '../../types/backlog';
 
 // ============================================================
 // TYPES
@@ -15,16 +21,33 @@ import { CopyIcon, CheckIcon } from '../ui/Icons';
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  content: string;
-  itemId: string;
+  /** The item to export - fetched fresh from backlog at render time */
+  item: BacklogItem | null;
+  /** Absolute path to the source markdown file */
+  sourcePath: string;
+  /** Absolute path to the screenshots folder (optional) */
+  screenshotBasePath?: string;
 }
 
 // ============================================================
 // COMPONENT
 // ============================================================
 
-export function ExportModal({ isOpen, onClose, content, itemId }: ExportModalProps) {
+export function ExportModal({
+  isOpen,
+  onClose,
+  item,
+  sourcePath,
+  screenshotBasePath,
+}: ExportModalProps) {
   const [copied, setCopied] = useState(false);
+
+  // Generate content at render time - this ensures we always use the latest item state
+  // FIX BUG-002: Previously content was generated at click time (stale after AI refinement)
+  const content = useMemo(() => {
+    if (!item) return '';
+    return exportItemForClipboard(item, sourcePath, screenshotBasePath);
+  }, [item, sourcePath, screenshotBasePath]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -74,7 +97,7 @@ export function ExportModal({ isOpen, onClose, content, itemId }: ExportModalPro
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Exporter ${itemId}`}
+      title={`Exporter ${item?.id || ''}`}
       size="lg"
       footer={footer}
     >
