@@ -1,0 +1,169 @@
+@import "tailwindcss" source(none);
+
+/* Explicitly include only source directories (prevents scanning binary files at root) */
+@source "../src";
+@source "../index.html";
+
+/* Override dark variant to use data-attribute instead of prefers-color-scheme */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Light theme tokens */
+:root {
+  --color-surface: #ffffff;
+  --color-surface-alt: #f9fafb;
+  --color-surface-raised: #ffffff;
+  --color-on-surface: #111827;
+  --color-on-surface-secondary: #374151;
+  --color-on-surface-muted: #6b7280;
+  --color-on-surface-faint: #9ca3af;
+  --color-outline: #e5e7eb;
+  --color-outline-strong: #d1d5db;
+  --color-input-bg: #ffffff;
+  --color-input-border: #d1d5db;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-soft: #eff6ff;
+  --color-accent-text: #1d4ed8;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-danger-text: #b91c1c;
+  --color-success: #16a34a;
+  --color-success-soft: #f0fdf4;
+  --color-success-text: #15803d;
+  --color-warning-soft: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+}
+
+/* Dark theme token overrides */
+[data-theme="dark"] {
+  --color-surface: #1f2937;
+  --color-surface-alt: #111827;
+  --color-surface-raised: #374151;
+  --color-on-surface: #f9fafb;
+  --color-on-surface-secondary: #e5e7eb;
+  --color-on-surface-muted: #9ca3af;
+  --color-on-surface-faint: #6b7280;
+  --color-outline: #374151;
+  --color-outline-strong: #4b5563;
+  --color-input-bg: #374151;
+  --color-input-border: #4b5563;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-soft: rgba(59, 130, 246, 0.15);
+  --color-accent-text: #93c5fd;
+  --color-danger: #ef4444;
+  --color-danger-soft: rgba(239, 68, 68, 0.15);
+  --color-danger-text: #fca5a5;
+  --color-success: #22c55e;
+  --color-success-soft: rgba(34, 197, 94, 0.15);
+  --color-success-text: #86efac;
+  --color-warning-soft: rgba(245, 158, 11, 0.15);
+  --color-warning-text: #fcd34d;
+  --color-overlay: rgba(0, 0, 0, 0.7);
+}
+
+/* Register semantic tokens as Tailwind utilities (inline = dynamic var() resolution) */
+@theme inline {
+  --color-surface: var(--color-surface);
+  --color-surface-alt: var(--color-surface-alt);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-secondary: var(--color-on-surface-secondary);
+  --color-on-surface-muted: var(--color-on-surface-muted);
+  --color-on-surface-faint: var(--color-on-surface-faint);
+  --color-outline: var(--color-outline);
+  --color-outline-strong: var(--color-outline-strong);
+  --color-input-bg: var(--color-input-bg);
+  --color-input-border: var(--color-input-border);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-text: var(--color-accent-text);
+  --color-danger: var(--color-danger);
+  --color-danger-soft: var(--color-danger-soft);
+  --color-danger-text: var(--color-danger-text);
+  --color-success: var(--color-success);
+  --color-success-soft: var(--color-success-soft);
+  --color-success-text: var(--color-success-text);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-warning-text: var(--color-warning-text);
+  --color-overlay: var(--color-overlay);
+}
+
+/* Static design tokens (severity/effort colors - NOT theme-dependent) */
+@theme {
+  --color-severity-p0: #dc2626;
+  --color-severity-p1: #ea580c;
+  --color-severity-p2: #f59e0b;
+  --color-severity-p3: #84cc16;
+  --color-severity-p4: #6b7280;
+
+  --color-effort-xs: #22c55e;
+  --color-effort-s: #84cc16;
+  --color-effort-m: #f59e0b;
+  --color-effort-l: #f97316;
+  --color-effort-xl: #ef4444;
+}
+
+/* Base styles */
+html, body, #root {
+  background-color: var(--color-surface-alt);
+}
+
+body {
+  @apply bg-surface-alt text-on-surface antialiased;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-alt);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-on-surface-faint);
+}
+
+/* Slide-in animation for panels */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out;
+}
+
+/* Fade-in animation for toasts and notifications */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
