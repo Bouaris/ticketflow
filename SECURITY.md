@@ -1,5 +1,12 @@
 # Security Policy
 
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 2.0.x   | :white_check_mark: |
+| < 2.0   | :x:                |
+
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in TicketFlow, please report it responsibly:
@@ -144,6 +151,6 @@ RWQoscFilxftXNhV9NpjOOL0SuxZr69lFv+f579+tdopDK+xhh+r4gcw
 
 ---
 
-**Version:** 1.0
-**Last updated:** 2026-02-14
+**Version:** 2.0
+**Last updated:** 2026-02-15
 **Contact:** See [GitHub Security Advisories](https://github.com/Bouaris/ticketflow/security/advisories)
