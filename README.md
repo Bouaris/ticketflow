@@ -110,6 +110,17 @@ pnpm build        # Web build
 pnpm tauri build  # Windows .exe
 ```
 
+## Breaking Changes in v2.0.0
+
+**Auto-update from v1.x is NOT supported.**
+
+Due to a security requirement (signing key rotation), users on v1.6.0 or earlier cannot auto-update to v2.0.0. To upgrade:
+
+1. Download the v2.0.0 installer from [Releases](https://github.com/Bouaris/ticketflow/releases/latest)
+2. Run the installer (it will replace the old version)
+
+Future updates (v2.0.0 and later) will auto-update normally.
+
 ## Quick Start
 
 1. **Create a project** — Give it a name, pick a folder
