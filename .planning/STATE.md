@@ -6,21 +6,21 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
 
-**Current focus:** Phase 20 - OSS Documentation (v2.0 Fresh Start)
+**Current focus:** Phase 21 - Release Engineering (v2.0 Fresh Start)
 
 ## Current Position
 
-Phase: 20 of 21 (OSS Documentation)
-Plan: 1 of TBD complete
+Phase: 21 of 21 (Release Engineering)
+Plan: 1 of 2 complete
 Status: In progress
-Last activity: 2026-02-15 — Completed 20-01 (OSS Documentation Foundation)
+Last activity: 2026-02-15 — Completed 21-01 (Release Config & Signing)
 
-Progress: [████████████░░░░░░░░] 60/TBD plans (TBD%)
+Progress: [████████████████░░░░] 61/TBD plans (TBD%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 60 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 6)
+- Total plans completed: 61 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 7)
 - Average duration: ~6.5 min per plan
 - Total execution time: ~6.5 hours
 
@@ -31,11 +31,11 @@ Progress: [████████████░░░░░░░░] 60/TBD 
 | v1.0 | 22 | 7 | 40/40 | Shipped 2026-02-06 |
 | v1.5 | 24 | 6 | 63/63 | Shipped 2026-02-08 |
 | v1.6 | 8 | 4 | 19/19 | Shipped 2026-02-14 |
-| v2.0 | 6 (TBD total) | 5 | 26/TBD | In progress |
+| v2.0 | 7 (TBD total) | 5 | 26/TBD | In progress |
 
 **Recent Trend:**
-- Last 5 plans: v2.0-18-03 (security docs 3m), v2.0-19-01 (repo prep 3m), v2.0-19-02 (force push 2m), v2.0-20-01 (OSS docs 8m)
-- Trend: Stable — mature codebase, fresh git history established, GitHub public repository live, professional OSS documentation complete
+- Last 5 plans: v2.0-19-01 (repo prep 3m), v2.0-19-02 (force push 2m), v2.0-20-01 (OSS docs 8m), v2.0-21-01 (release config 4m)
+- Trend: Stable — signing keys rotated, version bumped to 2.0.0, release workflow upgraded, ready for v2.0.0 tag
 
 *Plan count for v2.0 phases to be determined during planning*
 
@@ -65,6 +65,9 @@ Recent decisions affecting v2.0:
 - **Theme-aware screenshots (20-01):** Use HTML picture element with prefers-color-scheme for screenshots — GitHub auto-switches based on user theme
 - **Version 2.0.0 declaration (20-01):** Declare v2.0.0 in README badge — reflects fresh start milestone after clean git history
 - **Supported versions policy (20-01):** Only v2.0.x marked as supported in SECURITY.md — reflects fresh start strategy, old versions on deleted history are unsupported
+- **Password-protected signing key (21-01):** New Ed25519 keypair at ~/.tauri/ticketflow.key with password protection -- stored locally, never committed
+- **Base64 pubkey format (21-01):** Tauri CLI generates single base64-encoded string, used as-is in tauri.conf.json
+- **English release body (21-01):** Replaced French release notes with English for OSS standard -- consistent with README language
 
 ### Pending Todos
 
@@ -75,7 +78,7 @@ Recent decisions affecting v2.0:
 ### Blockers/Concerns
 
 **Security considerations (v2.0):**
-- Tauri signing key rotation will break auto-update for v1.6.0 users — must announce manual reinstall in README (REL-06)
+- ✅ Tauri signing key rotated (21-01) — new keypair generated, breaking change documented in README, v1.x users informed of manual reinstall
 - ✅ Git history fresh: 1 commit, zero leaked secrets — REPO-03 satisfied (Plan 19-02 complete, GitHub live)
 - ✅ localStorage API keys documented in SECURITY.md — SEC-07 satisfied with honest transparency (XOR obfuscation, not encryption)
 
@@ -93,9 +96,9 @@ Recent decisions affecting v2.0:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 20-01 (OSS Documentation Foundation) - README, LICENSE, SECURITY.md updated for v2.0 with badges and screenshots
+Stopped at: Completed 21-01 (Release Config & Signing) - New keypair, v2.0.0 version bump, tauri-action@v0.6.1, breaking change docs
 Resume file: None
-Next action: Continue Phase 20 with next plan or begin Phase 21 planning
+Next action: Execute Plan 21-02 (GitHub Secrets + v2.0.0 tag creation)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-15 after Phase 19 completion*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-15 after Plan 21-01 completion*
