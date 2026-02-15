@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Ticketflow",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "identifier": "com.ticketflow.app",
   "build": {
     "frontendDist": "../dist",
@@ -66,7 +66,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVDRUQxNzk3NjJDMUIxMjgKUldRb3NjRmlseGZ0WE5oVjlOcGpPT0wwU3V4WnI2OWxGditmNTc5K3Rkb3BESyt4aGgrcjRnY3cK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZEOTkzREIwNEM4OEExN0QKUldSOW9ZaE1zRDJaYmVrRmtTdWFaNUpUNlZNRzAwaDMrVjZkUXVxZG4yN2lWTHNDaHhzV1FDSisK",
       "endpoints": [
         "https://github.com/Bouaris/ticketflow/releases/latest/download/latest.json"
       ]
