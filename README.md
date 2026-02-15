@@ -4,10 +4,15 @@
 
 TicketFlow is a local-first desktop app that turns your chaotic brain dumps into organized, AI-powered tickets — ready to feed to your coding CLI.
 
-![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Built with](https://img.shields.io/badge/built%20with-Tauri%202-orange.svg)
 
 ## Why TicketFlow?
 
@@ -69,6 +74,16 @@ One place. Every idea captured, organized, contextualized with your project, and
 - **Local-first** — Your data stays on your machine. No cloud, no account, no tracking.
 - **Auto-update** — Get notified when a new version is available
 - **System tray** — Minimize to tray
+
+## Screenshots
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/screenshot-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/screenshot-light.png">
+  <img alt="TicketFlow Kanban board" src="./assets/screenshot-light.png" width="800">
+</picture>
+
+> Kanban board with drag-and-drop, AI-generated tickets, and dark mode support.
 
 ## Installation
 
@@ -152,9 +167,13 @@ ticketflow/
 
 Contributions are welcome. Open an issue or submit a PR.
 
+## Security
+
+For vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT © 2026 Bouaris — see [LICENSE](LICENSE)
 
 ---
 
