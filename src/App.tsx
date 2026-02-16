@@ -18,7 +18,8 @@ import { useScreenshotFolder } from './hooks/useScreenshotFolder';
 import { useTauriScreenshots } from './hooks/useTauriScreenshots';
 import { useTypeConfig } from './hooks/useTypeConfig';
 import { useUpdater } from './hooks/useUpdater';
-import { SettingsModal } from './components/settings/SettingsModal';
+import { AppSettingsModal } from './components/settings/AppSettingsModal';
+import { AISettingsModal } from './components/settings/AISettingsModal';
 import { TypeConfigModal } from './components/settings/TypeConfigModal';
 import { ProjectSettingsModal } from './components/settings/ProjectSettingsModal';
 import { WelcomePage } from './components/welcome/WelcomePage';
@@ -78,7 +79,8 @@ function App() {
   // GLOBAL UI STATE (persist across project switches)
   // ============================================================
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAppSettingsOpen, setIsAppSettingsOpen] = useState(false);
+  const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
   const [isTypeConfigOpen, setIsTypeConfigOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -242,7 +244,7 @@ function App() {
       {!shouldShowTauriWelcome && shouldShowWelcome && (
         <div className="fixed bottom-4 right-4 z-30">
           <button
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={() => setIsAppSettingsOpen(true)}
             className="relative p-3 bg-surface rounded-full shadow-lg dark:shadow-none dark:ring-1 dark:ring-outline hover:shadow-xl transition-shadow"
             title="Parametres"
           >
@@ -278,7 +280,8 @@ function App() {
           screenshotFolder={screenshotFolder}
           onOpenTypeConfig={() => setIsTypeConfigOpen(true)}
           onOpenProjectSettings={() => setIsProjectSettingsOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={() => setIsAppSettingsOpen(true)}
+          onOpenAISettings={() => setIsAISettingsOpen(true)}
           onGoHome={isTauri() ? handleGoHome : undefined}
           showUpdateBadge={updater.dismissed && !!updater.available}
         />
@@ -295,11 +298,18 @@ function App() {
       {/* GLOBAL MODALS (persist across project switches) */}
       {/* ============================================================ */}
 
-      {/* Settings modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+      {/* App Settings modal */}
+      <AppSettingsModal
+        isOpen={isAppSettingsOpen}
+        onClose={() => setIsAppSettingsOpen(false)}
         updater={updater}
+        projectPath={typeConfig.projectPath || undefined}
+      />
+
+      {/* AI Settings modal */}
+      <AISettingsModal
+        isOpen={isAISettingsOpen}
+        onClose={() => setIsAISettingsOpen(false)}
         projectPath={typeConfig.projectPath || undefined}
       />
 

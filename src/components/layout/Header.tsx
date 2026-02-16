@@ -3,7 +3,7 @@
  */
 
 import type { ViewMode } from '../../hooks/useBacklogDB';
-import { HomeIcon, KanbanIcon, ListIcon, GraphIcon, ChartBarIcon, ArchiveIcon, FolderIcon, SettingsIcon, ArrowLeftIcon, ArrowRightIcon } from '../ui/Icons';
+import { HomeIcon, KanbanIcon, ListIcon, GraphIcon, ChartBarIcon, ArchiveIcon, FolderIcon, SettingsIcon, ArrowLeftIcon, ArrowRightIcon, SparklesIcon } from '../ui/Icons';
 import { useTranslation } from '../../i18n';
 
 interface HeaderProps {
@@ -14,6 +14,8 @@ interface HeaderProps {
   onOpenFile: () => void;
   onViewModeChange: (mode: ViewMode) => void;
   onOpenProjectSettings: () => void;
+  onOpenAISettings: () => void;
+  showAISettingsBadge?: boolean;
   onGoHome?: () => void;
   // Undo/Redo
   canUndo?: boolean;
@@ -30,6 +32,8 @@ export function Header({
   onOpenFile,
   onViewModeChange,
   onOpenProjectSettings,
+  onOpenAISettings,
+  showAISettingsBadge = false,
   onGoHome,
   canUndo = false,
   canRedo = false,
@@ -179,6 +183,21 @@ export function Header({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 whitespace-nowrap">
+          {/* AI Settings button - always visible */}
+          <button
+            onClick={onOpenAISettings}
+            className="relative px-2.5 py-2 xl:px-4 text-sm font-medium text-on-surface-secondary bg-surface border border-outline-strong rounded-lg hover:bg-surface-alt transition-colors"
+            aria-label={t.settings.aiSettings}
+          >
+            <span className="flex items-center gap-2">
+              <SparklesIcon className="w-4 h-4" />
+              <span className="hidden xl:inline">{t.settings.aiSettings}</span>
+            </span>
+            {showAISettingsBadge && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full" />
+            )}
+          </button>
+
           {hasProject && (
             <button
               onClick={onOpenProjectSettings}

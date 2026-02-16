@@ -48,6 +48,7 @@ import { PlusIcon, SparklesIcon, ChatIcon, TagIcon, SettingsIcon, UploadIcon } f
 import { buildItemMarkdown } from '../../lib/serializer';
 import { getStaticCommands, buildItemCommands, parseNLCommand, addRecentItem, getRecentItemIds, type WorkspaceActions } from '../../lib/command-registry';
 import { isTauri, getFolderName } from '../../lib/tauri-bridge';
+import { hasApiKey, getProvider } from '../../lib/ai';
 import { insertArchivedItem, deleteArchivedItem, getArchivedScreenshotFilenames, getArchivedItemScreenshots, purgeAllArchivedItems } from '../../db/queries/archive';
 import { deleteItem as dbDeleteItemDirect, updateItem as dbUpdateItemDirect } from '../../db/queries/items';
 import { bulkUpsertTypeConfigs, deleteTypeConfig } from '../../db/queries/type-configs';
@@ -68,6 +69,7 @@ export interface ProjectWorkspaceProps {
   onOpenTypeConfig: () => void;
   onOpenProjectSettings: () => void;
   onOpenSettings: () => void;
+  onOpenAISettings: () => void;
   onGoHome?: () => void;
   showUpdateBadge?: boolean;
 }
@@ -83,6 +85,7 @@ export function ProjectWorkspace({
   onOpenTypeConfig,
   onOpenProjectSettings,
   onOpenSettings,
+  onOpenAISettings,
   onGoHome,
   showUpdateBadge,
 }: ProjectWorkspaceProps) {
@@ -1103,6 +1106,8 @@ export function ProjectWorkspace({
         onOpenFile={() => {}} // Not used in project context
         onViewModeChange={backlog.setViewMode}
         onOpenProjectSettings={onOpenProjectSettings}
+        onOpenAISettings={onOpenAISettings}
+        showAISettingsBadge={!hasApiKey(getProvider())}
         onGoHome={onGoHome}
         canUndo={backlog.canUndo}
         canRedo={backlog.canRedo}
