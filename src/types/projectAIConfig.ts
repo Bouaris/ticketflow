@@ -1,10 +1,13 @@
 /**
  * Project AI Configuration Types
  *
- * Types and constants for per-project AI provider and model configuration.
+ * @deprecated This module is deprecated since v2.1. Use ai-provider-registry instead.
+ * Kept for backward compatibility — will be removed in v2.2.
  */
 
 import { z } from 'zod';
+import { BUILT_IN_PROVIDERS } from '../lib/ai-provider-registry';
+import type { BuiltInProviderId } from './aiProvider';
 
 // ============================================================
 // SCHEMAS
@@ -43,35 +46,23 @@ export const DEFAULT_PROJECT_AI_CONFIG: ProjectAIConfig = {
 };
 
 // ============================================================
-// AVAILABLE MODELS PER PROVIDER
+// AVAILABLE MODELS PER PROVIDER (derived from registry)
 // ============================================================
 
-export const AVAILABLE_MODELS: Record<'groq' | 'gemini' | 'openai', AIModel[]> = {
-  groq: [
-    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Versatile)', provider: 'groq' },
-    { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B (Versatile)', provider: 'groq' },
-    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Instant)', provider: 'groq' },
-    { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', provider: 'groq' },
-  ],
-  gemini: [
-    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'gemini' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', provider: 'gemini' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'gemini' },
-  ],
-  openai: [
-    { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai' },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' },
-  ],
+/** @deprecated Use BUILT_IN_PROVIDERS from ai-provider-registry instead */
+export const AVAILABLE_MODELS: Record<BuiltInProviderId, AIModel[]> = {
+  groq: BUILT_IN_PROVIDERS.find(p => p.id === 'groq')!.models.map(m => ({ ...m, provider: 'groq' as const })),
+  gemini: BUILT_IN_PROVIDERS.find(p => p.id === 'gemini')!.models.map(m => ({ ...m, provider: 'gemini' as const })),
+  openai: BUILT_IN_PROVIDERS.find(p => p.id === 'openai')!.models.map(m => ({ ...m, provider: 'openai' as const })),
 };
 
 // ============================================================
-// DEFAULT MODELS PER PROVIDER
+// DEFAULT MODELS PER PROVIDER (derived from registry)
 // ============================================================
 
-export const DEFAULT_MODELS: Record<'groq' | 'gemini' | 'openai', string> = {
-  groq: 'llama-3.3-70b-versatile',
-  gemini: 'gemini-2.0-flash',
-  openai: 'gpt-4o-mini',
+/** @deprecated Use getProviderById(id).defaultModel from ai-provider-registry instead */
+export const DEFAULT_MODELS: Record<BuiltInProviderId, string> = {
+  groq: BUILT_IN_PROVIDERS.find(p => p.id === 'groq')!.defaultModel,
+  gemini: BUILT_IN_PROVIDERS.find(p => p.id === 'gemini')!.defaultModel,
+  openai: BUILT_IN_PROVIDERS.find(p => p.id === 'openai')!.defaultModel,
 };
