@@ -61,7 +61,9 @@
 - [x] Phase 22: Provider Registry & Core Refactor (3/3 plans) — completed 2026-02-16
 - [x] Phase 23: Settings UI Split & Provider Config (3/3 plans) — completed 2026-02-16
 - [x] Phase 24: Validation & Generation UX (3/3 plans) — completed 2026-02-16
-- [ ] Phase 25: Model Resolution & Selection — **Gap Closure** (closes GENX-03, PROV-01)
+- [ ] Phase 25: Model Resolution & Selection (2 plans) — **Gap Closure** (closes GENX-03, PROV-01)
+  - [ ] 25-01-PLAN.md — Fix provider override model resolution + persistence infrastructure
+  - [ ] 25-02-PLAN.md — Add model selector dropdown to ProviderCard
 
 </details>
 
@@ -73,8 +75,8 @@
 | v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
 | v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
 | v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-25 | 9+? | 16/18 (2 gaps) | In Progress |
-| **Total** | **25** | **71+** | **161+2 gaps** | |
+| v2.1 AI Refresh | 22-25 | 11 | 18/18 | In Progress |
+| **Total** | **25** | **73** | **163** | |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 25 added — gap closure for GENX-03, PROV-01)*
