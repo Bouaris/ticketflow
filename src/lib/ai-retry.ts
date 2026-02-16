@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { getTranslations } from '../i18n';
+import { getProviderById } from './ai-provider-registry';
 
 // ============================================================
 // TYPES
@@ -92,18 +93,25 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
  * Check if a specific provider/model combination supports structured outputs
  * and return the supported mode.
  *
- * @param provider - AI provider ('groq' | 'gemini' | 'openai')
+ * Accepts arbitrary provider IDs (including custom providers). Resolves the
+ * provider type via the registry to determine structured output capabilities.
+ *
+ * @param provider - AI provider ID (e.g. 'groq', 'gemini', 'openai', 'custom-ollama')
  * @param modelId - Model identifier
  * @returns The supported structured output mode
  */
 export function getStructuredOutputMode(
-  provider: 'groq' | 'gemini' | 'openai',
+  provider: string,
   modelId: string
 ): StructuredOutputMode {
+  // Resolve provider type from registry
+  const providerConfig = getProviderById(provider);
+  const providerType = providerConfig?.type ?? provider;
+
   // Normalize model ID (remove version suffixes for matching)
   const normalizedModel = modelId.toLowerCase();
 
-  if (provider === 'groq') {
+  if (providerType === 'groq') {
     // Check strict support first
     if (STRUCTURED_OUTPUT_SUPPORT.groq.strict.some(m =>
       normalizedModel.includes(m.toLowerCase())
@@ -119,7 +127,13 @@ export function getStructuredOutputMode(
     return 'none';
   }
 
-  if (provider === 'openai') {
+  if (providerType === 'openai-compatible') {
+    // For custom openai-compatible providers, use conservative 'none'
+    // unless the model is known to support structured output
+    if (providerConfig?.isCustom) {
+      return 'none'; // Conservative: custom providers may not support structured output
+    }
+    // Built-in OpenAI check
     if (STRUCTURED_OUTPUT_SUPPORT.openai.strict.some(m =>
       normalizedModel.includes(m.toLowerCase()) ||
       m.toLowerCase().includes(normalizedModel)
@@ -129,7 +143,7 @@ export function getStructuredOutputMode(
     return 'none';
   }
 
-  if (provider === 'gemini') {
+  if (providerType === 'gemini') {
     if (STRUCTURED_OUTPUT_SUPPORT.gemini.schema.some(m =>
       normalizedModel.includes(m.toLowerCase())
     )) {
@@ -145,7 +159,7 @@ export function getStructuredOutputMode(
  * Simplified check: does this provider/model support ANY structured output mode?
  */
 export function supportsStructuredOutput(
-  provider: 'groq' | 'gemini' | 'openai',
+  provider: string,
   modelId: string
 ): boolean {
   return getStructuredOutputMode(provider, modelId) !== 'none';

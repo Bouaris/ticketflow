@@ -9,7 +9,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import type { BacklogItem } from '../types/backlog';
 import type { TypeDefinition } from '../types/typeConfig';
-import { STORAGE_KEYS, getProjectAIConfigKey } from '../constants/storage';
+import { STORAGE_KEYS } from '../constants/storage';
+import { getCustomProviderApiKeyKey } from '../constants/storage';
 import { AI_CONFIG } from '../constants/config';
 import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
 import {
@@ -26,12 +27,10 @@ import {
   type BlockingBug,
 } from '../types/ai';
 import { buildPromptWithContext, type AIOptions as BaseAIOptions } from './ai-context';
-import {
-  type ProjectAIConfig,
-  ProjectAIConfigSchema,
-  DEFAULT_PROJECT_AI_CONFIG,
-  DEFAULT_MODELS,
-} from '../types/projectAIConfig';
+import { getProviderById } from './ai-provider-registry';
+import type { ProviderConfig } from '../types/aiProvider';
+import type { ProjectAIConfig } from '../types/projectAIConfig';
+import { DEFAULT_PROJECT_AI_CONFIG } from '../types/projectAIConfig';
 import {
   generateWithRetry,
   getStructuredOutputMode,
@@ -72,6 +71,9 @@ export { recordTelemetry, getErrorRate, getTelemetryStats } from './ai-telemetry
 
 export type AIProvider = 'groq' | 'gemini' | 'openai';
 
+/** Extended provider ID that includes custom provider IDs */
+export type ProviderId = string;
+
 /** Base64-encoded image data for multimodal AI requests */
 export interface ImageData {
   /** Base64-encoded image content (no data: prefix) */
@@ -97,25 +99,26 @@ export function setProvider(provider: AIProvider): void {
   localStorage.setItem(STORAGE_KEYS.AI_PROVIDER, provider);
 }
 
-function getApiKeyStorageKey(provider: AIProvider): string {
+function getApiKeyStorageKey(provider: string): string {
   switch (provider) {
     case 'groq': return STORAGE_KEYS.GROQ_API_KEY;
     case 'gemini': return STORAGE_KEYS.GEMINI_API_KEY;
     case 'openai': return STORAGE_KEYS.OPENAI_API_KEY;
+    default: return getCustomProviderApiKeyKey(provider);
   }
 }
 
-export function getApiKey(provider?: AIProvider): string | null {
+export function getApiKey(provider?: string): string | null {
   const p = provider || getProvider();
   return getSecureItem(getApiKeyStorageKey(p));
 }
 
-export function setApiKey(key: string, provider?: AIProvider): void {
+export function setApiKey(key: string, provider?: string): void {
   const p = provider || getProvider();
   setSecureItem(getApiKeyStorageKey(p), key);
 }
 
-export function clearApiKey(provider?: AIProvider): void {
+export function clearApiKey(provider?: string): void {
   const p = provider || getProvider();
   removeSecureItem(getApiKeyStorageKey(p));
 }
@@ -132,29 +135,33 @@ export function initSecureStorage(): void {
   ]);
 }
 
-export function hasApiKey(provider?: AIProvider): boolean {
+export function hasApiKey(provider?: string): boolean {
   return !!getApiKey(provider);
 }
 
-export function getClientConfig(overrideProvider?: AIProvider): AIClientConfig | null {
+export function getClientConfig(overrideProvider?: string): AIClientConfig | null {
   const provider = overrideProvider || getProvider();
   const apiKey = getApiKey(provider);
   if (!apiKey) return null;
-  return { provider, apiKey };
+  return { provider: provider as AIProvider, apiKey };
 }
 
 // ============================================================
 // AI CLIENTS (singletons with API key change detection)
 // ============================================================
 
+// Groq and Gemini keep simple singleton (one instance each, keyed by apiKey)
 let groqClient: Groq | null = null;
-let geminiClient: GoogleGenerativeAI | null = null;
-let openaiClient: OpenAI | null = null;
-
-// Track the API key each client was created with
 let groqClientKey: string | null = null;
+let geminiClient: GoogleGenerativeAI | null = null;
 let geminiClientKey: string | null = null;
-let openaiClientKey: string | null = null;
+
+// OpenAI-compatible clients: Map-based cache keyed by "apiKey::baseURL"
+const openaiClientCache = new Map<string, OpenAI>();
+
+function getOpenAICacheKey(apiKey: string, baseURL?: string): string {
+  return baseURL ? `${apiKey}::${baseURL}` : apiKey;
+}
 
 function getGroqClient(apiKey: string): Groq {
   if (!groqClient || groqClientKey !== apiKey) {
@@ -172,86 +179,100 @@ function getGeminiClient(apiKey: string): GoogleGenerativeAI {
   return geminiClient;
 }
 
-function getOpenAIClient(apiKey: string): OpenAI {
-  if (!openaiClient || openaiClientKey !== apiKey) {
-    openaiClient = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-    openaiClientKey = apiKey;
+function getOpenAIClient(apiKey: string, baseURL?: string): OpenAI {
+  const cacheKey = getOpenAICacheKey(apiKey, baseURL);
+  if (!openaiClientCache.has(cacheKey)) {
+    openaiClientCache.set(cacheKey, new OpenAI({
+      apiKey,
+      ...(baseURL && { baseURL }),
+      dangerouslyAllowBrowser: true,
+    }));
   }
-  return openaiClient;
+  return openaiClientCache.get(cacheKey)!;
 }
 
 /**
- * Reset all AI client singletons and their tracked keys.
+ * Reset AI client singletons and their tracked keys.
  * Forces recreation on next usage.
+ *
+ * @param providerId - Optional: clear only a specific provider's cache.
+ *   If omitted, clears all caches.
  */
-export function resetClient(): void {
-  groqClient = null;
-  geminiClient = null;
-  openaiClient = null;
-  groqClientKey = null;
-  geminiClientKey = null;
-  openaiClientKey = null;
-}
+export function resetClient(providerId?: string): void {
+  if (!providerId) {
+    // Clear all caches
+    groqClient = null;
+    geminiClient = null;
+    openaiClientCache.clear();
+    groqClientKey = null;
+    geminiClientKey = null;
+    return;
+  }
 
-// ============================================================
-// PROJECT AI CONFIGURATION
-// ============================================================
-
-/**
- * Load project-specific AI configuration from localStorage
- */
-export function loadProjectAIConfig(projectPath: string): ProjectAIConfig {
-  try {
-    const key = getProjectAIConfigKey(projectPath);
-    const stored = localStorage.getItem(key);
-    if (!stored) return DEFAULT_PROJECT_AI_CONFIG;
-
-    const parsed = JSON.parse(stored);
-    const result = ProjectAIConfigSchema.safeParse(parsed);
-    return result.success ? result.data : DEFAULT_PROJECT_AI_CONFIG;
-  } catch {
-    return DEFAULT_PROJECT_AI_CONFIG;
+  if (providerId === 'groq') {
+    groqClient = null;
+    groqClientKey = null;
+  } else if (providerId === 'gemini') {
+    geminiClient = null;
+    geminiClientKey = null;
+  } else {
+    // Clear specific openai-compatible provider entries
+    const providerConfig = getProviderById(providerId);
+    if (providerConfig) {
+      for (const [key] of openaiClientCache) {
+        if (providerConfig.baseURL && key.endsWith(`::${providerConfig.baseURL}`)) {
+          openaiClientCache.delete(key);
+        } else if (!providerConfig.baseURL && !key.includes('::')) {
+          openaiClientCache.delete(key);
+        }
+      }
+    } else {
+      // Unknown provider -- clear all openai cache as safety measure
+      openaiClientCache.clear();
+    }
   }
 }
 
+// ============================================================
+// AI CONFIGURATION
+// ============================================================
+
 /**
- * Save project-specific AI configuration to localStorage
+ * Load project-specific AI configuration from localStorage.
+ *
+ * @deprecated Project-level AI config removed in v2.1. Always returns global default.
+ * Kept for backward compatibility with useProjectAIConfig hook.
  */
-export function saveProjectAIConfig(projectPath: string, config: ProjectAIConfig): void {
-  try {
-    const key = getProjectAIConfigKey(projectPath);
-    localStorage.setItem(key, JSON.stringify(config));
-  } catch (error) {
-    console.warn('[ProjectAIConfig] Failed to save:', error);
-  }
+export function loadProjectAIConfig(_projectPath: string): ProjectAIConfig {
+  return DEFAULT_PROJECT_AI_CONFIG;
 }
 
 /**
- * Get effective AI configuration for a project.
- * Resolves 'global' provider to actual global settings.
+ * Save project-specific AI configuration to localStorage.
+ *
+ * @deprecated Project-level AI config removed in v2.1. This is a no-op.
+ * Kept for backward compatibility with useProjectAIConfig hook.
  */
-export function getEffectiveAIConfig(projectPath?: string): {
+export function saveProjectAIConfig(_projectPath: string, _config: ProjectAIConfig): void {
+  // No-op: project-level config removed per v2.1 decision
+}
+
+/**
+ * Get effective AI configuration.
+ * Uses global settings only (project-level config removed per v2.1 decision).
+ *
+ * @deprecated projectPath parameter is ignored -- global config only since v2.1
+ */
+export function getEffectiveAIConfig(_projectPath?: string): {
   provider: AIProvider;
   modelId: string;
 } {
-  if (projectPath) {
-    const projectConfig = loadProjectAIConfig(projectPath);
-    if (projectConfig.provider !== 'global') {
-      const provider = projectConfig.provider as AIProvider;
-      return {
-        provider,
-        modelId: projectConfig.modelId || DEFAULT_MODELS[provider],
-      };
-    }
-  }
-
-  // Fallback to global settings
   const globalProvider = getProvider();
-  const defaultModel = globalProvider === 'groq'
-    ? AI_CONFIG.GROQ_MODEL
-    : globalProvider === 'gemini'
-      ? AI_CONFIG.GEMINI_MODEL
-      : AI_CONFIG.OPENAI_MODEL;
+  const providerConfig = getProviderById(globalProvider);
+  const defaultModel = providerConfig?.defaultModel
+    ?? (globalProvider === 'groq' ? AI_CONFIG.GROQ_MODEL
+      : globalProvider === 'gemini' ? AI_CONFIG.GEMINI_MODEL
+      : AI_CONFIG.OPENAI_MODEL);
 
   return {
     provider: globalProvider,
@@ -260,14 +281,14 @@ export function getEffectiveAIConfig(projectPath?: string): {
 }
 
 /**
- * Get display name for a provider
+ * Get display name for a provider.
+ * Uses the registry for known providers, falls back to capitalizing the ID.
  */
-export function getProviderDisplayName(provider: AIProvider): string {
-  switch (provider) {
-    case 'groq': return 'Groq';
-    case 'gemini': return 'Gemini';
-    case 'openai': return 'OpenAI';
-  }
+export function getProviderDisplayName(provider: string): string {
+  const config = getProviderById(provider);
+  if (config) return config.name;
+  // Fallback for unknown providers
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
 // ============================================================
@@ -275,7 +296,7 @@ export function getProviderDisplayName(provider: AIProvider): string {
 // ============================================================
 
 interface CompletionOptions {
-  provider?: AIProvider;
+  provider?: string;
   modelId?: string;
   /** Optional Zod schema for structured output (provider-native when supported) */
   schema?: ZodType;
@@ -286,28 +307,33 @@ interface CompletionOptions {
 }
 
 async function generateCompletion(prompt: string, options?: CompletionOptions): Promise<string> {
-  const provider = options?.provider || getProvider();
-  const config = getClientConfig(provider);
+  const providerId = options?.provider || getProvider();
+  const config = getClientConfig(providerId);
   if (!config) {
     const t = getTranslations();
-    throw new Error(`${getProviderDisplayName(provider)} ${t.aiErrors.apiKeyNotConfigured}`);
+    throw new Error(`${getProviderDisplayName(providerId)} ${t.aiErrors.apiKeyNotConfigured}`);
   }
 
+  // Resolve provider type from registry
+  const providerDef: ProviderConfig | null = getProviderById(providerId);
+  const providerType = providerDef?.type ?? providerId; // fallback to ID as type for built-ins
+
   const modelId = options?.modelId || (
-    config.provider === 'groq' ? AI_CONFIG.GROQ_MODEL :
-    config.provider === 'gemini' ? AI_CONFIG.GEMINI_MODEL :
-    AI_CONFIG.OPENAI_MODEL
+    providerDef?.defaultModel
+    ?? (providerId === 'groq' ? AI_CONFIG.GROQ_MODEL
+      : providerId === 'gemini' ? AI_CONFIG.GEMINI_MODEL
+      : AI_CONFIG.OPENAI_MODEL)
   );
 
   // Check structured output support when schema is provided
   const structuredMode = options?.schema
-    ? getStructuredOutputMode(config.provider, modelId)
+    ? getStructuredOutputMode(providerId, modelId)
     : 'none';
   const jsonSchema = options?.schema && structuredMode !== 'none'
     ? zodToSimpleJsonSchema(options.schema)
     : null;
 
-  if (config.provider === 'groq') {
+  if (providerType === 'groq') {
     const client = getGroqClient(config.apiKey);
 
     // Build base request - stream: false ensures we get ChatCompletion not Stream
@@ -337,7 +363,7 @@ async function generateCompletion(prompt: string, options?: CompletionOptions): 
     const response = await client.chat.completions.create(request);
     return response.choices[0]?.message?.content || '';
 
-  } else if (config.provider === 'gemini') {
+  } else if (providerType === 'gemini') {
     const client = getGeminiClient(config.apiKey);
 
     // Gemini uses a different schema format (SchemaType enum) - we use JSON mode only
@@ -367,8 +393,8 @@ async function generateCompletion(prompt: string, options?: CompletionOptions): 
     return result.response.text();
 
   } else {
-    // OpenAI
-    const client = getOpenAIClient(config.apiKey);
+    // OpenAI-compatible (built-in OpenAI + all custom providers)
+    const client = getOpenAIClient(config.apiKey, providerDef?.baseURL);
 
     // Build message content: multimodal with image_url parts or plain text
     const messageContent = options?.images && options.images.length > 0
@@ -423,7 +449,7 @@ export interface ChatCompletionMessage {
 }
 
 interface ChatCompletionOptions {
-  provider?: AIProvider;
+  provider?: string;
   modelId?: string;
   /** Override max_tokens for this request (defaults to AI_CONFIG.MAX_TOKENS) */
   maxTokens?: number;
@@ -443,20 +469,25 @@ export async function generateChatCompletion(
   messages: ChatCompletionMessage[],
   options?: ChatCompletionOptions
 ): Promise<string> {
-  const provider = options?.provider || getProvider();
-  const config = getClientConfig(provider);
+  const providerId = options?.provider || getProvider();
+  const config = getClientConfig(providerId);
   if (!config) {
     const t = getTranslations();
-    throw new Error(`${getProviderDisplayName(provider)} ${t.aiErrors.apiKeyNotConfigured}`);
+    throw new Error(`${getProviderDisplayName(providerId)} ${t.aiErrors.apiKeyNotConfigured}`);
   }
 
+  // Resolve provider type from registry
+  const providerDef: ProviderConfig | null = getProviderById(providerId);
+  const providerType = providerDef?.type ?? providerId;
+
   const modelId = options?.modelId || (
-    config.provider === 'groq' ? AI_CONFIG.GROQ_MODEL :
-    config.provider === 'gemini' ? AI_CONFIG.GEMINI_MODEL :
-    AI_CONFIG.OPENAI_MODEL
+    providerDef?.defaultModel
+    ?? (providerId === 'groq' ? AI_CONFIG.GROQ_MODEL
+      : providerId === 'gemini' ? AI_CONFIG.GEMINI_MODEL
+      : AI_CONFIG.OPENAI_MODEL)
   );
 
-  if (config.provider === 'groq') {
+  if (providerType === 'groq') {
     const client = getGroqClient(config.apiKey);
     const response = await client.chat.completions.create({
       model: modelId,
@@ -470,7 +501,7 @@ export async function generateChatCompletion(
     });
     return response.choices[0]?.message?.content || '';
 
-  } else if (config.provider === 'gemini') {
+  } else if (providerType === 'gemini') {
     const client = getGeminiClient(config.apiKey);
 
     // Extract system instruction from messages
@@ -505,8 +536,8 @@ export async function generateChatCompletion(
     return result.response.text();
 
   } else {
-    // OpenAI - same pattern as Groq (both use OpenAI-compatible API)
-    const client = getOpenAIClient(config.apiKey);
+    // OpenAI-compatible (built-in OpenAI + all custom providers)
+    const client = getOpenAIClient(config.apiKey, providerDef?.baseURL);
     const response = await client.chat.completions.create({
       model: modelId,
       messages: messages.map(m => ({

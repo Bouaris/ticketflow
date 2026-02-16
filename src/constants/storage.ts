@@ -40,6 +40,10 @@ export const STORAGE_KEYS = {
 
   // Onboarding
   ONBOARDING_COMPLETE: 'ticketflow-onboarding-complete',
+
+  // Custom AI Providers
+  CUSTOM_AI_PROVIDERS: 'custom-ai-providers',
+  CUSTOM_PROVIDER_API_KEY_PREFIX: 'custom-provider-api-key',
 } as const;
 
 // ============================================================
@@ -59,6 +63,13 @@ export const INDEXED_DB = {
 // ============================================================
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
+
+/**
+ * Build a storage key for a custom provider's API key
+ */
+export function getCustomProviderApiKeyKey(providerId: string): string {
+  return `${STORAGE_KEYS.CUSTOM_PROVIDER_API_KEY_PREFIX}-${providerId}`;
+}
 
 /**
  * Build a type config key for a specific project
