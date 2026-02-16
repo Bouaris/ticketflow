@@ -29,8 +29,6 @@ import {
 import { buildPromptWithContext, type AIOptions as BaseAIOptions } from './ai-context';
 import { getProviderById } from './ai-provider-registry';
 import type { ProviderConfig } from '../types/aiProvider';
-import type { ProjectAIConfig } from '../types/projectAIConfig';
-import { DEFAULT_PROJECT_AI_CONFIG } from '../types/projectAIConfig';
 import {
   generateWithRetry,
   getStructuredOutputMode,
@@ -238,30 +236,10 @@ export function resetClient(providerId?: string): void {
 // ============================================================
 
 /**
- * Load project-specific AI configuration from localStorage.
- *
- * @deprecated Project-level AI config removed in v2.1. Always returns global default.
- * Kept for backward compatibility with useProjectAIConfig hook.
- */
-export function loadProjectAIConfig(_projectPath: string): ProjectAIConfig {
-  return DEFAULT_PROJECT_AI_CONFIG;
-}
-
-/**
- * Save project-specific AI configuration to localStorage.
- *
- * @deprecated Project-level AI config removed in v2.1. This is a no-op.
- * Kept for backward compatibility with useProjectAIConfig hook.
- */
-export function saveProjectAIConfig(_projectPath: string, _config: ProjectAIConfig): void {
-  // No-op: project-level config removed per v2.1 decision
-}
-
-/**
  * Get effective AI configuration.
  * Uses global settings only (project-level config removed per v2.1 decision).
  *
- * @deprecated projectPath parameter is ignored -- global config only since v2.1
+ * @param _projectPath - Ignored parameter, kept for backward compatibility
  */
 export function getEffectiveAIConfig(_projectPath?: string): {
   provider: AIProvider;

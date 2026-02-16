@@ -26,7 +26,3 @@ export { useTypeConfig } from './useTypeConfig';
 // AI context files configuration
 export type { UseContextFilesReturn } from './useContextFiles';
 export { useContextFiles } from './useContextFiles';
-
-// Project AI configuration
-export type { UseProjectAIConfigReturn } from './useProjectAIConfig';
-export { useProjectAIConfig } from './useProjectAIConfig';
