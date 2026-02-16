@@ -44,6 +44,9 @@ export const STORAGE_KEYS = {
   // Custom AI Providers
   CUSTOM_AI_PROVIDERS: 'custom-ai-providers',
   CUSTOM_PROVIDER_API_KEY_PREFIX: 'custom-provider-api-key',
+
+  // AI Model Selection (per-provider persistence)
+  AI_MODEL_PREFIX: 'ai-model',
 } as const;
 
 // ============================================================
@@ -69,6 +72,13 @@ export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
  */
 export function getCustomProviderApiKeyKey(providerId: string): string {
   return `${STORAGE_KEYS.CUSTOM_PROVIDER_API_KEY_PREFIX}-${providerId}`;
+}
+
+/**
+ * Build a storage key for a provider's selected model
+ */
+export function getModelStorageKey(providerId: string): string {
+  return `${STORAGE_KEYS.AI_MODEL_PREFIX}-${providerId}`;
 }
 
 /**

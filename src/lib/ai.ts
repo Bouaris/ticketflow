@@ -10,7 +10,7 @@ import OpenAI from 'openai';
 import type { BacklogItem } from '../types/backlog';
 import type { TypeDefinition } from '../types/typeConfig';
 import { STORAGE_KEYS } from '../constants/storage';
-import { getCustomProviderApiKeyKey } from '../constants/storage';
+import { getCustomProviderApiKeyKey, getModelStorageKey } from '../constants/storage';
 import { AI_CONFIG } from '../constants/config';
 import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
 import {
@@ -239,6 +239,21 @@ export function resetClient(providerId?: string): void {
 // ============================================================
 
 /**
+ * Get user's selected model for a provider from localStorage.
+ * Returns null if no selection persisted (use provider default).
+ */
+export function getSelectedModel(providerId: string): string | null {
+  return localStorage.getItem(getModelStorageKey(providerId));
+}
+
+/**
+ * Persist user's selected model for a provider.
+ */
+export function setSelectedModel(providerId: string, modelId: string): void {
+  localStorage.setItem(getModelStorageKey(providerId), modelId);
+}
+
+/**
  * Get effective AI configuration.
  * Uses global settings only (project-level config removed per v2.1 decision).
  *
@@ -250,6 +265,9 @@ export function getEffectiveAIConfig(_projectPath?: string): {
 } {
   const globalProvider = getProvider();
   const providerConfig = getProviderById(globalProvider);
+
+  // Read persisted model selection, falling back to provider default
+  const selectedModel = getSelectedModel(globalProvider);
   const defaultModel = providerConfig?.defaultModel
     ?? (globalProvider === 'groq' ? AI_CONFIG.GROQ_MODEL
       : globalProvider === 'gemini' ? AI_CONFIG.GEMINI_MODEL
@@ -257,8 +275,26 @@ export function getEffectiveAIConfig(_projectPath?: string): {
 
   return {
     provider: globalProvider,
-    modelId: defaultModel,
+    modelId: selectedModel || defaultModel,
   };
+}
+
+/**
+ * Resolve the correct model ID for a given provider.
+ * Uses: persisted user selection > provider's defaultModel > hardcoded fallback.
+ * This is the authoritative model resolution -- use when provider may be overridden.
+ */
+export function resolveModelForProvider(providerId: string): string {
+  const selected = getSelectedModel(providerId);
+  if (selected) return selected;
+
+  const providerConfig = getProviderById(providerId);
+  if (providerConfig?.defaultModel) return providerConfig.defaultModel;
+
+  // Ultimate fallback for unknown/deleted providers
+  if (providerId === 'groq') return AI_CONFIG.GROQ_MODEL;
+  if (providerId === 'gemini') return AI_CONFIG.GEMINI_MODEL;
+  return AI_CONFIG.OPENAI_MODEL;
 }
 
 /**
