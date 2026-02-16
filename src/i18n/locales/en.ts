@@ -122,6 +122,7 @@ export const en: Translations = {
     geminiDescription: '15 req/min, 1M tokens/day free (Gemini 2.0 Flash)',
     openaiDescription: 'GPT-4o and GPT-4o Mini, paid',
     geminiRecommended: 'Recommended free tier',
+    modelLabel: 'Model',
   },
 
   // -- Severity Labels ----------------------------------------------

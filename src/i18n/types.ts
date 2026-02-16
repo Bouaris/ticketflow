@@ -136,6 +136,7 @@ export interface Translations {
     geminiDescription: string;
     openaiDescription: string;
     geminiRecommended: string;
+    modelLabel: string;
   };
 
   // -- Severity Labels ----------------------------------------------
