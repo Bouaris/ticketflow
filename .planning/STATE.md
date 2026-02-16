@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 25 (Model Resolution & Selection)
-Plan: 1 of 2
-Status: In Progress
-Last activity: 2026-02-17 — Completed 25-01 (Fix Provider Override Model Resolution)
+Plan: 2 of 2
+Status: Complete
+Last activity: 2026-02-17 — Completed 25-02 (Model Selector UI)
 
-Progress: [██████████░░░░░░░░░░] 1/2 plans (50%)
+Progress: [████████████████████] 2/2 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 72 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 9, gap: 1)
+- Total plans completed: 73 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 9, gap: 2)
 - Average duration: ~6.1 min per plan
 - Total execution time: ~7.2 hours
 
@@ -52,7 +52,7 @@ Progress: [██████████░░░░░░░░░░] 1/2 pla
 | Plan | Duration | Tasks | Files | Status |
 |------|----------|-------|-------|--------|
 | 01 | 4 min | 2 | 5 modified | Complete |
-| 02 | - | - | - | Pending |
+| 02 | 2 min | 2 | 4 modified | Complete |
 
 ## Accumulated Context
 
@@ -90,6 +90,7 @@ Recent decisions affecting v2.1:
 - **Inline error display with retry (24-03):** Error feedback appears below AIGenerationMode prompt with retry button, keeping user in creation context without modal interruption.
 - **Provider override already working (24-03):** Confirmed selectedProvider state properly passed to generateItemFromDescription which uses options.provider as override - GENX-03 fulfilled with zero code change.
 - **resolveModelForProvider pattern (25-01):** Single authoritative function for model resolution when provider may be overridden. Three-tier fallback: persisted user selection > provider defaultModel > hardcoded AI_CONFIG constant.
+- **Model dropdown conditional render (25-02):** Only show model dropdown when provider has > 1 model. Reuses existing 'saved' feedback for model change confirmation.
 
 ### Pending Todos
 
@@ -121,9 +122,9 @@ Recent decisions affecting v2.1:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 25-01-PLAN.md (Fix Provider Override Model Resolution)
+Stopped at: Completed 25-02-PLAN.md (Model Selector UI) — Phase 25 complete
 Resume file: None
-Next action: Execute 25-02-PLAN.md (Model Selector UI)
+Next action: Phase 25 complete — both GENX-03 and PROV-01 gaps closed
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after 25-01 plan complete*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after 25-02 plan complete (Phase 25 done)*
