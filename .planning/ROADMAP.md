@@ -6,7 +6,7 @@
 - ✅ **v1.5 Next-Gen Desktop Experience** — Phases 8-13 (shipped 2026-02-08)
 - ✅ **v1.6 Smart Import** — Phases 14-17 (shipped 2026-02-14)
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
-- 🚧 **v2.1 AI Refresh** — Phases 22-24 (in progress)
+- ✅ **v2.1 AI Refresh** — Phases 22-24 (shipped 2026-02-16)
 
 ## Phases
 
@@ -55,48 +55,14 @@
 
 </details>
 
-### 🚧 v2.1 AI Refresh (In Progress)
+<details>
+<summary>✅ v2.1 AI Refresh (Phases 22-24) — SHIPPED 2026-02-16</summary>
 
-**Milestone Goal:** Refactor AI settings UX — separate app settings from AI config, add custom provider support, fix provider override logic, improve generation feedback.
+- [x] Phase 22: Provider Registry & Core Refactor (3/3 plans) — completed 2026-02-16
+- [x] Phase 23: Settings UI Split & Provider Config (3/3 plans) — completed 2026-02-16
+- [x] Phase 24: Validation & Generation UX (3/3 plans) — completed 2026-02-16
 
-#### Phase 22: Provider Registry & Core Refactor ✓
-**Goal**: Centralize provider logic and enable custom endpoints
-**Depends on**: Phase 21
-**Requirements**: INTL-01, INTL-02, PROV-06
-**Status**: Complete — 2026-02-16 | Verified: 10/10 must-haves
-
-Plans:
-- [x] 22-01-PLAN.md — Provider Registry Foundation (types, registry module, CSP update)
-- [x] 22-02-PLAN.md — Core AI Client Refactor (singleton cache expansion, registry integration, project config removal)
-- [x] 22-03-PLAN.md — Consumer Migration & Cleanup (deprecate projectAIConfig, simplify hook, update ProviderToggle)
-
-#### Phase 23: Settings UI Split & Provider Config ✓
-**Goal**: Separate App Settings from AI Settings with dedicated provider management
-**Depends on**: Phase 22
-**Requirements**: SETT-01, SETT-02, SETT-03, SETT-04, PROV-01, PROV-02, PROV-03, PROV-05
-**Status**: Complete — 2026-02-16 | Verified: 10/10 must-haves
-
-Plans:
-- [x] 23-01-PLAN.md — Create AppSettingsModal, AISettingsModal, and provider CRUD sub-components
-- [x] 23-02-PLAN.md — Add i18n keys and update Plan 01 components to use them
-- [x] 23-03-PLAN.md — Wire modals, update Header, remove deprecated files and project-level AI selector
-
-#### Phase 24: Validation & Generation UX
-**Goal**: Provider health checks, loading states, and improved generation feedback
-**Depends on**: Phase 23
-**Requirements**: PROV-04, GENX-01, GENX-02, GENX-03, GENX-04, GENX-05, INTL-03
-**Success Criteria** (what must be TRUE):
-  1. User can test provider connection and see latency and error details before using provider
-  2. User sees loading spinner and progress text during AI generation (not silent operations)
-  3. User can cancel in-flight AI generation for operations longer than 5 seconds
-  4. Provider selector in ticket creation modal overrides default provider (not ignored as before)
-  5. Tooltip recommends Gemini free tier with actionable info (Pay-as-you-go Level 1: 15 req/min, 1M tokens/day)
-**Plans**: 3 plans
-
-Plans:
-- [ ] 24-01-PLAN.md — Health check module + ProviderCard test button + Gemini tooltip + health i18n
-- [ ] 24-02-PLAN.md — AbortSignal propagation through AI completion stack
-- [ ] 24-03-PLAN.md — Generation progress UI, cancel wiring, error feedback, generation i18n
+</details>
 
 ## Progress
 
@@ -106,9 +72,9 @@ Plans:
 | v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
 | v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
 | v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-24 | 6+ | 18/18 | In progress |
-| **Total** | **24** | **68+** | **163** | |
+| v2.1 AI Refresh | 22-24 | 9 | 18/18 | 2026-02-16 |
+| **Total** | **24** | **71** | **163** | |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 23 complete)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 24 complete — v2.1 shipped)*
 *Full milestone details: .planning/milestones/*
