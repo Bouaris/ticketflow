@@ -104,6 +104,26 @@ export interface Translations {
     themeLight: string;
     themeDark: string;
     themeSystem: string;
+    appSettings: string;
+    aiSettings: string;
+    providers: string;
+    customProviders: string;
+    addProvider: string;
+    editProvider: string;
+    deleteProvider: string;
+    deleteProviderConfirm: string;
+    providerName: string;
+    endpointURL: string;
+    endpointHint: string;
+    defaultModel: string;
+    apiKeyOptional: string;
+    apiKeyHintLocal: string;
+    providerConfigured: string;
+    providerNotConfigured: string;
+    noCustomProviders: string;
+    providerAdded: string;
+    providerDeleted: string;
+    saveProvider: string;
   };
 
   // -- Severity Labels ----------------------------------------------

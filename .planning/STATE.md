@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ## Current Position
 
-Phase: 22 of 24 (Provider Registry & Core Refactor)
-Plan: 3 of 3
-Status: Phase Complete
-Last activity: 2026-02-16 — Completed 22-03 (Consumer Migration)
+Phase: 23 of 24 (Settings UI Split & Provider Config)
+Plan: 1 of 3
+Status: In Progress
+Last activity: 2026-02-16 — Completed 23-01 (Component Creation)
 
-Progress: [████████████████████] 3/3 plans (100%)
+Progress: [██████▒▒▒▒▒▒▒▒▒▒▒▒▒▒] 1/3 plans (33%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 65 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 3)
-- Average duration: ~6.5 min per plan
-- Total execution time: ~6.7 hours
+- Total plans completed: 66 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 4)
+- Average duration: ~6.4 min per plan
+- Total execution time: ~7.0 hours
 
 **By Milestone:**
 
@@ -33,6 +33,11 @@ Progress: [████████████████████] 3/3 pla
 | v1.6 | 8 | 4 | 19/19 | Shipped 2026-02-14 |
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | TBD | 3 | 18/18 | In progress |
+
+**Phase 23 (23-01):**
+| Plan | Duration | Tasks | Files | Status |
+|------|----------|-------|-------|--------|
+| 01 | 5 min | 1 | 5 created | Complete ✓ |
 
 ## Accumulated Context
 
@@ -53,6 +58,9 @@ Recent decisions affecting v2.1:
 - **Registry-derived deprecated exports (22-03):** AVAILABLE_MODELS/DEFAULT_MODELS derived from BUILT_IN_PROVIDERS at module level (not duplicated).
 - **Global-only useProjectAIConfig (22-03):** Hook simplified to always return global config with no-op setters and console.warn deprecation warnings.
 - **Widened getProviderLabel (22-03):** Accepts any string (not just AIProvider) to support custom provider IDs in Phase 24.
+- **Standalone components NOT wired (23-01):** Plan 01 creates components as standalone files. Wiring into App.tsx happens in Plan 02. Clean separation of UI construction from integration.
+- **TODO comments for i18n (23-01):** New UI strings marked with '// TODO: i18n' for Plan 02 to add proper translations.
+- **Custom provider edit uses remove+add (23-01):** Registry has no update function. Edit operation removes old provider, then adds new with updated data.
 
 ### Pending Todos
 
@@ -84,9 +92,9 @@ Recent decisions affecting v2.1:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 22-03-PLAN.md (Consumer Migration) — Phase 22 fully complete
+Stopped at: Completed 23-01-PLAN.md (Settings UI Split - Component Creation)
 Resume file: None
-Next action: Plan/execute Phase 23 (Settings Split)
+Next action: Execute Plan 23-02 (i18n + wiring)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 22-03 plan complete (Phase 22 done)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 23-01 plan complete*
