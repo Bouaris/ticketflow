@@ -6,21 +6,21 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
 
-**Current focus:** Milestone v2.1 "AI Refresh" — Phase 22 complete, ready for Phase 23
+**Current focus:** Gap Closure Phase 25 — Model Resolution & Selection
 
 ## Current Position
 
-Phase: 24 of 24 (Validation & Generation UX)
-Plan: 3 of 3
-Status: Complete
-Last activity: 2026-02-16 — Completed 24-03 (Generation UX - Progress + Cancel + Error Feedback)
+Phase: 25 (Model Resolution & Selection)
+Plan: 1 of 2
+Status: In Progress
+Last activity: 2026-02-17 — Completed 25-01 (Fix Provider Override Model Resolution)
 
-Progress: [████████████████████] 3/3 plans (100%)
+Progress: [██████████░░░░░░░░░░] 1/2 plans (50%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 71 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 9)
+- Total plans completed: 72 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 9, gap: 1)
 - Average duration: ~6.1 min per plan
 - Total execution time: ~7.2 hours
 
@@ -47,6 +47,12 @@ Progress: [████████████████████] 3/3 pla
 | 01 | 3 min | 2 | 1 created, 4 modified | Complete ✓ |
 | 02 | 2 min | 1 | 1 modified | Complete ✓ |
 | 03 | 5 min | 2 | 6 modified | Complete ✓ |
+
+**Phase 25 (25-01, 25-02):**
+| Plan | Duration | Tasks | Files | Status |
+|------|----------|-------|-------|--------|
+| 01 | 4 min | 2 | 5 modified | Complete |
+| 02 | - | - | - | Pending |
 
 ## Accumulated Context
 
@@ -83,6 +89,7 @@ Recent decisions affecting v2.1:
 - **Silent cancellation via isAbortError (24-03):** User-initiated cancellation is not an error - skip error toast and return silently for clean UX.
 - **Inline error display with retry (24-03):** Error feedback appears below AIGenerationMode prompt with retry button, keeping user in creation context without modal interruption.
 - **Provider override already working (24-03):** Confirmed selectedProvider state properly passed to generateItemFromDescription which uses options.provider as override - GENX-03 fulfilled with zero code change.
+- **resolveModelForProvider pattern (25-01):** Single authoritative function for model resolution when provider may be overridden. Three-tier fallback: persisted user selection > provider defaultModel > hardcoded AI_CONFIG constant.
 
 ### Pending Todos
 
@@ -113,10 +120,10 @@ Recent decisions affecting v2.1:
 
 ## Session Continuity
 
-Last session: 2026-02-16
-Stopped at: Completed 24-03-PLAN.md (Generation UX - Progress + Cancel + Error Feedback)
+Last session: 2026-02-17
+Stopped at: Completed 25-01-PLAN.md (Fix Provider Override Model Resolution)
 Resume file: None
-Next action: Phase 24 Complete - v2.1 Milestone Complete - Ready for ship/release
+Next action: Execute 25-02-PLAN.md (Model Selector UI)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 24-03 plan complete - Phase 24 and v2.1 Milestone COMPLETE*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after 25-01 plan complete*
