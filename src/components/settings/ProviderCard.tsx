@@ -5,9 +5,9 @@
  * Used for built-in providers (Groq, Gemini, OpenAI).
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ProviderConfig } from '../../types/aiProvider';
-import { hasApiKey, getApiKey, setApiKey, clearApiKey, resetClient } from '../../lib/ai';
+import { hasApiKey, getApiKey, setApiKey, clearApiKey, resetClient, getSelectedModel, setSelectedModel } from '../../lib/ai';
 import { GroqIcon, GeminiIcon, OpenAIIcon, CheckIcon } from '../ui/Icons';
 import { Spinner } from '../ui/Spinner';
 import { useTranslation } from '../../i18n';
@@ -29,6 +29,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
     loading: boolean;
     result: HealthCheckResult | null;
   }>({ loading: false, result: null });
+  const [selectedModelId, setSelectedModelId] = useState<string>(provider.defaultModel);
 
   const isConfigured = hasApiKey(provider.id);
 
@@ -39,6 +40,14 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
       setApiKeyInput(currentKey || '');
     }
   });
+
+  // Load persisted model selection when card becomes active
+  useEffect(() => {
+    if (isActive) {
+      const persisted = getSelectedModel(provider.id);
+      setSelectedModelId(persisted || provider.defaultModel);
+    }
+  }, [isActive, provider.id, provider.defaultModel]);
 
   // Provider-specific colors
   const colors = {
@@ -80,6 +89,13 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
         window.open(providerUrl, '_blank');
       }
     }
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    setSelectedModel(provider.id, modelId);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleTestConnection = async () => {
@@ -188,6 +204,26 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
               </button>
             </div>
           </div>
+
+          {/* Model selection */}
+          {provider.models && provider.models.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium text-on-surface-secondary mb-2">
+                {t.settings.modelLabel}
+              </label>
+              <select
+                value={selectedModelId}
+                onChange={(e) => handleModelChange(e.target.value)}
+                className="w-full px-3 py-2 border border-input-border rounded-lg bg-input-bg text-on-surface focus:ring-2 focus:ring-accent focus:border-accent outline-none text-sm"
+              >
+                {provider.models.map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="flex items-center justify-between gap-2">
