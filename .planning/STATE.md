@@ -6,21 +6,21 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
 
-**Current focus:** Milestone v2.1 "AI Refresh" — Phase 22 Plan 02 complete
+**Current focus:** Milestone v2.1 "AI Refresh" — Phase 22 complete, ready for Phase 23
 
 ## Current Position
 
 Phase: 22 of 24 (Provider Registry & Core Refactor)
-Plan: 2 of 3
-Status: Executing
-Last activity: 2026-02-16 — Completed 22-02 (AI Core Registry Integration)
+Plan: 3 of 3
+Status: Phase Complete
+Last activity: 2026-02-16 — Completed 22-03 (Consumer Migration)
 
-Progress: [█████████████░░░░░░░] 2/3 plans (67%)
+Progress: [████████████████████] 3/3 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 64 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 2)
+- Total plans completed: 65 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 3)
 - Average duration: ~6.5 min per plan
 - Total execution time: ~6.7 hours
 
@@ -50,6 +50,9 @@ Recent decisions affecting v2.1:
 - **Provider registry pattern established (22-01):** BUILT_IN_PROVIDERS + loadCustomProviders() = getAllProviders() in ai-provider-registry.ts.
 - **Map-based OpenAI client cache (22-02):** Cache keyed by apiKey::baseURL prevents state leaks between custom providers.
 - **Deprecated stubs for project-level AI config (22-02):** loadProjectAIConfig/saveProjectAIConfig kept as no-ops for backward compat with useProjectAIConfig hook.
+- **Registry-derived deprecated exports (22-03):** AVAILABLE_MODELS/DEFAULT_MODELS derived from BUILT_IN_PROVIDERS at module level (not duplicated).
+- **Global-only useProjectAIConfig (22-03):** Hook simplified to always return global config with no-op setters and console.warn deprecation warnings.
+- **Widened getProviderLabel (22-03):** Accepts any string (not just AIProvider) to support custom provider IDs in Phase 24.
 
 ### Pending Todos
 
@@ -59,10 +62,11 @@ Recent decisions affecting v2.1:
 
 ### Blockers/Concerns
 
-**Phase 22 (in progress):**
+**Phase 22 (COMPLETE):**
 - ~~CSP decision gates custom provider feature~~ RESOLVED in 22-01: HTTPS-only enforcement
 - ~~Client singleton cache must expand to handle baseURL~~ RESOLVED in 22-02: Map-based cache with apiKey::baseURL key
-- loadProjectAIConfig/saveProjectAIConfig deprecated stubs need cleanup when useProjectAIConfig hook is removed (Phase 23 settings split)
+- ~~Consumer migration to registry~~ RESOLVED in 22-03: projectAIConfig deprecated, useProjectAIConfig simplified, ProviderToggle registry-aware
+- loadProjectAIConfig/saveProjectAIConfig deprecated stubs + projectAIConfig.ts module need full removal in Phase 23 settings split
 
 **Phase 23:**
 - Settings modal split may break existing shortcuts (Cmd+,) — need router pattern
@@ -80,9 +84,9 @@ Recent decisions affecting v2.1:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 22-02-PLAN.md (AI Core Registry Integration)
+Stopped at: Completed 22-03-PLAN.md (Consumer Migration) — Phase 22 fully complete
 Resume file: None
-Next action: Execute 22-03-PLAN.md
+Next action: Plan/execute Phase 23 (Settings Split)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 22-02 plan complete*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 22-03 plan complete (Phase 22 done)*
