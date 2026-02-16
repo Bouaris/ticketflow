@@ -78,3 +78,6 @@ export {
   AVAILABLE_MODELS,
   DEFAULT_MODELS,
 } from './projectAIConfig';
+
+// AI Provider Registry Types
+export type { ProviderConfig, BuiltInProviderId, CustomProviderInput } from './aiProvider';

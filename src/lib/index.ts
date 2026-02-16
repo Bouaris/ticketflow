@@ -60,6 +60,17 @@ export {
   joinPath,
 } from './tauri-bridge';
 
+// AI Provider Registry
+export {
+  BUILT_IN_PROVIDERS,
+  getAllProviders,
+  getProviderById,
+  addCustomProvider,
+  removeCustomProvider,
+  validateCustomProvider,
+  isBuiltInProvider,
+} from './ai-provider-registry';
+
 // Screenshots
 export type { ScreenshotInfo } from './screenshots';
 export {

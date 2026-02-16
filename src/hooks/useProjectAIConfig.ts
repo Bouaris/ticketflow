@@ -1,23 +1,19 @@
 /**
  * useProjectAIConfig - Hook for managing per-project AI configuration
  *
- * Provides access to project-specific AI provider and model settings
- * with automatic fallback to global settings when set to 'global'.
+ * @deprecated Since v2.1, project-level AI config has been removed.
+ * This hook always returns global settings. Kept for backward compatibility.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import {
-  loadProjectAIConfig,
-  saveProjectAIConfig,
   getProvider,
-  getEffectiveAIConfig,
   type AIProvider,
 } from '../lib/ai';
-import {
-  type ProjectAIConfig,
-  type ProjectAIProvider,
-  DEFAULT_PROJECT_AI_CONFIG,
-  DEFAULT_MODELS,
+import { getProviderById } from '../lib/ai-provider-registry';
+import type {
+  ProjectAIConfig,
+  ProjectAIProvider,
 } from '../types/projectAIConfig';
 
 // ============================================================
@@ -43,61 +39,28 @@ export interface UseProjectAIConfigReturn {
 // HOOK
 // ============================================================
 
-export function useProjectAIConfig(projectPath: string | null): UseProjectAIConfigReturn {
-  const [config, setConfig] = useState<ProjectAIConfig>(DEFAULT_PROJECT_AI_CONFIG);
+export function useProjectAIConfig(_projectPath: string | null): UseProjectAIConfigReturn {
+  // v2.1: Project-level AI config removed — always use global settings
+  const globalProvider = getProvider();
+  const providerConfig = getProviderById(globalProvider);
 
-  // Load config when project path changes
-  useEffect(() => {
-    if (projectPath) {
-      const loaded = loadProjectAIConfig(projectPath);
-      setConfig(loaded);
-    } else {
-      setConfig(DEFAULT_PROJECT_AI_CONFIG);
-    }
-  }, [projectPath]);
+  const effectiveModelId = providerConfig?.defaultModel ?? globalProvider;
 
-  // Set provider
-  const setProvider = useCallback((provider: ProjectAIProvider) => {
-    if (!projectPath) return;
+  // Keep setProvider and setModelId as no-ops with deprecation warnings
+  const setProviderFn = useCallback((_provider: ProjectAIProvider) => {
+    console.warn('[useProjectAIConfig] Project-level AI config removed in v2.1. Use global settings.');
+  }, []);
 
-    const newConfig: ProjectAIConfig = {
-      ...config,
-      provider,
-      // Reset modelId when changing provider
-      modelId: provider === 'global' ? undefined : DEFAULT_MODELS[provider as AIProvider],
-    };
-
-    setConfig(newConfig);
-    saveProjectAIConfig(projectPath, newConfig);
-  }, [projectPath, config]);
-
-  // Set model ID
-  const setModelId = useCallback((modelId: string) => {
-    if (!projectPath) return;
-
-    const newConfig: ProjectAIConfig = {
-      ...config,
-      modelId,
-    };
-
-    setConfig(newConfig);
-    saveProjectAIConfig(projectPath, newConfig);
-  }, [projectPath, config]);
-
-  // Compute derived values
-  const isGlobal = config.provider === 'global';
-
-  // Get effective values (resolves 'global' to actual provider)
-  const { provider: effectiveProvider, modelId: effectiveModelId } = projectPath
-    ? getEffectiveAIConfig(projectPath)
-    : { provider: getProvider(), modelId: DEFAULT_MODELS[getProvider()] };
+  const setModelId = useCallback((_modelId: string) => {
+    console.warn('[useProjectAIConfig] Project-level AI config removed in v2.1. Use global settings.');
+  }, []);
 
   return {
-    config,
-    setProvider,
+    config: { provider: 'global', version: 1 },
+    setProvider: setProviderFn,
     setModelId,
-    isGlobal,
-    effectiveProvider,
+    isGlobal: true,
+    effectiveProvider: globalProvider,
     effectiveModelId,
   };
 }

@@ -2,9 +2,11 @@
  * ProviderToggle - Toggle button for AI provider selection
  *
  * Displays Groq/Gemini/OpenAI toggle with availability status.
+ * Uses the provider registry for label resolution.
  */
 
 import { type AIProvider, hasApiKey } from '../../lib/ai';
+import { BUILT_IN_PROVIDERS } from '../../lib/ai-provider-registry';
 import { useTranslation } from '../../i18n';
 
 // ============================================================
@@ -12,7 +14,7 @@ import { useTranslation } from '../../i18n';
 // ============================================================
 
 interface ProviderToggleProps {
-  value: AIProvider;
+  value: AIProvider | string;
   onChange: (provider: AIProvider) => void;
   size?: 'sm' | 'md';
   showLabel?: boolean;
@@ -91,10 +93,8 @@ export function ProviderToggle({
 // PROVIDER LABEL HELPER
 // ============================================================
 
-export function getProviderLabel(provider: AIProvider): string {
-  switch (provider) {
-    case 'groq': return 'Groq';
-    case 'gemini': return 'Gemini';
-    case 'openai': return 'OpenAI';
-  }
+export function getProviderLabel(provider: string): string {
+  const config = BUILT_IN_PROVIDERS.find(p => p.id === provider);
+  if (config) return config.name;
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
