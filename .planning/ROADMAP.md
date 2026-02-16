@@ -6,7 +6,7 @@
 - ✅ **v1.5 Next-Gen Desktop Experience** — Phases 8-13 (shipped 2026-02-08)
 - ✅ **v1.6 Smart Import** — Phases 14-17 (shipped 2026-02-14)
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
-- ✅ **v2.1 AI Refresh** — Phases 22-24 (shipped 2026-02-16)
+- 🔧 **v2.1 AI Refresh** — Phases 22-25 (gap closure in progress)
 
 ## Phases
 
@@ -55,12 +55,13 @@
 
 </details>
 
-<details>
-<summary>✅ v2.1 AI Refresh (Phases 22-24) — SHIPPED 2026-02-16</summary>
+<details open>
+<summary>🔧 v2.1 AI Refresh (Phases 22-25) — Gap Closure In Progress</summary>
 
 - [x] Phase 22: Provider Registry & Core Refactor (3/3 plans) — completed 2026-02-16
 - [x] Phase 23: Settings UI Split & Provider Config (3/3 plans) — completed 2026-02-16
 - [x] Phase 24: Validation & Generation UX (3/3 plans) — completed 2026-02-16
+- [ ] Phase 25: Model Resolution & Selection — **Gap Closure** (closes GENX-03, PROV-01)
 
 </details>
 
@@ -72,9 +73,9 @@
 | v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
 | v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
 | v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-24 | 9 | 18/18 | 2026-02-16 |
-| **Total** | **24** | **71** | **163** | |
+| v2.1 AI Refresh | 22-25 | 9+? | 16/18 (2 gaps) | In Progress |
+| **Total** | **25** | **71+** | **161+2 gaps** | |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 24 complete — v2.1 shipped)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 25 added — gap closure for GENX-03, PROV-01)*
 *Full milestone details: .planning/milestones/*
