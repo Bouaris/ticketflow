@@ -58,6 +58,8 @@ export interface AIOptions extends BaseAIOptions {
   typeConfigs?: TypeDefinition[];
   /** Base64-encoded images for multimodal AI requests (Gemini/OpenAI) */
   images?: ImageData[];
+  /** AbortSignal for cancelling AI operations (Phase 24) */
+  signal?: AbortSignal;
 }
 
 // Re-export for consumers
@@ -879,7 +881,7 @@ export async function refineItem(item: BacklogItem, options?: RefineOptions): Pr
     const result = await generateCompletionWithRetry(
       prompt,
       RefineResponseSchema,
-      { provider: effectiveProvider, modelId }
+      { provider: effectiveProvider, modelId, signal: options?.signal }
     );
 
     // Record telemetry
@@ -1229,7 +1231,7 @@ export async function generateItemFromDescription(description: string, options?:
     const result = await generateCompletionWithRetry(
       prompt,
       GenerateItemResponseSchema,
-      { provider: effectiveProvider, modelId, images: options?.images }
+      { provider: effectiveProvider, modelId, images: options?.images, signal: options?.signal }
     );
 
     // Record telemetry
@@ -1358,7 +1360,7 @@ export async function suggestImprovements(items: BacklogItem[], options?: AIOpti
     const result = await generateCompletionWithRetry(
       prompt,
       SuggestionsResponseSchema,
-      { provider: effectiveProvider, modelId }
+      { provider: effectiveProvider, modelId, signal: options?.signal }
     );
 
     // Record telemetry

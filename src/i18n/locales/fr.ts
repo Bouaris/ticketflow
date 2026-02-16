@@ -376,6 +376,11 @@ export const fr: Translations = {
     exampleApi: 'API: Integrer l\'endpoint de synchronisation externe',
     configureApiKey: 'Configurez votre cle API',
     describeWhatToCreate: 'Decrivez ce que vous voulez creer',
+    progressAnalyzing: 'Analyse de votre demande...',
+    progressGenerating: 'Generation de la structure du ticket...',
+    progressFinalizing: 'Finalisation des details...',
+    generationFailed: 'Echec de la generation',
+    generationCancelled: 'Generation annulee',
   },
 
   // -- Palette ------------------------------------------------------

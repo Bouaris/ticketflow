@@ -390,6 +390,11 @@ export interface Translations {
     exampleApi: string;
     configureApiKey: string;
     describeWhatToCreate: string;
+    progressAnalyzing: string;
+    progressGenerating: string;
+    progressFinalizing: string;
+    generationFailed: string;
+    generationCancelled: string;
   };
 
   // -- Palette ------------------------------------------------------

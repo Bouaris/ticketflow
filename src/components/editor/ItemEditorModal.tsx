@@ -24,6 +24,7 @@ import type { DependencySuggestion } from '../../types/ai';
 import { getProviderLabel } from '../ui/ProviderToggle';
 import { extractImageFromClipboard } from '../../lib/screenshots';
 import { getNextItemNumber } from '../../db/queries/counters';
+import { isAbortError } from '../../lib/abort';
 import { CloseIcon, SparklesIcon, PlusIcon, TrashIcon, SaveIcon, CameraIcon } from '../ui/Icons';
 import { ListEditor } from '../ui/ListEditor';
 import { ScreenshotEditor } from './ScreenshotEditor';
@@ -217,6 +218,8 @@ export function ItemEditorModal({
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => getProvider());
+  const [progressText, setProgressText] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // AI Questioning Flow
   const questioning = useAIQuestioning(projectPath);
@@ -275,6 +278,8 @@ export function ItemEditorModal({
       setGeminiSuggestions([]);
       setAiPrompt('');
       setIsGenerating(false);
+      setProgressText(null);
+      setGenerationError(null);
       setIsSaving(false);
       abortControllerRef.current?.abort();
       questioning.reset();
@@ -439,96 +444,114 @@ export function ItemEditorModal({
   // Core generation logic (shared between direct and post-questioning flows)
   const executeGeneration = useCallback(async (promptText: string) => {
     setIsGenerating(true);
+    setProgressText(t.ai.progressAnalyzing);
+    setGenerationError(null);
 
     // Create AbortController for this generation
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // Convert attached screenshots to base64 for multimodal AI
-    const imageData = await screenshotsToImageData(
-      screenshotsRef.current,
-      screenshotOps?.getUrl,
-    );
+    // Cycle progress text every 2s
+    const progressInterval = setInterval(() => {
+      setProgressText(prev => {
+        if (prev === t.ai.progressAnalyzing) return t.ai.progressGenerating;
+        if (prev === t.ai.progressGenerating) return t.ai.progressFinalizing;
+        return prev;
+      });
+    }, 2000);
 
-    const result = await generateItemFromDescription(promptText, {
-      provider: selectedProvider,
-      projectPath,
-      availableTypes: types,
-      items,
-      projectId: projectId ?? undefined,
-      typeConfigs: types,
-      images: imageData.length > 0 ? imageData : undefined,
-    });
+    try {
+      // Convert attached screenshots to base64 for multimodal AI
+      const imageData = await screenshotsToImageData(
+        screenshotsRef.current,
+        screenshotOps?.getUrl,
+      );
 
-    // Check if generation was aborted
-    if (controller.signal.aborted) {
+      const result = await generateItemFromDescription(promptText, {
+        provider: selectedProvider,
+        projectPath,
+        availableTypes: types,
+        items,
+        projectId: projectId ?? undefined,
+        typeConfigs: types,
+        images: imageData.length > 0 ? imageData : undefined,
+        signal: controller.signal,
+      });
+
+      if (result.success && result.item) {
+        // Validate that the suggested type exists in available types
+        let suggestedType = result.item.suggestedType;
+        const typeExists = types.some(t => t.id === suggestedType);
+        if (!typeExists) {
+          console.warn(`[AI] Unknown suggested type: ${suggestedType}, falling back to first available type`);
+          suggestedType = types[0]?.id || 'CT';
+        }
+
+        // Use temp ID for preview - the definitive counter-based ID
+        // will be assigned at save time in handleSave to avoid
+        // premature counter consumption and gaps in numbering
+        const newId = generateTempId(suggestedType);
+
+        setForm(f => ({
+          id: newId,
+          type: suggestedType,
+          title: result.item!.title,
+          emoji: result.item!.emoji,
+          description: result.item!.description,
+          userStory: result.item!.userStory,
+          specs: result.item!.specs,
+          criteria: result.item!.criteria,
+          priority: suggestedType !== 'BUG' ? result.item!.suggestedPriority : undefined,
+          severity: suggestedType === 'BUG' ? result.item!.suggestedSeverity : undefined,
+          effort: result.item!.suggestedEffort,
+          module: result.item!.suggestedModule,
+          component: suggestedType === 'BUG' ? result.item!.suggestedModule : undefined,
+          reproduction: [],
+          dependencies: result.item!.dependencies || [],
+          constraints: result.item!.constraints || [],
+          screenshots: f.screenshots, // Preserve screenshots from AI mode
+        }));
+
+        // Exit AI mode to show the form for review
+        setAiMode(false);
+        setActiveTab('general');
+        questioning.reset();
+        setShowFeedbackWidget(true);
+
+        // Trigger dependency detection in background (non-blocking)
+        // Delay to avoid 429 rate-limit from back-to-back API calls
+        if (items && items.length > 0) {
+          const depItem = { title: result.item.title, description: result.item.description, type: result.item.suggestedType };
+          setIsDetectingDeps(true);
+          setTimeout(() => {
+            detectDependencies(
+              depItem,
+              items,
+              { provider: selectedProvider, projectPath, projectId: projectId ?? undefined }
+            ).then(suggestions => {
+              setDependencySuggestions(suggestions);
+            }).finally(() => {
+              setIsDetectingDeps(false);
+            });
+          }, 2000);
+        }
+      } else {
+        // Show error with retry option
+        setGenerationError(result.error || t.aiErrors.unknownError);
+      }
+    } catch (error) {
+      if (isAbortError(error)) {
+        // User cancelled - silent, no error shown
+        return;
+      }
+      setGenerationError(error instanceof Error ? error.message : t.aiErrors.unknownError);
+    } finally {
+      clearInterval(progressInterval);
       setIsGenerating(false);
-      return; // User cancelled, discard result
+      setProgressText(null);
+      abortControllerRef.current = null;
     }
-
-    setIsGenerating(false);
-
-    if (result.success && result.item) {
-      // Validate that the suggested type exists in available types
-      let suggestedType = result.item.suggestedType;
-      const typeExists = types.some(t => t.id === suggestedType);
-      if (!typeExists) {
-        console.warn(`[AI] Unknown suggested type: ${suggestedType}, falling back to first available type`);
-        suggestedType = types[0]?.id || 'CT';
-      }
-
-      // Use temp ID for preview - the definitive counter-based ID
-      // will be assigned at save time in handleSave to avoid
-      // premature counter consumption and gaps in numbering
-      const newId = generateTempId(suggestedType);
-
-      setForm(f => ({
-        id: newId,
-        type: suggestedType,
-        title: result.item!.title,
-        emoji: result.item!.emoji,
-        description: result.item!.description,
-        userStory: result.item!.userStory,
-        specs: result.item!.specs,
-        criteria: result.item!.criteria,
-        priority: suggestedType !== 'BUG' ? result.item!.suggestedPriority : undefined,
-        severity: suggestedType === 'BUG' ? result.item!.suggestedSeverity : undefined,
-        effort: result.item!.suggestedEffort,
-        module: result.item!.suggestedModule,
-        component: suggestedType === 'BUG' ? result.item!.suggestedModule : undefined,
-        reproduction: [],
-        dependencies: result.item!.dependencies || [],
-        constraints: result.item!.constraints || [],
-        screenshots: f.screenshots, // Preserve screenshots from AI mode
-      }));
-
-      // Exit AI mode to show the form for review
-      setAiMode(false);
-      setActiveTab('general');
-      questioning.reset();
-      setShowFeedbackWidget(true);
-
-      // Trigger dependency detection in background (non-blocking)
-      // Delay to avoid 429 rate-limit from back-to-back API calls
-      if (items && items.length > 0) {
-        const depItem = { title: result.item.title, description: result.item.description, type: result.item.suggestedType };
-        setIsDetectingDeps(true);
-        setTimeout(() => {
-          detectDependencies(
-            depItem,
-            items,
-            { provider: selectedProvider, projectPath, projectId: projectId ?? undefined }
-          ).then(suggestions => {
-            setDependencySuggestions(suggestions);
-          }).finally(() => {
-            setIsDetectingDeps(false);
-          });
-        }, 2000);
-      }
-    } else {
-      alert(`${t.editor.errorPrefix} ${getProviderLabel(selectedProvider)}: ${result.error}`);
-    }
-  }, [selectedProvider, projectPath, types, items, projectId, generateTempId, questioning, screenshotOps]);
+  }, [selectedProvider, projectPath, types, items, projectId, generateTempId, questioning, screenshotOps, t]);
 
   // Generate item from AI description (entry point from Generate button)
   const handleGenerateFromAI = async () => {
@@ -580,8 +603,15 @@ export function ItemEditorModal({
   const handleCancelGeneration = useCallback(() => {
     abortControllerRef.current?.abort();
     setIsGenerating(false);
+    setProgressText(null);
     abortControllerRef.current = null;
   }, []);
+
+  // Handle retry generation after error
+  const handleRetryGeneration = useCallback(() => {
+    setGenerationError(null);
+    handleGenerateFromAI();
+  }, [handleGenerateFromAI]);
 
   // Handle recap confirmation: confirm and trigger generation
   const handleQuestioningConfirmRecap = useCallback(() => {
@@ -855,51 +885,75 @@ export function ItemEditorModal({
           <>
           {/* AI Mode */}
           {aiMode && (
-            <AIGenerationMode
-              prompt={aiPrompt}
-              onPromptChange={setAiPrompt}
-              provider={selectedProvider}
-              onProviderChange={setSelectedProvider}
-              isGenerating={isGenerating}
-              onGenerate={handleGenerateFromAI}
-              onCancel={handleCancelGeneration}
-              onSwitchToManual={() => {
-                setAiMode(false);
-                setPreferredCreationMode('templates');
-                questioning.reset();
-              }}
-              projectPath={projectPath}
-              screenshots={form.screenshots}
-              getScreenshotUrl={screenshotOps?.getUrl}
-              onRemoveScreenshot={(filename) => {
-                screenshotOps?.deleteFile(filename);
-                setForm(f => ({
-                  ...f,
-                  screenshots: f.screenshots.filter(s => s.filename !== filename),
-                }));
-              }}
-              questioningFlow={
-                questioning.state.phase !== 'idle' && (
-                  <AIQuestionFlow
-                    messages={questioning.state.messages.filter(m => m.role !== 'system')}
-                    phase={questioning.state.phase}
-                    questions={questioning.state.lastQuestions}
-                    recap={questioning.state.lastRecap}
-                    confidence={questioning.state.confidence}
-                    isProcessing={questioning.isProcessing}
-                    onAnswer={questioning.answer}
-                    onSkip={handleQuestioningSkip}
-                    onConfirmRecap={handleQuestioningConfirmRecap}
-                    error={questioning.error}
-                  />
-                )
-              }
-              isQuestioning={
-                questioning.state.phase !== 'idle' &&
-                questioning.state.phase !== 'ready' &&
-                questioning.state.phase !== 'skipped'
-              }
-            />
+            <>
+              <AIGenerationMode
+                prompt={aiPrompt}
+                onPromptChange={setAiPrompt}
+                provider={selectedProvider}
+                onProviderChange={setSelectedProvider}
+                isGenerating={isGenerating}
+                onGenerate={handleGenerateFromAI}
+                onCancel={handleCancelGeneration}
+                onSwitchToManual={() => {
+                  setAiMode(false);
+                  setPreferredCreationMode('templates');
+                  questioning.reset();
+                }}
+                projectPath={projectPath}
+                screenshots={form.screenshots}
+                getScreenshotUrl={screenshotOps?.getUrl}
+                onRemoveScreenshot={(filename) => {
+                  screenshotOps?.deleteFile(filename);
+                  setForm(f => ({
+                    ...f,
+                    screenshots: f.screenshots.filter(s => s.filename !== filename),
+                  }));
+                }}
+                questioningFlow={
+                  questioning.state.phase !== 'idle' && (
+                    <AIQuestionFlow
+                      messages={questioning.state.messages.filter(m => m.role !== 'system')}
+                      phase={questioning.state.phase}
+                      questions={questioning.state.lastQuestions}
+                      recap={questioning.state.lastRecap}
+                      confidence={questioning.state.confidence}
+                      isProcessing={questioning.isProcessing}
+                      onAnswer={questioning.answer}
+                      onSkip={handleQuestioningSkip}
+                      onConfirmRecap={handleQuestioningConfirmRecap}
+                      error={questioning.error}
+                    />
+                  )
+                }
+                isQuestioning={
+                  questioning.state.phase !== 'idle' &&
+                  questioning.state.phase !== 'ready' &&
+                  questioning.state.phase !== 'skipped'
+                }
+                progressText={progressText}
+              />
+              {/* Error feedback UI */}
+              {generationError && (
+                <div className="max-w-2xl mx-auto mt-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                        {t.ai.generationFailed}
+                      </p>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                        {generationError}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRetryGeneration}
+                      className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-800/40 hover:bg-red-200 dark:hover:bg-red-800/60 rounded-lg transition-colors"
+                    >
+                      {t.ai.retry}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* General Tab - Layout 2 colonnes responsive */}

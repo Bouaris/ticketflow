@@ -48,6 +48,8 @@ interface AIGenerationModeProps {
   questioningFlow?: ReactNode;
   /** Whether questioning is active (hides generate button) */
   isQuestioning?: boolean;
+  /** Progress text shown during generation */
+  progressText?: string | null;
 }
 
 // ============================================================
@@ -75,6 +77,7 @@ export function AIGenerationMode({
   onRemoveScreenshot,
   questioningFlow,
   isQuestioning,
+  progressText,
 }: AIGenerationModeProps) {
   const { t } = useTranslation();
   // Textarea resizable height (persisted globally)
@@ -145,7 +148,7 @@ export function AIGenerationMode({
                 {isGenerating ? (
                   <>
                     <Spinner size="sm" color="white" />
-                    {t.ai.generating}
+                    {progressText || t.ai.generating}
                   </>
                 ) : (
                   <>

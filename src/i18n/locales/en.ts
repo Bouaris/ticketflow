@@ -376,6 +376,11 @@ export const en: Translations = {
     exampleApi: 'API: Integrate the external sync endpoint',
     configureApiKey: 'Configure your API key',
     describeWhatToCreate: 'Describe what you want to create',
+    progressAnalyzing: 'Analyzing your request...',
+    progressGenerating: 'Generating ticket structure...',
+    progressFinalizing: 'Finalizing details...',
+    generationFailed: 'Generation failed',
+    generationCancelled: 'Generation cancelled',
   },
 
   // -- Palette ------------------------------------------------------
