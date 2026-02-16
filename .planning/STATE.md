@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 23 of 24 (Settings UI Split & Provider Config)
-Plan: 2 of 3
-Status: In Progress
-Last activity: 2026-02-16 — Completed 23-02 (i18n Integration)
+Plan: 3 of 3
+Status: Complete
+Last activity: 2026-02-16 — Completed 23-03 (Wiring + Cleanup)
 
-Progress: [████████████▒▒▒▒▒▒▒▒] 2/3 plans (67%)
+Progress: [████████████████████] 3/3 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 67 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 5)
+- Total plans completed: 68 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 6)
 - Average duration: ~6.4 min per plan
-- Total execution time: ~7.1 hours
+- Total execution time: ~7.2 hours
 
 **By Milestone:**
 
@@ -34,11 +34,12 @@ Progress: [████████████▒▒▒▒▒▒▒▒] 2/3 pla
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | TBD | 3 | 18/18 | In progress |
 
-**Phase 23 (23-01, 23-02):**
+**Phase 23 (23-01, 23-02, 23-03):**
 | Plan | Duration | Tasks | Files | Status |
 |------|----------|-------|-------|--------|
 | 01 | 5 min | 1 | 5 created | Complete ✓ |
 | 02 | 4 min | 2 | 8 modified | Complete ✓ |
+| 03 | 6 min | 2 | 7 modified, 3 deleted | Complete ✓ |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting v2.1:
 - **Standalone components NOT wired (23-01):** Plan 01 creates components as standalone files. Wiring into App.tsx happens in Plan 02. Clean separation of UI construction from integration.
 - **TODO comments for i18n (23-01):** New UI strings marked with '// TODO: i18n' for Plan 02 to add proper translations.
 - **Custom provider edit uses remove+add (23-01):** Registry has no update function. Edit operation removes old provider, then adds new with updated data.
+- **Keep getEffectiveAIConfig parameter (23-03):** Kept unused _projectPath parameter for backward compatibility with 16 call sites across AI subsystem. Avoids cascading changes, can clean up later.
+- **AI Settings button always visible (23-03):** Unlike Project Settings (only visible when project loaded), AI Settings accessible from welcome screen or within project.
+- **Amber badge on AI Settings (23-03):** Visual indicator for first-run users. Badge disappears once any provider has API key configured.
 
 ### Pending Todos
 
@@ -77,8 +81,8 @@ Recent decisions affecting v2.1:
 - ~~Consumer migration to registry~~ RESOLVED in 22-03: projectAIConfig deprecated, useProjectAIConfig simplified, ProviderToggle registry-aware
 - loadProjectAIConfig/saveProjectAIConfig deprecated stubs + projectAIConfig.ts module need full removal in Phase 23 settings split
 
-**Phase 23:**
-- Settings modal split may break existing shortcuts (Cmd+,) — need router pattern
+**Phase 23 (COMPLETE):**
+- ~~Settings modal split may break existing shortcuts (Cmd+,)~~ RESOLVED in 23-03: Command palette "Settings" opens AppSettingsModal via onOpenSettings callback
 
 **Phase 24:**
 - OpenAI-compatible API shape differences require adapter layer (error formats, rate-limit headers)
@@ -93,9 +97,9 @@ Recent decisions affecting v2.1:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 23-02-PLAN.md (Settings UI Split - i18n Integration)
+Stopped at: Completed 23-03-PLAN.md (Settings UI Split - Wiring + Cleanup) — PHASE 23 COMPLETE
 Resume file: None
-Next action: Execute Plan 23-03 (wiring + cleanup)
+Next action: Ready for Phase 24 (Custom AI Providers)
 
 ---
 *STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 23-01 plan complete*
