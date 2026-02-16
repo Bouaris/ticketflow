@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ## Current Position
 
-Phase: 23 of 24 (Settings UI Split & Provider Config)
-Plan: 3 of 3
-Status: Complete
-Last activity: 2026-02-16 — Completed 23-03 (Wiring + Cleanup)
+Phase: 24 of 24 (Validation & Generation UX)
+Plan: 2 of 3
+Status: In Progress
+Last activity: 2026-02-16 — Completed 24-02 (AbortSignal Propagation)
 
-Progress: [████████████████████] 3/3 plans (100%)
+Progress: [█████████████░░░░░░░] 2/3 plans (66%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 68 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 6)
-- Average duration: ~6.4 min per plan
-- Total execution time: ~7.2 hours
+- Total plans completed: 69 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 7)
+- Average duration: ~6.3 min per plan
+- Total execution time: ~7.3 hours
 
 **By Milestone:**
 
@@ -40,6 +40,13 @@ Progress: [████████████████████] 3/3 pla
 | 01 | 5 min | 1 | 5 created | Complete ✓ |
 | 02 | 4 min | 2 | 8 modified | Complete ✓ |
 | 03 | 6 min | 2 | 7 modified, 3 deleted | Complete ✓ |
+
+**Phase 24 (24-01, 24-02, 24-03):**
+| Plan | Duration | Tasks | Files | Status |
+|------|----------|-------|-------|--------|
+| 01 | TBD | TBD | TBD | Pending |
+| 02 | 2 min | 1 | 1 modified | Complete ✓ |
+| 03 | TBD | TBD | TBD | Pending |
 
 ## Accumulated Context
 
@@ -66,6 +73,9 @@ Recent decisions affecting v2.1:
 - **Keep getEffectiveAIConfig parameter (23-03):** Kept unused _projectPath parameter for backward compatibility with 16 call sites across AI subsystem. Avoids cascading changes, can clean up later.
 - **AI Settings button always visible (23-03):** Unlike Project Settings (only visible when project loaded), AI Settings accessible from welcome screen or within project.
 - **Amber badge on AI Settings (23-03):** Visual indicator for first-run users. Badge disappears once any provider has API key configured.
+- **Promise.race wrapper for Gemini SDK (24-02):** Google GenerativeAI SDK doesn't support AbortSignal natively — use Promise.race with abort listener for cancellation.
+- **Signal as 2nd parameter for Groq/OpenAI (24-02):** Both SDKs follow OpenAI pattern: create(request, { signal }) as RequestOptions.
+- **Export testProviderConnection (24-02):** Dedicated lightweight function for health checks — no retry, no telemetry, minimal tokens.
 
 ### Pending Todos
 
@@ -97,9 +107,9 @@ Recent decisions affecting v2.1:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 23-03-PLAN.md (Settings UI Split - Wiring + Cleanup) — PHASE 23 COMPLETE
+Stopped at: Completed 24-02-PLAN.md (AbortSignal Propagation)
 Resume file: None
-Next action: Ready for Phase 24 (Custom AI Providers)
+Next action: Continue Phase 24 (Plan 24-03: Cancel Button + Progress UI)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 23-01 plan complete*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-16 after 24-02 plan complete*
