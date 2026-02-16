@@ -80,11 +80,12 @@ Plans:
   3. User can add, edit, and delete custom OpenAI-compatible providers (name, baseURL, API key, model)
   4. User sees provider status indicator (configured/not configured) for each provider in AI Settings
   5. Project-level AI provider selector is removed (single global AI config only)
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 23-01-PLAN.md — Create AppSettingsModal, AISettingsModal, and provider CRUD sub-components
-- [ ] 23-02-PLAN.md — Wire modals, update Header/i18n, remove deprecated files and project-level AI selector
+- [ ] 23-02-PLAN.md — Add i18n keys and update Plan 01 components to use them
+- [ ] 23-03-PLAN.md — Wire modals, update Header, remove deprecated files and project-level AI selector
 
 #### Phase 24: Validation & Generation UX
 **Goal**: Provider health checks, loading states, and improved generation feedback
