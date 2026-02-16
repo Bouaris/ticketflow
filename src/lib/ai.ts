@@ -844,8 +844,9 @@ function getRefinePrompt(): string {
 
 export async function refineItem(item: BacklogItem, options?: RefineOptions): Promise<RefinementResult> {
   const startTime = Date.now();
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig(options?.projectPath);
   const effectiveProvider = options?.provider || provider;
+  const modelId = resolveModelForProvider(effectiveProvider);
 
   try {
     const locale = getCurrentLocale();
@@ -1216,8 +1217,9 @@ function getGenerateItemPrompt(): string {
 
 export async function generateItemFromDescription(description: string, options?: AIOptions): Promise<GenerateItemResult> {
   const startTime = Date.now();
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig(options?.projectPath);
   const effectiveProvider = options?.provider || provider;
+  const modelId = resolveModelForProvider(effectiveProvider);
 
   try {
     // Build base prompt with type classification and criteria instructions
@@ -1380,8 +1382,9 @@ function getBulkSuggestPrompt(): string {
 
 export async function suggestImprovements(items: BacklogItem[], options?: AIOptions): Promise<RefinementResult> {
   const startTime = Date.now();
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig(options?.projectPath);
   const effectiveProvider = options?.provider || provider;
+  const modelId = resolveModelForProvider(effectiveProvider);
 
   try {
     const itemsList = items
@@ -1679,8 +1682,9 @@ export async function analyzeBacklogFormat(
 ): Promise<BacklogMaintenanceResult> {
   try {
     // Get effective AI config for this project
-    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
+    const modelId = resolveModelForProvider(effectiveProvider);
 
     // Limit content size to avoid token limits
     const t = getTranslations();
@@ -1731,8 +1735,9 @@ export async function correctBacklogFormat(
     }
 
     // Get effective AI config for this project
-    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
+    const modelId = resolveModelForProvider(effectiveProvider);
 
     // Build issues list for the prompt
     const issuesList = issues
@@ -2048,8 +2053,9 @@ export async function analyzeBacklog(
     }
 
     // Get effective AI config for this project
-    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
+    const modelId = resolveModelForProvider(effectiveProvider);
 
     // Chunk items for processing
     const batches = chunkArray(items, batchSize);
@@ -2176,8 +2182,9 @@ export async function analyzeBacklog(
     };
   } catch (error) {
     // Record telemetry for exception
-    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
+    const modelId = resolveModelForProvider(effectiveProvider);
     if (options?.projectId) {
       const errorType: TelemetryErrorType = error instanceof Error && error.message.includes('network')
         ? 'network'

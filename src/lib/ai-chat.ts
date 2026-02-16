@@ -14,6 +14,7 @@ import { ChatResponseSchema, safeParseAIResponse } from '../types/ai';
 import {
   generateChatCompletion,
   getEffectiveAIConfig,
+  resolveModelForProvider,
   type ChatCompletionMessage,
 } from './ai';
 import {
@@ -188,7 +189,8 @@ export async function sendChatMessage(
   await insertChatMessage(projectPath, projectId, 'user', userMessage);
 
   // 5. Get effective AI config
-  const { provider, modelId } = getEffectiveAIConfig(projectPath);
+  const { provider } = getEffectiveAIConfig(projectPath);
+  const modelId = resolveModelForProvider(provider);
 
   // Check abort before AI call
   if (signal?.aborted) {

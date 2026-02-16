@@ -8,7 +8,7 @@
  */
 
 import type { AIProvider, ImageData, AIOptions } from './ai';
-import { getEffectiveAIConfig, buildTypeClassificationSection, buildTypeEnum, generateCompletionWithRetry } from './ai';
+import { getEffectiveAIConfig, buildTypeClassificationSection, buildTypeEnum, generateCompletionWithRetry, resolveModelForProvider } from './ai';
 import { BulkGenerateResponseSchema } from '../types/ai';
 import { buildPromptWithContext } from './ai-context';
 import { gatherDynamicContext, buildEnhancedPrompt } from './ai-context-dynamic';
@@ -447,8 +447,9 @@ export async function generateBulkItems(
   const t = getTranslations();
 
   // Get effective AI config (project-specific or global)
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig(options?.projectPath);
   const effectiveProvider = options?.provider || provider;
+  const modelId = resolveModelForProvider(effectiveProvider);
 
   try {
     // VALIDATE: Provider vision capability (if images provided)
@@ -588,8 +589,9 @@ async function generateBulkItemsSingleRequest(
   const t = getTranslations();
 
   // Get effective AI config
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig(options?.projectPath);
   const effectiveProvider = options?.provider || provider;
+  const modelId = resolveModelForProvider(effectiveProvider);
 
   try {
 

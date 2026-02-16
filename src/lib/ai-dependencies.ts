@@ -19,6 +19,7 @@ import { scoreSimilarity } from './ai-few-shot';
 import {
   generateCompletionWithRetry,
   getEffectiveAIConfig,
+  resolveModelForProvider,
   type AIProvider,
 } from './ai';
 import { recordTelemetry } from './ai-telemetry';
@@ -191,8 +192,9 @@ export async function detectDependencies(
     }
 
     // Stage 2: AI classification
-    const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig(options?.projectPath);
     const effectiveProvider = options?.provider || provider;
+    const modelId = resolveModelForProvider(effectiveProvider);
 
     const prompt = DEPENDENCY_DETECTION_PROMPT
       .replace('{new_item}', formatNewItem(newItem))
@@ -241,8 +243,9 @@ export async function detectDependencies(
 
     // Record failure telemetry
     if (options?.projectId) {
-      const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+      const { provider } = getEffectiveAIConfig(options?.projectPath);
       const effectiveProvider = options?.provider || provider;
+      const modelId = resolveModelForProvider(effectiveProvider);
       try {
         await recordTelemetry({
           projectId: options.projectId,
