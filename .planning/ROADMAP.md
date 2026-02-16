@@ -59,22 +59,16 @@
 
 **Milestone Goal:** Refactor AI settings UX — separate app settings from AI config, add custom provider support, fix provider override logic, improve generation feedback.
 
-#### Phase 22: Provider Registry & Core Refactor
+#### Phase 22: Provider Registry & Core Refactor ✓
 **Goal**: Centralize provider logic and enable custom endpoints
 **Depends on**: Phase 21
 **Requirements**: INTL-01, INTL-02, PROV-06
-**Success Criteria** (what must be TRUE):
-  1. All provider configurations are managed through a single registry (no scattered hardcoded logic)
-  2. User can configure custom OpenAI-compatible endpoints with baseURL (Ollama, LM Studio, etc.)
-  3. Custom HTTPS endpoints work without CSP violations (wildcard HTTPS or HTTPS-only enforcement)
-  4. Client singletons correctly handle multiple providers with different baseURLs (no state leaks on provider switch)
-  5. Registry supports built-in providers (Groq, Gemini, OpenAI) with backward compatibility
-**Plans**: 3 plans
+**Status**: Complete — 2026-02-16 | Verified: 10/10 must-haves
 
 Plans:
-- [ ] 22-01-PLAN.md — Provider Registry Foundation (types, registry module, CSP update)
-- [ ] 22-02-PLAN.md — Core AI Client Refactor (singleton cache expansion, registry integration, project config removal)
-- [ ] 22-03-PLAN.md — Consumer Migration & Cleanup (deprecate projectAIConfig, simplify hook, update ProviderToggle)
+- [x] 22-01-PLAN.md — Provider Registry Foundation (types, registry module, CSP update)
+- [x] 22-02-PLAN.md — Core AI Client Refactor (singleton cache expansion, registry integration, project config removal)
+- [x] 22-03-PLAN.md — Consumer Migration & Cleanup (deprecate projectAIConfig, simplify hook, update ProviderToggle)
 
 #### Phase 23: Settings UI Split & Provider Config
 **Goal**: Separate App Settings from AI Settings with dedicated provider management
@@ -86,12 +80,11 @@ Plans:
   3. User can add, edit, and delete custom OpenAI-compatible providers (name, baseURL, API key, model)
   4. User sees provider status indicator (configured/not configured) for each provider in AI Settings
   5. Project-level AI provider selector is removed (single global AI config only)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 23-01: TBD
-- [ ] 23-02: TBD
-- [ ] 23-03: TBD
+- [ ] 23-01-PLAN.md — Create AppSettingsModal, AISettingsModal, and provider CRUD sub-components
+- [ ] 23-02-PLAN.md — Wire modals, update Header/i18n, remove deprecated files and project-level AI selector
 
 #### Phase 24: Validation & Generation UX
 **Goal**: Provider health checks, loading states, and improved generation feedback
@@ -117,9 +110,9 @@ Plans:
 | v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
 | v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
 | v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-24 | TBD | 18/18 | In progress |
-| **Total** | **24** | **62+** | **163** | |
+| v2.1 AI Refresh | 22-24 | 3+ | 18/18 | In progress |
+| **Total** | **24** | **65+** | **163** | |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (v2.1 milestone added)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 22 complete)*
 *Full milestone details: .planning/milestones/*
