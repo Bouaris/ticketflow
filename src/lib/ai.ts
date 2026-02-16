@@ -46,6 +46,7 @@ import {
 import { getCriteriaInstructions } from './ai-criteria';
 import { getCurrentLocale, getTranslations } from '../i18n';
 import type { ZodType, ZodSchema } from 'zod';
+import { isAbortError } from './abort';
 
 // Extended AI options with Phase 3 additions
 export interface AIOptions extends BaseAIOptions {
@@ -282,6 +283,26 @@ interface CompletionOptions {
   images?: ImageData[];
   /** Override max_tokens for this request (defaults to AI_CONFIG.MAX_TOKENS) */
   maxTokens?: number;
+  /** Enable cancellation of in-flight requests */
+  signal?: AbortSignal;
+}
+
+/**
+ * Helper: race a promise against an abort signal.
+ * Used for Gemini SDK which doesn't natively support AbortSignal.
+ */
+async function withAbortSignal<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      signal.addEventListener('abort', () => {
+        reject(new DOMException('Aborted', 'AbortError'));
+      }, { once: true });
+    }),
+  ]);
 }
 
 async function generateCompletion(prompt: string, options?: CompletionOptions): Promise<string> {
@@ -338,7 +359,10 @@ async function generateCompletion(prompt: string, options?: CompletionOptions): 
         }
       : baseRequest;
 
-    const response = await client.chat.completions.create(request);
+    const response = await client.chat.completions.create(
+      request,
+      options?.signal ? { signal: options.signal } : undefined
+    );
     return response.choices[0]?.message?.content || '';
 
   } else if (providerType === 'gemini') {
@@ -363,11 +387,17 @@ async function generateCompletion(prompt: string, options?: CompletionOptions): 
           inlineData: { mimeType: img.mimeType, data: img.base64 },
         })),
       ];
-      const result = await model.generateContent({ contents: [{ role: 'user', parts }] });
+      const result = await withAbortSignal(
+        model.generateContent({ contents: [{ role: 'user', parts }] }),
+        options?.signal
+      );
       return result.response.text();
     }
 
-    const result = await model.generateContent(prompt);
+    const result = await withAbortSignal(
+      model.generateContent(prompt),
+      options?.signal
+    );
     return result.response.text();
 
   } else {
@@ -409,7 +439,10 @@ async function generateCompletion(prompt: string, options?: CompletionOptions): 
         }
       : baseRequest;
 
-    const response = await client.chat.completions.create(request);
+    const response = await client.chat.completions.create(
+      request,
+      options?.signal ? { signal: options.signal } : undefined
+    );
     return response.choices[0]?.message?.content || '';
   }
 }
@@ -431,6 +464,8 @@ interface ChatCompletionOptions {
   modelId?: string;
   /** Override max_tokens for this request (defaults to AI_CONFIG.MAX_TOKENS) */
   maxTokens?: number;
+  /** Enable cancellation of in-flight requests */
+  signal?: AbortSignal;
 }
 
 /**
@@ -476,7 +511,7 @@ export async function generateChatCompletion(
       temperature: AI_CONFIG.TEMPERATURE,
       max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
       stream: false as const,
-    });
+    }, options?.signal ? { signal: options.signal } : undefined);
     return response.choices[0]?.message?.content || '';
 
   } else if (providerType === 'gemini') {
@@ -498,7 +533,10 @@ export async function generateChatCompletion(
     if (nonSystemMessages.length <= 1) {
       // Single message: use generateContent directly
       const lastContent = nonSystemMessages[nonSystemMessages.length - 1]?.content || '';
-      const result = await model.generateContent(lastContent);
+      const result = await withAbortSignal(
+        model.generateContent(lastContent),
+        options?.signal
+      );
       return result.response.text();
     }
 
@@ -510,7 +548,10 @@ export async function generateChatCompletion(
 
     const chat = model.startChat({ history });
     const lastMessage = nonSystemMessages[nonSystemMessages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
+    const result = await withAbortSignal(
+      chat.sendMessage(lastMessage.content),
+      options?.signal
+    );
     return result.response.text();
 
   } else {
@@ -525,7 +566,7 @@ export async function generateChatCompletion(
       temperature: AI_CONFIG.TEMPERATURE,
       max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
       stream: false as const,
-    });
+    }, options?.signal ? { signal: options.signal } : undefined);
     return response.choices[0]?.message?.content || '';
   }
 }
@@ -570,6 +611,8 @@ async function withRateLimitRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseD
       return await fn();
     } catch (err) {
       lastError = err;
+      // Don't retry abort errors - propagate immediately
+      if (isAbortError(err)) throw err;
       if (!isRateLimitError(err) || attempt === maxRetries) throw err;
       // Exponential backoff: 3s, 6s, 12s
       const backoffMs = baseDelayMs * Math.pow(2, attempt);
@@ -613,6 +656,11 @@ export async function generateCompletionWithRetry<T>(
   schema: ZodSchema<T>,
   options?: Omit<CompletionOptions, 'schema'> & { images?: ImageData[] }
 ): Promise<RetryResult<T>> {
+  // Check if already aborted
+  if (options?.signal?.aborted) {
+    return { success: false, error: 'Operation cancelled', retryCount: 0 };
+  }
+
   // First try with structured output if available
   // 429 errors are silently retried (up to 2 retries, 3s apart) to avoid user-facing rate-limit errors
   try {
@@ -649,6 +697,14 @@ export async function generateCompletionWithRetry<T>(
     (p) => withRateLimitRetry(() => generateCompletion(p, options)),
     1 // maxRetries
   );
+}
+
+/**
+ * Test provider connectivity with minimal token usage.
+ * Used by health check — no retry, no telemetry, no context.
+ */
+export async function testProviderConnection(providerId?: string): Promise<string> {
+  return generateCompletion('Test', { provider: providerId, maxTokens: 5 });
 }
 
 // ============================================================
