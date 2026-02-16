@@ -70,22 +70,16 @@ Plans:
 - [x] 22-02-PLAN.md — Core AI Client Refactor (singleton cache expansion, registry integration, project config removal)
 - [x] 22-03-PLAN.md — Consumer Migration & Cleanup (deprecate projectAIConfig, simplify hook, update ProviderToggle)
 
-#### Phase 23: Settings UI Split & Provider Config
+#### Phase 23: Settings UI Split & Provider Config ✓
 **Goal**: Separate App Settings from AI Settings with dedicated provider management
 **Depends on**: Phase 22
 **Requirements**: SETT-01, SETT-02, SETT-03, SETT-04, PROV-01, PROV-02, PROV-03, PROV-05
-**Success Criteria** (what must be TRUE):
-  1. User can access App Settings (language, theme, updates) separately from AI Settings
-  2. User can access dedicated AI Settings panel from header with clear visual separation
-  3. User can add, edit, and delete custom OpenAI-compatible providers (name, baseURL, API key, model)
-  4. User sees provider status indicator (configured/not configured) for each provider in AI Settings
-  5. Project-level AI provider selector is removed (single global AI config only)
-**Plans**: 3 plans
+**Status**: Complete — 2026-02-16 | Verified: 10/10 must-haves
 
 Plans:
-- [ ] 23-01-PLAN.md — Create AppSettingsModal, AISettingsModal, and provider CRUD sub-components
-- [ ] 23-02-PLAN.md — Add i18n keys and update Plan 01 components to use them
-- [ ] 23-03-PLAN.md — Wire modals, update Header, remove deprecated files and project-level AI selector
+- [x] 23-01-PLAN.md — Create AppSettingsModal, AISettingsModal, and provider CRUD sub-components
+- [x] 23-02-PLAN.md — Add i18n keys and update Plan 01 components to use them
+- [x] 23-03-PLAN.md — Wire modals, update Header, remove deprecated files and project-level AI selector
 
 #### Phase 24: Validation & Generation UX
 **Goal**: Provider health checks, loading states, and improved generation feedback
@@ -97,11 +91,12 @@ Plans:
   3. User can cancel in-flight AI generation for operations longer than 5 seconds
   4. Provider selector in ticket creation modal overrides default provider (not ignored as before)
   5. Tooltip recommends Gemini free tier with actionable info (Pay-as-you-go Level 1: 15 req/min, 1M tokens/day)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 24-01: TBD
-- [ ] 24-02: TBD
+- [ ] 24-01-PLAN.md — Health check module + ProviderCard test button + Gemini tooltip + health i18n
+- [ ] 24-02-PLAN.md — AbortSignal propagation through AI completion stack
+- [ ] 24-03-PLAN.md — Generation progress UI, cancel wiring, error feedback, generation i18n
 
 ## Progress
 
@@ -111,9 +106,9 @@ Plans:
 | v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
 | v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
 | v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-24 | 3+ | 18/18 | In progress |
-| **Total** | **24** | **65+** | **163** | |
+| v2.1 AI Refresh | 22-24 | 6+ | 18/18 | In progress |
+| **Total** | **24** | **68+** | **163** | |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 22 complete)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-16 (Phase 23 complete)*
 *Full milestone details: .planning/milestones/*
