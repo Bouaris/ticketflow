@@ -93,7 +93,7 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
 
       onSuccess();
     } catch (error) {
-      setErrors({ name: error instanceof Error ? error.message : 'Unknown error' }); // TODO: i18n
+      setErrors({ name: error instanceof Error ? error.message : t.error.unknown });
       setIsSubmitting(false);
     }
   };
@@ -103,13 +103,13 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
       {/* Name */}
       <div>
         <label className="block text-sm font-medium text-on-surface-secondary mb-2">
-          Provider Name {/* TODO: i18n */}
+          {t.settings.providerName}
         </label>
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="Ollama Local" // TODO: i18n
+          placeholder="Ollama Local"
           className={`w-full px-3 py-2 border rounded-lg bg-input-bg focus:ring-2 focus:ring-accent outline-none ${
             errors.name ? 'border-danger' : 'border-input-border'
           }`}
@@ -123,13 +123,13 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
       {/* Base URL */}
       <div>
         <label className="block text-sm font-medium text-on-surface-secondary mb-2">
-          Base URL {/* TODO: i18n */}
+          {t.settings.endpointURL}
         </label>
         <input
           type="url"
           value={baseURL}
           onChange={e => setBaseURL(e.target.value)}
-          placeholder="http://localhost:11434/v1" // TODO: i18n
+          placeholder="http://localhost:11434/v1"
           className={`w-full px-3 py-2 border rounded-lg bg-input-bg focus:ring-2 focus:ring-accent outline-none font-mono text-sm ${
             errors.baseURL ? 'border-danger' : 'border-input-border'
           }`}
@@ -139,20 +139,20 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
           <p className="mt-1 text-xs text-danger-text">{errors.baseURL}</p>
         )}
         <p className="mt-1 text-xs text-on-surface-muted">
-          Must use HTTPS or localhost {/* TODO: i18n */}
+          {t.settings.endpointHint}
         </p>
       </div>
 
       {/* Default Model */}
       <div>
         <label className="block text-sm font-medium text-on-surface-secondary mb-2">
-          Default Model {/* TODO: i18n */}
+          {t.settings.defaultModel}
         </label>
         <input
           type="text"
           value={defaultModel}
           onChange={e => setDefaultModel(e.target.value)}
-          placeholder="llama3.2" // TODO: i18n
+          placeholder="llama3.2"
           className={`w-full px-3 py-2 border rounded-lg bg-input-bg focus:ring-2 focus:ring-accent outline-none font-mono text-sm ${
             errors.defaultModel ? 'border-danger' : 'border-input-border'
           }`}
@@ -166,14 +166,14 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
       {/* API Key (optional) */}
       <div>
         <label className="block text-sm font-medium text-on-surface-secondary mb-2">
-          {t.settings.apiKey} <span className="text-on-surface-muted">(optional)</span> {/* TODO: i18n "optional" */}
+          {t.settings.apiKeyOptional}
         </label>
         <div className="relative">
           <input
             type={showKey ? 'text' : 'password'}
             value={apiKey}
             onChange={e => setApiKeyState(e.target.value)}
-            placeholder="Optional for localhost providers" // TODO: i18n
+            placeholder={t.settings.apiKeyHintLocal}
             className="w-full px-3 py-2 pr-20 border border-input-border rounded-lg bg-input-bg focus:ring-2 focus:ring-accent outline-none font-mono text-sm"
             disabled={isSubmitting}
           />
@@ -202,7 +202,7 @@ export function CustomProviderForm({ onSuccess, onCancel, editProvider }: Custom
           disabled={isSubmitting || !name.trim() || !baseURL.trim() || !defaultModel.trim()}
           className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? t.settings.loading : (editProvider ? 'Save Changes' : 'Add Provider')} {/* TODO: i18n */}
+          {isSubmitting ? t.settings.loading : (editProvider ? t.settings.saveProvider : t.settings.addProvider)}
         </button>
       </div>
     </form>

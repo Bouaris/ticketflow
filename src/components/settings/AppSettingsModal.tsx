@@ -131,7 +131,7 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={t.common.parameters} // TODO: i18n - add settings.appSettingsTitle
+        title={t.settings.appSettings}
         size="md"
       >
         <div className="space-y-5">

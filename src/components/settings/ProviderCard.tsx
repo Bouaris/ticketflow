@@ -19,7 +19,7 @@ interface ProviderCardProps {
 }
 
 export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -91,7 +91,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
           ? 'bg-success-soft text-success-text'
           : 'bg-surface-alt text-on-surface-muted'
       }`}>
-        {isConfigured ? 'OK' : '...'} {/* TODO: i18n */}
+        {isConfigured ? t.settings.providerConfigured : t.settings.providerNotConfigured}
       </div>
 
       {/* Provider header */}
@@ -112,10 +112,9 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
 
       {/* Description */}
       <p className="text-sm text-on-surface-muted mb-3">
-        {/* TODO: i18n - provider descriptions */}
-        {provider.id === 'groq' && '14,400 req/jour gratuit, ultra rapide (Llama 3.3 70B)'}
-        {provider.id === 'gemini' && '15 req/min, 1M tokens/jour (Gemini 2.0 Flash)'}
-        {provider.id === 'openai' && 'GPT-4o et GPT-4o Mini, payant'}
+        {provider.id === 'groq' && (locale === 'fr' ? '14,400 req/jour gratuit, ultra rapide (Llama 3.3 70B)' : '14,400 req/day free, ultra fast (Llama 3.3 70B)')}
+        {provider.id === 'gemini' && (locale === 'fr' ? '15 req/min, 1M tokens/jour (Gemini 2.0 Flash)' : '15 req/min, 1M tokens/day (Gemini 2.0 Flash)')}
+        {provider.id === 'openai' && (locale === 'fr' ? 'GPT-4o et GPT-4o Mini, payant' : 'GPT-4o and GPT-4o Mini, paid')}
       </p>
 
       {/* API Key configuration (shown when active) */}
@@ -133,7 +132,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
                   className="text-accent-text hover:underline cursor-pointer"
                   onClick={handleGetKey}
                 >
-                  {provider.id === 'groq' ? 'Groq Console' : provider.id === 'gemini' ? 'Google AI Studio' : 'OpenAI Platform'} {/* TODO: i18n */}
+                  {provider.id === 'groq' ? 'Groq Console' : provider.id === 'gemini' ? 'Google AI Studio' : 'OpenAI Platform'}
                 </button>
               </p>
             )}

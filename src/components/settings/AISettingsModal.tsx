@@ -66,7 +66,7 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t.settings.title}
+      title={t.settings.aiSettings}
       size="lg"
     >
       <div className="space-y-5">
@@ -81,7 +81,7 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
                   : 'text-on-surface-muted hover:text-on-surface-secondary'
               }`}
             >
-              Built-in Providers {/* TODO: i18n */}
+              {t.settings.providers}
               {activeTab === 'providers' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
               )}
@@ -94,7 +94,7 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
                   : 'text-on-surface-muted hover:text-on-surface-secondary'
               }`}
             >
-              Custom Providers {/* TODO: i18n */}
+              {t.settings.customProviders}
               {activeTab === 'custom' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
               )}

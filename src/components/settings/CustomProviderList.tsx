@@ -66,7 +66,7 @@ export function CustomProviderList() {
     return (
       <div>
         <h3 className="text-sm font-medium text-on-surface-secondary mb-4">
-          {editingProvider ? 'Edit Custom Provider' : 'Add Custom Provider'} {/* TODO: i18n */}
+          {editingProvider ? t.settings.editProvider : t.settings.addProvider}
         </h3>
         <CustomProviderForm
           onSuccess={handleFormSuccess}
@@ -82,14 +82,14 @@ export function CustomProviderList() {
       {/* Header with add button */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-on-surface-secondary">
-          Custom Providers {/* TODO: i18n */}
+          {t.settings.customProviders}
         </h3>
         <button
           onClick={handleAdd}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-text bg-accent-soft hover:bg-accent-soft/80 rounded-lg transition-colors"
         >
           <PlusIcon className="w-4 h-4" />
-          Add Provider {/* TODO: i18n */}
+          {t.settings.addProvider}
         </button>
       </div>
 
@@ -97,7 +97,7 @@ export function CustomProviderList() {
       {customProviders.length === 0 ? (
         <div className="text-center py-8 text-on-surface-muted">
           <p className="text-sm">
-            No custom providers. Add Ollama, LM Studio, or other OpenAI-compatible endpoints. {/* TODO: i18n */}
+            {t.settings.noCustomProviders}
           </p>
         </div>
       ) : (
@@ -115,21 +115,21 @@ export function CustomProviderList() {
                   {provider.baseURL}
                 </p>
                 <p className="text-xs text-on-surface-faint mt-0.5">
-                  Model: {provider.defaultModel} {/* TODO: i18n */}
+                  {t.settings.defaultModel}: {provider.defaultModel}
                 </p>
               </div>
               <div className="flex items-center gap-2 ml-4">
                 <button
                   onClick={() => handleEdit(provider)}
                   className="p-2 text-on-surface-muted hover:text-accent-text hover:bg-accent-soft rounded transition-colors"
-                  aria-label="Edit provider" // TODO: i18n
+                  aria-label={t.settings.editProvider}
                 >
                   <EditIcon className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(provider)}
                   className="p-2 text-on-surface-muted hover:text-danger-text hover:bg-danger-soft rounded transition-colors"
-                  aria-label="Delete provider" // TODO: i18n
+                  aria-label={t.settings.deleteProvider}
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -143,7 +143,7 @@ export function CustomProviderList() {
       {deleteConfirm && (
         <div className="mt-4 p-3 bg-warning-soft border border-warning-text/30 rounded-lg">
           <p className="text-sm text-warning-text mb-3">
-            Delete provider "{deleteConfirm.name}"? This action cannot be undone. {/* TODO: i18n */}
+            {t.settings.deleteProviderConfirm}
           </p>
           <div className="flex gap-2">
             <button
