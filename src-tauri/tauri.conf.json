@@ -32,7 +32,7 @@
         "style-src": "'self' 'unsafe-inline'",
         "img-src": "'self' asset: http://asset.localhost blob: data:",
         "font-src": "'self' data:",
-        "connect-src": "ipc: http://ipc.localhost https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com",
+        "connect-src": "ipc: http://ipc.localhost http://localhost:* http://127.0.0.1:* https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https:",
         "object-src": "'none'",
         "base-uri": "'self'"
       },
@@ -42,7 +42,7 @@
         "style-src": "'self' 'unsafe-inline' http://localhost:*",
         "img-src": "'self' asset: http://asset.localhost blob: data: http://localhost:*",
         "font-src": "'self' data: http://localhost:*",
-        "connect-src": "ipc: http://ipc.localhost http://localhost:* ws://localhost:* https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com",
+        "connect-src": "ipc: http://ipc.localhost http://localhost:* http://127.0.0.1:* ws://localhost:* https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https:",
         "object-src": "'none'",
         "base-uri": "'self'"
       }
