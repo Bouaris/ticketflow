@@ -110,6 +110,18 @@ export const en: Translations = {
     providerAdded: 'Provider added',
     providerDeleted: 'Provider deleted',
     saveProvider: 'Save',
+    testConnection: 'Test Connection',
+    testing: 'Testing...',
+    connectionSuccess: 'Connection successful',
+    healthErrorAuth: 'Invalid API key. Check your key and try again.',
+    healthErrorRateLimit: 'Rate limit reached. Wait a moment and retry.',
+    healthErrorTimeout: 'Connection timed out. Check your network or provider status.',
+    healthErrorNetwork: 'Network error. Check your internet connection.',
+    healthErrorUnknown: 'Connection failed. Try again later.',
+    groqDescription: '14,400 req/day free, ultra fast (Llama 3.3 70B)',
+    geminiDescription: '15 req/min, 1M tokens/day free (Gemini 2.0 Flash)',
+    openaiDescription: 'GPT-4o and GPT-4o Mini, paid',
+    geminiRecommended: 'Recommended free tier',
   },
 
   // -- Severity Labels ----------------------------------------------

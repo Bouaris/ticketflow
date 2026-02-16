@@ -110,6 +110,18 @@ export const fr: Translations = {
     providerAdded: 'Fournisseur ajoute',
     providerDeleted: 'Fournisseur supprime',
     saveProvider: 'Enregistrer',
+    testConnection: 'Tester la connexion',
+    testing: 'Test en cours...',
+    connectionSuccess: 'Connexion reussie',
+    healthErrorAuth: 'Cle API invalide. Verifiez votre cle et reessayez.',
+    healthErrorRateLimit: 'Limite de requetes atteinte. Patientez un instant.',
+    healthErrorTimeout: 'Connexion expiree. Verifiez votre reseau ou le statut du fournisseur.',
+    healthErrorNetwork: 'Erreur reseau. Verifiez votre connexion internet.',
+    healthErrorUnknown: 'Echec de connexion. Reessayez plus tard.',
+    groqDescription: '14 400 req/jour gratuit, ultra rapide (Llama 3.3 70B)',
+    geminiDescription: '15 req/min, 1M tokens/jour gratuit (Gemini 2.0 Flash)',
+    openaiDescription: 'GPT-4o et GPT-4o Mini, payant',
+    geminiRecommended: 'Gratuit recommande',
   },
 
   // -- Severity Labels ----------------------------------------------

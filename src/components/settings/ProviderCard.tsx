@@ -9,8 +9,10 @@ import { useState } from 'react';
 import type { ProviderConfig } from '../../types/aiProvider';
 import { hasApiKey, getApiKey, setApiKey, clearApiKey, resetClient } from '../../lib/ai';
 import { GroqIcon, GeminiIcon, OpenAIIcon, CheckIcon } from '../ui/Icons';
+import { Spinner } from '../ui/Spinner';
 import { useTranslation } from '../../i18n';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
+import { testProviderHealth, type HealthCheckResult } from '../../lib/ai-health';
 
 interface ProviderCardProps {
   provider: ProviderConfig;
@@ -19,10 +21,14 @@ interface ProviderCardProps {
 }
 
 export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps) {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [healthCheck, setHealthCheck] = useState<{
+    loading: boolean;
+    result: HealthCheckResult | null;
+  }>({ loading: false, result: null });
 
   const isConfigured = hasApiKey(provider.id);
 
@@ -76,6 +82,19 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
     }
   };
 
+  const handleTestConnection = async () => {
+    setHealthCheck({ loading: true, result: null });
+    const result = await testProviderHealth(provider.id);
+    setHealthCheck({ loading: false, result });
+
+    // Auto-clear success message after 3 seconds
+    if (result.success) {
+      setTimeout(() => {
+        setHealthCheck({ loading: false, result: null });
+      }, 3000);
+    }
+  };
+
   return (
     <div
       className={`p-4 rounded-xl border-2 transition-all relative ${
@@ -112,9 +131,16 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
 
       {/* Description */}
       <p className="text-sm text-on-surface-muted mb-3">
-        {provider.id === 'groq' && (locale === 'fr' ? '14,400 req/jour gratuit, ultra rapide (Llama 3.3 70B)' : '14,400 req/day free, ultra fast (Llama 3.3 70B)')}
-        {provider.id === 'gemini' && (locale === 'fr' ? '15 req/min, 1M tokens/jour (Gemini 2.0 Flash)' : '15 req/min, 1M tokens/day (Gemini 2.0 Flash)')}
-        {provider.id === 'openai' && (locale === 'fr' ? 'GPT-4o et GPT-4o Mini, payant' : 'GPT-4o and GPT-4o Mini, paid')}
+        {provider.id === 'groq' && t.settings.groqDescription}
+        {provider.id === 'gemini' && (
+          <span>
+            {t.settings.geminiDescription}
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+              {t.settings.geminiRecommended}
+            </span>
+          </span>
+        )}
+        {provider.id === 'openai' && t.settings.openaiDescription}
       </p>
 
       {/* API Key configuration (shown when active) */}
@@ -179,6 +205,38 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
               {saved && <CheckIcon className="w-4 h-4" />}
               {saved ? t.settings.saved : t.settings.save}
             </button>
+          </div>
+
+          {/* Health Check */}
+          <div className="pt-3 border-t border-outline">
+            <button
+              onClick={handleTestConnection}
+              disabled={!isConfigured || healthCheck.loading}
+              className="text-sm text-accent-text hover:underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {healthCheck.loading && <Spinner size="sm" />}
+              {healthCheck.loading ? t.settings.testing : t.settings.testConnection}
+            </button>
+
+            {healthCheck.result && (
+              <div className={`mt-2 px-3 py-2 rounded-lg text-xs ${
+                healthCheck.result.success
+                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                  : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              }`}>
+                {healthCheck.result.success ? (
+                  <span>{t.settings.connectionSuccess} ({healthCheck.result.latencyMs}ms)</span>
+                ) : (
+                  <span>
+                    {healthCheck.result.errorType === 'auth' && t.settings.healthErrorAuth}
+                    {healthCheck.result.errorType === 'rate_limit' && t.settings.healthErrorRateLimit}
+                    {healthCheck.result.errorType === 'timeout' && t.settings.healthErrorTimeout}
+                    {healthCheck.result.errorType === 'network' && t.settings.healthErrorNetwork}
+                    {healthCheck.result.errorType === 'unknown' && (healthCheck.result.error || t.settings.healthErrorUnknown)}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -124,6 +124,18 @@ export interface Translations {
     providerAdded: string;
     providerDeleted: string;
     saveProvider: string;
+    testConnection: string;
+    testing: string;
+    connectionSuccess: string;
+    healthErrorAuth: string;
+    healthErrorRateLimit: string;
+    healthErrorTimeout: string;
+    healthErrorNetwork: string;
+    healthErrorUnknown: string;
+    groqDescription: string;
+    geminiDescription: string;
+    openaiDescription: string;
+    geminiRecommended: string;
   };
 
   // -- Severity Labels ----------------------------------------------
