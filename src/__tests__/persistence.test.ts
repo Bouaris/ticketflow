@@ -196,9 +196,9 @@ describe('Parser', () => {
 
   test('6. getTypeFromId returns null for invalid IDs', () => {
     expect(getTypeFromId('bug-001')).toBeNull(); // lowercase
-    expect(getTypeFromId('123')).toBeNull(); // numbers only
+    expect(getTypeFromId('123')).toBeNull(); // numbers only — starts with digit
     expect(getTypeFromId('')).toBeNull(); // empty
-    expect(getTypeFromId('BUG001')).toBeNull(); // no dash
+    expect(getTypeFromId('BUG001')).toBe('BUG001'); // valid type ID (no dash = full string is the type)
     expect(getTypeFromId('BUG-001')).toBe('BUG'); // valid
     expect(getTypeFromId('CT-042')).toBe('CT'); // valid
   });

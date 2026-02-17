@@ -38,10 +38,13 @@ describe('ItemTypeSchema', () => {
     expect(ItemTypeSchema.safeParse('bUG').success).toBe(false);
   });
 
-  test('3. rejects types with numbers or special chars', () => {
-    expect(ItemTypeSchema.safeParse('BUG1').success).toBe(false);
-    expect(ItemTypeSchema.safeParse('BUG-001').success).toBe(false);
-    expect(ItemTypeSchema.safeParse('').success).toBe(false);
+  test('3. rejects types with invalid characters or format', () => {
+    // Now allows alphanumeric + underscore: BUG1 and BUG_V5 are valid
+    expect(ItemTypeSchema.safeParse('BUG1').success).toBe(true);     // was false
+    expect(ItemTypeSchema.safeParse('BUG-001').success).toBe(false); // dash not allowed
+    expect(ItemTypeSchema.safeParse('').success).toBe(false);        // empty
+    expect(ItemTypeSchema.safeParse('1BUG').success).toBe(false);    // starts with number
+    expect(ItemTypeSchema.safeParse('bug_v5').success).toBe(false);  // lowercase
   });
 });
 
