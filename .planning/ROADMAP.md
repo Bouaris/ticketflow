@@ -102,12 +102,12 @@ Plans:
   3. A user who previously accepted can toggle telemetry off in App Settings; subsequent app actions produce no PostHog network calls
   4. `pnpm build` shows `posthog-js` in a lazy chunk separate from the main bundle (delta under 50KB in main); AI health check passes immediately after PostHog init (no fetch corruption)
   5. Unit tests for `src/lib/telemetry.ts` verify: no events fire before consent is granted, events fire correctly after consent, and revocation stops event capture
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 27-01: TBD
-- [ ] 27-02: TBD
-- [ ] 27-03: TBD
+- [ ] 27-01-PLAN.md — Telemetry core module (consent gate, IPC relay, track API), unit tests (TCOV-05), PRIVACY.md
+- [ ] 27-02-PLAN.md — Consent dialog component, App.tsx integration, AppSettingsModal Privacy toggle + dark_mode_toggled event
+- [ ] 27-03-PLAN.md — Event instrumentation across codebase (15 core+secondary usage events)
 
 ### Phase 28: Test Coverage & Quality Gates
 **Goal**: The critical library modules (parser, serializer, AI retry/health) have meaningful unit test coverage, a 70% coverage threshold is enforced for `src/lib/`, and a CI workflow validates every push automatically.
