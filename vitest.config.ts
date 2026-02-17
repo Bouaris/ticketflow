@@ -1,8 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'fs';
+
+// Mirror the Vite define constants so tests can import src/lib/version.ts
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8')) as { version: string };
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+    __CHANGELOG_CONTENT__: JSON.stringify(''),
+  },
   test: {
     globals: true,
     environment: 'jsdom',
