@@ -5145,8 +5145,10 @@ name = "ticketflow"
 version = "1.6.0"
 dependencies = [
  "log",
+ "reqwest",
  "serde",
  "serde_json",
+ "sqlx",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
