@@ -7,6 +7,7 @@
 - ✅ **v1.6 Smart Import** — Phases 14-17 (shipped 2026-02-14)
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
 - ✅ **v2.1 AI Refresh** — Phases 22-25 (shipped 2026-02-17)
+- 🚧 **v2.2 Quality & Insights** — Phases 26-28 (in progress)
 
 ## Phases
 
@@ -65,17 +66,81 @@
 
 </details>
 
+### 🚧 v2.2 Quality & Insights (In Progress)
+
+**Milestone Goal:** Add privacy-safe PostHog telemetry with GDPR-compliant opt-in consent, and harden the test infrastructure with Vitest 4, SQL plugin mocking, and critical module coverage.
+
+- [ ] **Phase 26: Infrastructure & Transport Foundation** - Upgrade Vitest to 4.x, add Rust IPC relay for PostHog, mock SQL plugin, update CSP
+- [ ] **Phase 27: Telemetry Core & Consent** - Full PostHog integration with consent dialog, telemetry wrapper, core events, and consent unit tests
+- [ ] **Phase 28: Test Coverage & Quality Gates** - Parser/serializer/AI module tests, 70% coverage threshold, CI workflow
+
+## Phase Details
+
+### Phase 26: Infrastructure & Transport Foundation
+**Goal**: The build and test environments are modernized and the Tauri network relay is in place, enabling all subsequent telemetry and test work to proceed without infrastructure blockers.
+**Depends on**: Phase 25
+**Requirements**: TINF-01, TINF-02, TELE-04, TELE-08
+**Success Criteria** (what must be TRUE):
+  1. `pnpm test` runs with Vitest 4.x and exits 0 with zero `__TAURI_INTERNALS__ is not defined` errors from the SQL plugin
+  2. The Rust `ph_send_batch` command is registered in the Tauri binary and accepts a JSON event batch, verifiable with `pnpm tauri build`
+  3. PostHog endpoints (`eu.i.posthog.com`, `us.i.posthog.com`) are present in both `csp` and `devCsp` of `tauri.conf.json`
+  4. A shared `src/test-utils/tauri-mocks.ts` exists providing `setupTauriMocks()` with `plugin:sql|*` handlers, and the existing test setup imports it
+**Plans**: TBD
+
+Plans:
+- [ ] 26-01: TBD
+- [ ] 26-02: TBD
+
+### Phase 27: Telemetry Core & Consent
+**Goal**: Users have full control over telemetry — prompted on first launch, able to revoke at any time — and the app captures the 15 core+secondary usage events in a privacy-safe, GDPR-compliant way.
+**Depends on**: Phase 26
+**Requirements**: TELE-01, TELE-02, TELE-03, TELE-05, TELE-06, TELE-07, TCOV-05
+**Success Criteria** (what must be TRUE):
+  1. A new user sees a consent dialog on first launch before any PostHog network call is made; Accept and Decline buttons have equal visual weight
+  2. After accepting, clicking 5 different app actions produces corresponding events visible in the PostHog live events dashboard within 60 seconds from the production binary (`pnpm tauri build`)
+  3. A user who previously accepted can toggle telemetry off in App Settings; subsequent app actions produce no PostHog network calls
+  4. `pnpm build` shows `posthog-js` in a lazy chunk separate from the main bundle (delta under 50KB in main); AI health check passes immediately after PostHog init (no fetch corruption)
+  5. Unit tests for `src/lib/telemetry.ts` verify: no events fire before consent is granted, events fire correctly after consent, and revocation stops event capture
+**Plans**: TBD
+
+Plans:
+- [ ] 27-01: TBD
+- [ ] 27-02: TBD
+- [ ] 27-03: TBD
+
+### Phase 28: Test Coverage & Quality Gates
+**Goal**: The critical library modules (parser, serializer, AI retry/health) have meaningful unit test coverage, a 70% coverage threshold is enforced for `src/lib/`, and a CI workflow validates every push automatically.
+**Depends on**: Phase 27
+**Requirements**: TINF-03, TINF-04, TCOV-01, TCOV-02, TCOV-03, TCOV-04
+**Success Criteria** (what must be TRUE):
+  1. `pnpm test:coverage` reports ≥70% line coverage for `src/lib/` without manual exclusions
+  2. Parser round-trip tests cover at least: fused section separators, empty sections, Unicode content, and the `parse(serialize(parse(md))) === parse(md)` idempotency invariant
+  3. `ai-retry.ts` tests verify exponential backoff triggers on 429/500 and does NOT retry on 401/403
+  4. `ai-health.ts` tests verify all 5 error classifications (auth, rate_limit, timeout, network, unknown) produce the correct result type
+  5. A GitHub Actions CI workflow runs all unit tests and coverage check on every push and PR to `master`, separate from `release.yml`
+**Plans**: TBD
+
+Plans:
+- [ ] 28-01: TBD
+- [ ] 28-02: TBD
+- [ ] 28-03: TBD
+
 ## Progress
 
-| Milestone | Phases | Plans | Requirements | Shipped |
-|-----------|--------|-------|--------------|---------|
-| v1.0 Stabilisation & IA | 1-7 | 22 | 40/40 | 2026-02-06 |
-| v1.5 Next-Gen Desktop | 8-13 | 24 | 63/63 | 2026-02-08 |
-| v1.6 Smart Import | 14-17 | 8 | 19/19 | 2026-02-14 |
-| v2.0 Fresh Start | 18-21 | 8 | 23/23 | 2026-02-16 |
-| v2.1 AI Refresh | 22-25 | 13 | 18/18 | 2026-02-17 |
-| **Total** | **25** | **75** | **163** | |
+**Execution Order:**
+Phases execute in numeric order: 26 → 27 → 28
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1-7. v1.0 phases | v1.0 | 22/22 | Complete | 2026-02-06 |
+| 8-13. v1.5 phases | v1.5 | 24/24 | Complete | 2026-02-08 |
+| 14-17. v1.6 phases | v1.6 | 8/8 | Complete | 2026-02-14 |
+| 18-21. v2.0 phases | v2.0 | 8/8 | Complete | 2026-02-16 |
+| 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
+| 26. Infrastructure & Transport Foundation | v2.2 | 0/TBD | Not started | - |
+| 27. Telemetry Core & Consent | v2.2 | 0/TBD | Not started | - |
+| 28. Test Coverage & Quality Gates | v2.2 | 0/TBD | Not started | - |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-17 (Phase 25 complete — v2.1 milestone shipped)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-17 (v2.2 roadmap added — Phases 26-28)*
 *Full milestone details: .planning/milestones/*
