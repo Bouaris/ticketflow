@@ -54,18 +54,24 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
       'llama-3.1-8b-instant',
       'llama3-8b-8192',
       'llama3-70b-8192',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
     ],
     // Models that support JSON mode but not strict schema
     bestEffort: [
       'llama-3.3-70b-versatile',
-      'llama-4-scout-17b-16e-instruct',
-      'llama-4-maverick-17b-128e-instruct',
-      'gemma2-9b-it',
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+      'meta-llama/llama-4-maverick-17b-128e-instruct',
+      'qwen/qwen3-32b',
+      'moonshotai/kimi-k2-instruct-0905',
     ],
   },
   openai: {
     // OpenAI models with strict structured outputs
     strict: [
+      'gpt-5',
+      'gpt-5-mini',
+      'gpt-5-nano',
       'gpt-4.1',
       'gpt-4.1-mini',
       'gpt-4.1-nano',
@@ -74,6 +80,9 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
       'gpt-4o-2024-08-06',
       'gpt-4o-2024-11-20',
       'gpt-4o-mini-2024-07-18',
+      'o4-mini',
+      'o3',
+      'o3-mini',
     ],
   },
   gemini: {
@@ -82,6 +91,9 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
       'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
       'gemini-2.5-pro',
+      'gemini-3-flash-preview',
+      'gemini-3-pro-preview',
+      // Legacy (for custom providers with cached selections)
       'gemini-2.0-flash',
       'gemini-1.5-flash',
       'gemini-1.5-pro',

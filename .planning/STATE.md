@@ -13,7 +13,7 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 Phase: 25 (Model Resolution & Selection)
 Plan: 2 of 2
 Status: Complete
-Last activity: 2026-02-17 — Completed 25-02 (Model Selector UI)
+Last activity: 2026-02-17 - Completed quick task 15: Update AI model lists + Gemini free tier tooltip
 
 Progress: [████████████████████] 2/2 plans (100%)
 
@@ -118,13 +118,14 @@ Recent decisions affecting v2.1:
 |---|-------------|------|--------|-----------|
 | 13 | Optimize bulk import: higher tokens, progress callback, category-aware splitting, retry with backoff | 2026-02-13 | a528c3f | [13-optimize-bulk-import](./quick/13-optimize-bulk-import-higher-tokens-progr/) |
 | 14 | Refonte page d'accueil: fix projets recents, favoris, renommage bouton, ameliorations UX/UI | 2026-02-14 | 7d29abf | [14-refonte-page-d-accueil](./quick/14-refonte-page-d-accueil-fix-projets-r-cen/) |
+| 15 | Update AI model lists (Llama 4, Gemini 2.5, GPT-4.1) + Gemini free tier tooltip | 2026-02-17 | c870626 | [15-recherche-mod-les-ia](./quick/15-recherche-mod-les-ia-tooltip-recommandat/) |
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 25-02-PLAN.md (Model Selector UI) — Phase 25 complete
+Stopped at: Completed quick task 15 (Update AI model lists + Gemini tooltip)
 Resume file: None
-Next action: Phase 25 complete — both GENX-03 and PROV-01 gaps closed
+Next action: None pending
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after 25-02 plan complete (Phase 25 done)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after quick task 15 complete*

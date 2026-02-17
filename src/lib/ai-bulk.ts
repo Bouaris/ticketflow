@@ -23,21 +23,38 @@ import { AI_CONFIG } from '../constants/config';
 
 /** Model token limits for bulk extraction validation */
 const MODEL_TOKEN_LIMITS: Record<string, number> = {
-  // Groq
+  // Groq - Production
   'llama-3.3-70b-versatile': 32000,
-  'llama-4-scout-17b-16e-instruct': 131072,
-  'llama-4-maverick-17b-128e-instruct': 131072,
   'llama-3.1-8b-instant': 8000,
-  // Gemini
+  'openai/gpt-oss-120b': 131072,
+  'openai/gpt-oss-20b': 131072,
+  // Groq - Preview
+  'meta-llama/llama-4-maverick-17b-128e-instruct': 131072,
+  'meta-llama/llama-4-scout-17b-16e-instruct': 131072,
+  'qwen/qwen3-32b': 131072,
+  'moonshotai/kimi-k2-instruct-0905': 262144,
+  // Gemini - Stable
   'gemini-2.5-flash': 1000000,
   'gemini-2.5-flash-lite': 1000000,
   'gemini-2.5-pro': 1000000,
-  // OpenAI
+  // Gemini - Preview
+  'gemini-3-flash-preview': 1000000,
+  'gemini-3-pro-preview': 1000000,
+  // OpenAI - GPT-5
+  'gpt-5': 400000,
+  'gpt-5-mini': 400000,
+  'gpt-5-nano': 400000,
+  // OpenAI - GPT-4.1
   'gpt-4.1': 1047576,
   'gpt-4.1-mini': 1047576,
   'gpt-4.1-nano': 1047576,
+  // OpenAI - GPT-4o
   'gpt-4o': 128000,
   'gpt-4o-mini': 128000,
+  // OpenAI - Reasoning
+  'o4-mini': 200000,
+  'o3': 200000,
+  'o3-mini': 200000,
 };
 
 const DEFAULT_TOKEN_LIMIT = 32000; // Conservative fallback

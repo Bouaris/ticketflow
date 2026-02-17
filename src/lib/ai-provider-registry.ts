@@ -33,10 +33,16 @@ export const BUILT_IN_PROVIDERS: ProviderConfig[] = [
     type: 'groq',
     defaultModel: 'llama-3.3-70b-versatile',
     models: [
+      // Production
       { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Versatile)' },
-      { id: 'llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B' },
-      { id: 'llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B' },
       { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Instant)' },
+      { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B' },
+      { id: 'openai/gpt-oss-20b', name: 'GPT-OSS 20B' },
+      // Preview
+      { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B' },
+      { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B' },
+      { id: 'qwen/qwen3-32b', name: 'Qwen 3 32B' },
+      { id: 'moonshotai/kimi-k2-instruct-0905', name: 'Kimi K2' },
     ],
     capabilities: { structuredOutput: true, multimodal: false },
     isCustom: false,
@@ -47,9 +53,13 @@ export const BUILT_IN_PROVIDERS: ProviderConfig[] = [
     type: 'gemini',
     defaultModel: 'gemini-2.5-flash',
     models: [
+      // Stable
       { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
       { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite' },
       { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+      // Preview
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (Preview)' },
+      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (Preview)' },
     ],
     capabilities: { structuredOutput: true, multimodal: true },
     isCustom: false,
@@ -61,11 +71,21 @@ export const BUILT_IN_PROVIDERS: ProviderConfig[] = [
     baseURL: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4.1-mini',
     models: [
+      // GPT-5 family
+      { id: 'gpt-5', name: 'GPT-5' },
+      { id: 'gpt-5-mini', name: 'GPT-5 Mini' },
+      { id: 'gpt-5-nano', name: 'GPT-5 Nano' },
+      // GPT-4.1 family
       { id: 'gpt-4.1', name: 'GPT-4.1' },
       { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini' },
       { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano' },
+      // GPT-4o family
       { id: 'gpt-4o', name: 'GPT-4o' },
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+      // Reasoning (o-series)
+      { id: 'o4-mini', name: 'o4 Mini' },
+      { id: 'o3', name: 'o3' },
+      { id: 'o3-mini', name: 'o3 Mini' },
     ],
     capabilities: { structuredOutput: true, multimodal: true },
     isCustom: false,
