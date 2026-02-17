@@ -85,11 +85,12 @@
   2. The Rust `ph_send_batch` command is registered in the Tauri binary and accepts a JSON event batch, verifiable with `pnpm tauri build`
   3. PostHog endpoints (`eu.i.posthog.com`, `us.i.posthog.com`) are present in both `csp` and `devCsp` of `tauri.conf.json`
   4. A shared `src/test-utils/tauri-mocks.ts` exists providing `setupTauriMocks()` with `plugin:sql|*` handlers, and the existing test setup imports it
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 26-01-PLAN.md — Vitest 4.x upgrade + shared setupTauriMocks() with plugin:sql IPC handlers
 - [ ] 26-02-PLAN.md — Rust ph_send_batch IPC relay with SQLite offline queue + CSP + env var
+- [ ] 26-03-PLAN.md — Gap closure: fix 134 pre-existing test failures (I18nProvider wrapper, schema assertions, ErrorBoundary strings)
 
 ### Phase 27: Telemetry Core & Consent
 **Goal**: Users have full control over telemetry — prompted on first launch, able to revoke at any time — and the app captures the 15 core+secondary usage events in a privacy-safe, GDPR-compliant way.
