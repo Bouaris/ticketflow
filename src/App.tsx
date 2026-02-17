@@ -38,6 +38,8 @@ import { SettingsIcon } from './components/ui/Icons';
 import { useOnboarding } from './hooks/useOnboarding';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { QuickCaptureApp } from './components/capture/QuickCapture';
+import { ConsentDialog } from './components/consent/ConsentDialog';
+import { getConsentState, setConsentState, shouldPromptConsent, incrementDismissCount, initTelemetry, track } from './lib/telemetry';
 
 function App() {
   // ============================================================
@@ -85,6 +87,9 @@ function App() {
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
 
+  // Telemetry consent dialog state
+  const [showConsent, setShowConsent] = useState(false);
+
   // What's New modal state
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [whatsNewSinceVersion, setWhatsNewSinceVersion] = useState<string | null>(null);
@@ -105,6 +110,20 @@ function App() {
       setWhatsNewSinceVersion(lastSeen);
       setShowWhatsNew(true);
     }
+  }, []);
+
+  // Telemetry: check consent state on startup
+  useEffect(() => {
+    const consent = getConsentState();
+    if (consent === 'granted') {
+      // Previously accepted — initialize telemetry and fire app_launched
+      initTelemetry();
+      track('app_launched');
+    } else if (consent === null && shouldPromptConsent()) {
+      // First launch or one previous dismiss — show consent dialog
+      setShowConsent(true);
+    }
+    // consent === 'declined' or dismissed twice: do nothing
   }, []);
 
   // Update window title based on project
@@ -133,6 +152,30 @@ function App() {
   }, []);
 
   // ============================================================
+  // TELEMETRY CONSENT HANDLERS
+  // ============================================================
+
+  const handleConsentAccept = useCallback(() => {
+    setConsentState('granted');
+    setShowConsent(false);
+    initTelemetry();
+    track('consent_granted');
+    track('app_launched');
+  }, []);
+
+  const handleConsentDecline = useCallback(() => {
+    setConsentState('declined');
+    setShowConsent(false);
+  }, []);
+
+  const handleConsentDismiss = useCallback(() => {
+    incrementDismissCount();
+    setShowConsent(false);
+    // On next launch, shouldPromptConsent() will check dismiss count
+    // and show again if count <= 1, otherwise treat as permanent decline
+  }, []);
+
+  // ============================================================
   // PROJECT NAVIGATION HANDLERS
   // ============================================================
 
@@ -151,6 +194,7 @@ function App() {
   const handleProjectSelect = useCallback(async (projectPath: string, _backlogFile: string, types?: TypeDefinition[]) => {
     if (types && types.length > 0) {
       typeConfig.initializeWithTypes(projectPath, types);
+      track('project_created');
     } else {
       // Don't detect from markdown — SQLite is the source of truth.
       // ProjectWorkspace Step 1 will load types from SQLite via backlog.typeConfigs.
@@ -332,6 +376,14 @@ function App() {
           onOpenTypeConfig={() => setIsTypeConfigOpen(true)}
         />
       )}
+
+      {/* Consent dialog (first-launch GDPR consent — before any telemetry) */}
+      <ConsentDialog
+        isOpen={showConsent}
+        onAccept={handleConsentAccept}
+        onDecline={handleConsentDecline}
+        onDismiss={handleConsentDismiss}
+      />
 
       {/* Update modal (Tauri only) */}
       <UpdateModal
