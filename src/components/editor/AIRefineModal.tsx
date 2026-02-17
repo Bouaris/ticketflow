@@ -10,11 +10,10 @@
 import { useState, useEffect } from 'react';
 import { Modal, ModalFooter } from '../ui/Modal';
 import { ProviderToggle, getProviderLabel } from '../ui/ProviderToggle';
-import { hasApiKey } from '../../lib/ai';
+import { hasApiKey, refineItem, getProvider, type RefinementResult, type AIProvider } from '../../lib/ai';
 import { AIContextIndicator } from '../ui/AIContextIndicator';
 import { Spinner } from '../ui/Spinner';
 import { SparklesIcon, CheckCircleIcon } from '../ui/Icons';
-import { refineItem, type RefinementResult, type AIProvider } from '../../lib/ai';
 import type { BacklogItem, Criterion } from '../../types/backlog';
 import type { TypeDefinition } from '../../types/typeConfig';
 import { useTranslation } from '../../i18n';
@@ -159,10 +158,7 @@ export function AIRefineModal({
   // State
   const [phase, setPhase] = useState<Phase>('input');
   const [additionalPrompt, setAdditionalPrompt] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => {
-    const saved = localStorage.getItem('ai-provider');
-    return (saved === 'groq' || saved === 'gemini') ? saved : 'groq';
-  });
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => getProvider());
   const [result, setResult] = useState<RefinementResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
