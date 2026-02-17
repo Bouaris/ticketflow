@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 26 of 28 (Infrastructure & Transport Foundation)
-Plan: — of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-17 — v2.2 roadmap created (Phases 26-28, 17/17 requirements mapped)
+Plan: 2 of 2 complete in current phase
+Status: Phase 26 complete
+Last activity: 2026-02-17 — Phase 26 plans 01+02 executed (Rust telemetry IPC relay, PostHog transport foundation)
 
-Progress: [██████████████████░░░░░░░░░░░░] ~87% (25/28 phases complete, v2.2 starting)
+Progress: [████████████████████░░░░░░░░░░] ~90% (26/28 phases effectively complete, Phase 26 done)
 
 ## Performance Metrics
 
@@ -46,6 +46,10 @@ Recent decisions for v2.2:
 - [v2.2 planning]: Rust IPC relay (ph_send_batch) mandatory — posthog-js silently drops events in Tauri WebView
 - [v2.2 planning]: TCOV-05 (telemetry unit tests) ships WITH Phase 27, not Phase 28 — consent gate tests are part of GDPR validation
 - [v2.2 planning]: autocapture: false + __preview_enable_fetch_instrumentation: false — prevents fetch corruption on AI calls
+- [26-02]: Separate telemetry.db avoids schema coupling with tauri-plugin-sql (no Rust-side API)
+- [26-02]: reqwest with rustls-tls + default-features=false avoids native-tls dependency
+- [26-02]: startup_flush skips delivery when api_key is empty — key provided by frontend per-batch
+- [26-02]: WAL journal mode on telemetry.db for crash-safe event persistence
 
 ### Pending Todos
 
@@ -72,9 +76,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 26 context gathered
-Resume file: .planning/phases/26-infrastructure-transport-foundation/26-CONTEXT.md
-Next action: /gsd:plan-phase 26
+Stopped at: Phase 26 Plan 02 complete — Rust ph_send_batch + offline queue + PostHog CSP
+Resume file: .planning/phases/26-infrastructure-transport-foundation/26-02-SUMMARY.md
+Next action: /gsd:execute-phase 27
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 context gathered*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 Plan 02 complete*

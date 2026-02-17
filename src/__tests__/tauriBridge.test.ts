@@ -113,9 +113,15 @@ import { isTauri } from '../lib/tauri-bridge';
 
 describe('isTauri', () => {
   test('17. returns false when __TAURI_INTERNALS__ is not present', () => {
-    // In jsdom, __TAURI_INTERNALS__ is not defined
+    // Temporarily remove __TAURI_INTERNALS__ (may be set by global setupTauriMocks)
+    const original = (window as any).__TAURI_INTERNALS__;
+    delete (window as any).__TAURI_INTERNALS__;
+
     const result = isTauri();
     expect(result).toBe(false);
+
+    // Restore
+    (window as any).__TAURI_INTERNALS__ = original;
   });
 
   test('18. returns true when __TAURI_INTERNALS__ is present', () => {

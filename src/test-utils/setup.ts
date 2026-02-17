@@ -7,6 +7,15 @@
 
 import { vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
+import { setupTauriMocks } from './tauri-mocks';
+
+// ============================================================
+// TAURI IPC-LEVEL MOCKS
+// Must be called BEFORE localStorage mock to establish __TAURI_INTERNALS__
+// before any plugin imports run.
+// ============================================================
+
+setupTauriMocks();
 
 // ============================================================
 // MOCK: localStorage
