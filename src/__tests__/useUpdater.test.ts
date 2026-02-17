@@ -13,7 +13,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHookWithProviders as renderHook, act } from '../test-utils/test-wrapper';
 
 // Mock tauri-bridge
 vi.mock('../lib/tauri-bridge', () => ({
@@ -382,7 +382,7 @@ describe('useUpdater - Tauri installUpdate', () => {
       await result.current.installUpdate();
     });
 
-    expect(result.current.error).toBe("Erreur lors de l'installation");
+    expect(result.current.error).toBe("Erreur lors de l'installation de la mise a jour");
   });
 
   test('19. installUpdate progress caps at 100%', async () => {

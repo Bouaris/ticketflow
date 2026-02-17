@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHookWithProviders as renderHook, act } from '../test-utils/test-wrapper';
 import { PROJECTS_STORAGE_KEY, BACKLOG_FILE_NAME } from '../types/project';
 
 // Mock tauri-bridge before importing the hook
@@ -376,7 +376,7 @@ describe('useProjects - openProjectDirectory Tauri Mode', () => {
     });
 
     expect(openResult).toBeNull();
-    expect(result.current.error).toBe('Cette fonctionnalité nécessite la version desktop.');
+    expect(result.current.error).toBe('Cette fonctionnalite necessite la version desktop.');
   });
 });
 
@@ -421,7 +421,7 @@ describe('useProjects - createNewBacklog Tauri Mode', () => {
       act(async () => {
         await result.current.createNewBacklog('/project/path');
       })
-    ).rejects.toThrow('Cette fonctionnalité nécessite la version desktop.');
+    ).rejects.toThrow('Cette fonctionnalite necessite la version desktop.');
   });
 
   test('20. createNewBacklog uses custom types when provided', async () => {

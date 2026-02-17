@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../test-utils/test-wrapper';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
 import type { BacklogItem } from '../types/backlog';
 import type { TypeDefinition } from '../types/typeConfig';
@@ -234,7 +234,7 @@ describe('KanbanBoard - Column Visibility', () => {
       />
     );
 
-    expect(screen.getByText('Aucun item à afficher')).toBeInTheDocument();
+    expect(screen.getByText('Aucun item')).toBeInTheDocument();
   });
 });
 
@@ -284,8 +284,8 @@ describe('KanbanBoard - Card Rendering', () => {
       />
     );
 
-    // Find and click the first card
-    const card = screen.getByText('Test BUG-001').closest('div[class*="bg-white"]');
+    // Find and click the first card (bg-surface class used in current component)
+    const card = screen.getByText('Test BUG-001').closest('div[class*="bg-surface"]');
     if (card) fireEvent.click(card);
 
     expect(mockOnItemClick).toHaveBeenCalled();
@@ -360,7 +360,7 @@ describe('KanbanBoard - Empty States', () => {
       />
     );
 
-    expect(screen.getByText('Aucun item à afficher')).toBeInTheDocument();
+    expect(screen.getByText('Aucun item')).toBeInTheDocument();
   });
 
   test('15. renders columns even with empty itemsByType when types are visible', () => {

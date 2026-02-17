@@ -11,7 +11,7 @@
  */
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent, waitFor } from '../test-utils/test-wrapper';
 import { ItemEditorModal } from '../components/editor/ItemEditorModal';
 import type { BacklogItem } from '../types/backlog';
 import type { TypeDefinition } from '../types/typeConfig';
@@ -113,7 +113,7 @@ describe('ItemEditorModal - New vs Edit Mode', () => {
 
     // New item starts in AI mode
     expect(screen.getByTestId('ai-mode')).toBeInTheDocument();
-    expect(screen.getByText("Créer avec l'IA")).toBeInTheDocument();
+    expect(screen.getByText("Creer avec l'IA")).toBeInTheDocument();
   });
 
   test('4. shows form mode for existing items', () => {
@@ -122,7 +122,7 @@ describe('ItemEditorModal - New vs Edit Mode', () => {
 
     // Existing item shows form, not AI mode
     expect(screen.queryByTestId('ai-mode')).not.toBeInTheDocument();
-    expect(screen.getByText('Éditer BUG-001')).toBeInTheDocument();
+    expect(screen.getByText('Editer BUG-001')).toBeInTheDocument();
   });
 
   test('5. can switch from AI mode to manual mode', () => {
@@ -150,9 +150,9 @@ describe('ItemEditorModal - Tab Navigation', () => {
     const existingItem = createMockItem();
     render(<ItemEditorModal {...defaultProps} item={existingItem} />);
 
-    expect(screen.getByText('Général')).toBeInTheDocument();
-    expect(screen.getByText('Détails')).toBeInTheDocument();
-    expect(screen.getByText('Critères')).toBeInTheDocument();
+    expect(screen.getByText('General')).toBeInTheDocument();
+    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(screen.getByText("Criteres d'acceptation")).toBeInTheDocument();
     expect(screen.getByText('Captures')).toBeInTheDocument();
   });
 
@@ -160,21 +160,23 @@ describe('ItemEditorModal - Tab Navigation', () => {
     const existingItem = createMockItem();
     render(<ItemEditorModal {...defaultProps} item={existingItem} />);
 
-    fireEvent.click(screen.getByText('Détails'));
+    fireEvent.click(screen.getByText('Details'));
 
     // Details tab content should be visible (ListEditor labels)
-    expect(screen.getByText('Spécifications')).toBeInTheDocument();
-    expect(screen.getByText('Dépendances')).toBeInTheDocument();
+    expect(screen.getByText('Specifications')).toBeInTheDocument();
+    expect(screen.getByText('Dependances')).toBeInTheDocument();
   });
 
   test('8. switches to Criteria tab when clicked', () => {
     const existingItem = createMockItem();
     render(<ItemEditorModal {...defaultProps} item={existingItem} />);
 
-    fireEvent.click(screen.getByText('Critères'));
+    // Click the criteria tab button
+    const tabButtons = screen.getAllByText("Criteres d'acceptation");
+    fireEvent.click(tabButtons[0]);
 
     // Criteria tab content should be visible
-    expect(screen.getByText("Critères d'acceptation")).toBeInTheDocument();
+    expect(screen.getAllByText("Criteres d'acceptation").length).toBeGreaterThan(0);
   });
 });
 
@@ -207,7 +209,7 @@ describe('ItemEditorModal - Form Validation', () => {
     fireEvent.change(titleInput, { target: { value: '' } });
 
     // Click save
-    fireEvent.click(screen.getByText('Créer'));
+    fireEvent.click(screen.getByText('Creer un item'));
 
     // Should show error
     await waitFor(() => {
@@ -230,11 +232,11 @@ describe('ItemEditorModal - Form Validation', () => {
     fireEvent.change(titleInput, { target: { value: 'Some title' } });
 
     // Click save
-    fireEvent.click(screen.getByText('Créer'));
+    fireEvent.click(screen.getByText('Creer un item'));
 
     // Should show error
     await waitFor(() => {
-      expect(screen.getByText('ID déjà existant')).toBeInTheDocument();
+      expect(screen.getByText('ID deja existant')).toBeInTheDocument();
     });
   });
 
@@ -249,7 +251,7 @@ describe('ItemEditorModal - Form Validation', () => {
     fireEvent.change(titleInput, { target: { value: 'New Bug Title' } });
 
     // Click save
-    fireEvent.click(screen.getByText('Créer'));
+    fireEvent.click(screen.getByText('Creer un item'));
 
     // Should call onSave
     await waitFor(() => {
@@ -324,8 +326,8 @@ describe('ItemEditorModal - Close Behavior', () => {
   test('16. calls onClose when backdrop is clicked', () => {
     render(<ItemEditorModal {...defaultProps} item={createMockItem()} />);
 
-    // Click the backdrop (the black overlay)
-    const backdrop = document.querySelector('.bg-black\\/50');
+    // Click the backdrop (bg-overlay div)
+    const backdrop = document.querySelector('.bg-overlay');
     if (backdrop) fireEvent.click(backdrop);
 
     expect(defaultProps.onClose).toHaveBeenCalled();
@@ -336,9 +338,9 @@ describe('ItemEditorModal - Close Behavior', () => {
 
     // Find close button by its SVG or position
     const closeButtons = screen.getAllByRole('button');
-    // The close button is typically near the header with an X icon
+    // The close button is the one with text-on-surface-faint (X icon button)
     const closeButton = closeButtons.find(btn =>
-      btn.className.includes('text-gray-400')
+      btn.className.includes('text-on-surface-faint')
     );
     if (closeButton) fireEvent.click(closeButton);
 

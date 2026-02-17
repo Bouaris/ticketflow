@@ -17,7 +17,7 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../test-utils/test-wrapper';
 import { Badge, DynamicBadge } from '../components/ui/Badge';
 import { Modal, ModalActions } from '../components/ui/Modal';
 import { Progress, CriteriaProgress } from '../components/ui/Progress';
@@ -79,13 +79,8 @@ vi.mock('../lib/ai', () => ({
 
 // Mock AI context module
 vi.mock('../lib/ai-context', () => ({
-  loadProjectContext: vi.fn().mockResolvedValue(undefined),
-  getContextStatus: vi.fn(() => ({
-    hasClaude: true,
-    hasAgents: false,
-    claudeChars: 1500,
-    agentsChars: 0,
-  })),
+  loadProjectContext: vi.fn().mockResolvedValue({ files: [{ filename: 'CLAUDE.md', chars: 500 }], loadedAt: Date.now() }),
+  getContextStatus: vi.fn().mockReturnValue({ files: [{ filename: 'CLAUDE.md', chars: 500 }], loadedAt: Date.now() }),
 }));
 
 // ============================================================
@@ -287,9 +282,9 @@ describe('Progress', () => {
 
   test('21. applies color classes', () => {
     const { container } = render(<Progress value={75} color="success" />);
-    // Color is on the track (container) as background, fill uses a different shade
+    // Color is on the track (container) as background using semantic token
     const track = container.querySelector('[role="progressbar"]');
-    expect(track?.className).toContain('bg-green-100');
+    expect(track?.className).toContain('bg-success-soft');
   });
 
   test('22. shows label when showLabel=true', () => {
@@ -572,7 +567,7 @@ describe('ErrorBoundary', () => {
         <ThrowingComponent shouldThrow={true} />
       </ErrorBoundary>
     );
-    expect(screen.getByText('Une erreur est survenue')).toBeInTheDocument();
+    expect(screen.getByText('Erreur inconnue')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
@@ -602,7 +597,7 @@ describe('ErrorBoundary', () => {
         <ThrowingComponent shouldThrow={true} />
       </ErrorBoundary>
     );
-    expect(screen.getByText('Réessayer')).toBeInTheDocument();
+    expect(screen.getByText('Actualiser')).toBeInTheDocument();
   });
 
   test('46. retry button triggers handleRetry', () => {
@@ -613,10 +608,10 @@ describe('ErrorBoundary', () => {
     );
 
     // Verify error state is shown
-    expect(screen.getByText('Une erreur est survenue')).toBeInTheDocument();
+    expect(screen.getByText('Erreur inconnue')).toBeInTheDocument();
 
     // Click retry button - it should be clickable
-    const retryButton = screen.getByText('Réessayer');
+    const retryButton = screen.getByText('Actualiser');
     expect(retryButton).toBeEnabled();
     fireEvent.click(retryButton);
 
@@ -711,7 +706,7 @@ describe('UpdateModal', () => {
       />
     );
     expect(screen.getByText('50%')).toBeInTheDocument();
-    expect(screen.getByText('Téléchargement en cours...')).toBeInTheDocument();
+    expect(screen.getByText('Telechargement...')).toBeInTheDocument();
   });
 
   test('51. shows error message when error present', () => {
@@ -743,7 +738,7 @@ describe('UpdateModal', () => {
         onClearError={mockOnClearError}
       />
     );
-    fireEvent.click(screen.getByText('Installer maintenant'));
+    fireEvent.click(screen.getByText('Appliquer'));
     expect(mockOnInstall).toHaveBeenCalledTimes(1);
   });
 });
