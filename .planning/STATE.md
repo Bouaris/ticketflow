@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2 Quality & Insights — Phase 26: Infrastructure & Transport Foundation
+**Current focus:** v2.2 Quality & Insights — Phase 27: Telemetry Core & Consent
 
 ## Current Position
 
-Phase: 26 of 28 (Infrastructure & Transport Foundation)
-Plan: 3 of 3 complete in current phase
-Status: Phase 26 complete (including gap closure 26-03)
-Last activity: 2026-02-17 — Phase 26 plan 03 executed (gap closure: all 445 tests pass, pnpm test exits 0)
+Phase: 27 of 28 (Telemetry Core & Consent)
+Plan: 1 of 3 complete in current phase
+Status: Phase 27 in progress — Plan 01 complete (telemetry.ts, TCOV-05 tests, PRIVACY.md)
+Last activity: 2026-02-17 — Phase 27 plan 01 executed (telemetry core module, consent gate, 10 new tests)
 
-Progress: [████████████████████░░░░░░░░░░] ~90% (26/28 phases effectively complete, Phase 26 done)
+Progress: [████████████████████░░░░░░░░░░] ~91% (Phase 27 Plan 1/3 done)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [████████████████████░░░
 | v1.6 | 8 | 4 | 19/19 | Shipped 2026-02-14 |
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
-| v2.2 | TBD | 3 | 0/17 | In progress |
-| **Total** | **73+** | **28** | **180** | |
+| v2.2 | TBD | 3 | 3/17 | In progress (27-01 done) |
+| **Total** | **76+** | **28** | **183** | |
 
 ## Accumulated Context
 
@@ -56,6 +56,8 @@ Recent decisions for v2.2:
 - [26-03]: Custom render wrapper (renderWithProviders) over global provider in setupFiles — avoids polluting non-i18n tests
 - [26-03]: Test assertions must match fr.ts normalized strings (unaccented) — fr.ts deliberately uses unaccented chars for normalization
 - [26-03]: AIContextIndicator mock returns ContextStatus.files array, not hasClaude/hasAgents shape
+- [Phase 27]: Approach B confirmed: direct IPC relay without posthog-js runtime — zero external SDK, telemetry.ts routes events through invoke('ph_send_batch') in Tauri and direct fetch in web mode
+- [Phase 27]: vitest.config.ts requires __APP_VERSION__ define constant to mirror vite.config.ts — required for any test that imports src/lib/version.ts
 
 ### Pending Todos
 
@@ -65,11 +67,10 @@ Recent decisions for v2.2:
 - getEffectiveAIConfig unused _projectPath parameter cleanup (16 call sites)
 - OpenAI-compatible API adapter layer (error formats, rate-limit headers)
 - [Phase 27 prereq]: PostHog account + VITE_POSTHOG_KEY must exist before Phase 27 validation can run against live dashboard
-- [Phase 27 spike]: Verify _send_request private API exists in posthog-js@1.347.2 source before full Phase 27 implementation
 
 ### Blockers/Concerns
 
-- [Phase 27]: _send_request override uses a private PostHog API — verify it exists in posthog-js@1.347.2 before coding; fallback: transport: 'fetch' config option or tauri-plugin-posthog@0.2.0
+- (None — Phase 27 Plan 01 resolved the posthog-js transport concern by using Approach B: direct IPC relay, no posthog-js runtime dependency)
 
 ### Quick Tasks Completed
 
@@ -82,9 +83,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 26 Plan 03 complete — gap closure: 445 tests pass, pnpm test exits 0, SC1 satisfied
-Resume file: .planning/phases/26-infrastructure-transport-foundation/26-03-SUMMARY.md
-Next action: /gsd:execute-phase 27
+Stopped at: Phase 27 Plan 01 complete — telemetry.ts, TCOV-05 tests (10 tests), PRIVACY.md, vitest.config.ts define fix; 455 tests pass
+Resume file: .planning/phases/27-telemetry-core-consent/27-01-SUMMARY.md
+Next action: /gsd:execute-phase 27 (continue with plan 02)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 Plan 03 complete (gap closure)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 27 Plan 01 complete (telemetry core module)*
