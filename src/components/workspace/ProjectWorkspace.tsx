@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { track } from '../../lib/telemetry';
 import { useBacklogDB, type BacklogFilters } from '../../hooks/useBacklogDB';
 import { useGlobalShortcuts } from '../../hooks/useGlobalShortcuts';
 import { useTemplates } from '../../hooks/useTemplates';
@@ -174,6 +175,18 @@ export function ProjectWorkspace({
       chatPanel.loadHistory();
     }
   }, [isChatOpen, backlog.projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---- project_opened telemetry (fires once after data loads) ----
+  const hasFiredProjectOpened = useRef(false);
+  useEffect(() => {
+    if (!backlog.isLoading && !hasFiredProjectOpened.current) {
+      hasFiredProjectOpened.current = true;
+      track('project_opened', {
+        has_items: backlog.allItems.length > 0,
+        item_count: backlog.allItems.length,
+      });
+    }
+  }, [backlog.isLoading, backlog.allItems.length]);
 
   // ---- Type Config ↔ SQLite sync ----
   // SQLite is the source of truth for types. On mount, we sync DB → typeConfig hook.
@@ -668,6 +681,7 @@ export function ProjectWorkspace({
     try {
       if (isNew) {
         await backlog.addItem(item);
+        track('ticket_created', { type: item.type, via: 'editor' });
       } else {
         await backlog.updateItemById(item.id, item);
       }
@@ -678,6 +692,33 @@ export function ProjectWorkspace({
       // Re-throw to prevent modal from closing
       throw error;
     }
+  }, [backlog]);
+
+  // ---- settings_opened telemetry wrappers ----
+  const handleOpenSettings = useCallback(() => {
+    track('settings_opened', { panel: 'app' });
+    onOpenSettings();
+  }, [onOpenSettings]);
+
+  const handleOpenAISettings = useCallback(() => {
+    track('settings_opened', { panel: 'ai' });
+    onOpenAISettings();
+  }, [onOpenAISettings]);
+
+  const handleOpenTypeConfig = useCallback(() => {
+    track('settings_opened', { panel: 'type_config' });
+    onOpenTypeConfig();
+  }, [onOpenTypeConfig]);
+
+  const handleOpenProjectSettings = useCallback(() => {
+    track('settings_opened', { panel: 'project' });
+    onOpenProjectSettings();
+  }, [onOpenProjectSettings]);
+
+  // ---- view_switched telemetry ----
+  const handleViewModeChange = useCallback((mode: Parameters<typeof backlog.setViewMode>[0]) => {
+    track('view_switched', { to: mode });
+    backlog.setViewMode(mode);
   }, [backlog]);
 
   // ============================================================
@@ -882,9 +923,9 @@ export function ProjectWorkspace({
 
   const workspaceActions: WorkspaceActions = useMemo(() => ({
     createItem: handleCreateItem,
-    setView: backlog.setViewMode,
-    openSettings: onOpenSettings,
-    openTypeConfig: onOpenTypeConfig,
+    setView: handleViewModeChange,
+    openSettings: handleOpenSettings,
+    openTypeConfig: handleOpenTypeConfig,
     toggleAIPanel: () => setIsAIAnalysisPanelOpen(prev => !prev),
     showHelp: () => setIsHelpModalOpen(true),
     undo: backlog.undo,
@@ -897,8 +938,8 @@ export function ProjectWorkspace({
       }
     },
     openBulkImport: handleOpenBulkImport,
-  }), [handleCreateItem, backlog.setViewMode, onOpenSettings,
-       onOpenTypeConfig, backlog.undo, backlog.redo, handleOpenBulkImport]);
+  }), [handleCreateItem, handleViewModeChange, handleOpenSettings,
+       handleOpenTypeConfig, backlog.undo, backlog.redo, handleOpenBulkImport]);
 
   const allCommands = useMemo(() => {
     const staticCmds = getStaticCommands(t, workspaceActions);
@@ -1055,13 +1096,13 @@ export function ProjectWorkspace({
     { ...SHORTCUTS.CYCLE_EFFORT, handler: handleCycleEffort },
 
     // View switching
-    { ...SHORTCUTS.VIEW_KANBAN, handler: () => backlog.setViewMode('kanban') },
-    { ...SHORTCUTS.VIEW_LIST, handler: () => backlog.setViewMode('list') },
-    { ...SHORTCUTS.VIEW_GRAPH, handler: () => backlog.setViewMode('graph') },
-    { ...SHORTCUTS.VIEW_DASHBOARD, handler: () => backlog.setViewMode('dashboard') },
+    { ...SHORTCUTS.VIEW_KANBAN, handler: () => handleViewModeChange('kanban') },
+    { ...SHORTCUTS.VIEW_LIST, handler: () => handleViewModeChange('list') },
+    { ...SHORTCUTS.VIEW_GRAPH, handler: () => handleViewModeChange('graph') },
+    { ...SHORTCUTS.VIEW_DASHBOARD, handler: () => handleViewModeChange('dashboard') },
   ], [handlePaletteToggle, handleChatToggle, handleOpenBulkImport, handleCreateItem, handleNavigate,
       handleCloseDetail, handleEditItem, handleDeleteRequest, handleArchiveItem,
-      handleCyclePriority, handleCycleEffort, backlog,
+      handleCyclePriority, handleCycleEffort, backlog, handleViewModeChange,
       multiSelect.hasSelection, multiSelect.clearSelection, multiSelect.selectAll]);
 
   useGlobalShortcuts(shortcutActions, shortcutContext);
@@ -1104,9 +1145,9 @@ export function ProjectWorkspace({
         viewMode={backlog.viewMode}
         hasProject={true}
         onOpenFile={() => {}} // Not used in project context
-        onViewModeChange={backlog.setViewMode}
-        onOpenProjectSettings={onOpenProjectSettings}
-        onOpenAISettings={onOpenAISettings}
+        onViewModeChange={handleViewModeChange}
+        onOpenProjectSettings={handleOpenProjectSettings}
+        onOpenAISettings={handleOpenAISettings}
         showAISettingsBadge={!hasApiKey(getProvider())}
         onGoHome={onGoHome}
         canUndo={backlog.canUndo}
@@ -1179,7 +1220,7 @@ export function ProjectWorkspace({
 
         {/* Type config button */}
         <button
-          onClick={onOpenTypeConfig}
+          onClick={handleOpenTypeConfig}
           className="p-2.5 bg-surface text-on-surface-secondary rounded-md hover:bg-surface-alt transition-colors"
           title={t.common.configureTypes}
         >
@@ -1188,7 +1229,7 @@ export function ProjectWorkspace({
 
         {/* Settings button */}
         <button
-          onClick={onOpenSettings}
+          onClick={handleOpenSettings}
           className="relative p-2.5 bg-surface text-on-surface-secondary rounded-md hover:bg-surface-alt transition-colors"
           title={t.common.parameters}
         >

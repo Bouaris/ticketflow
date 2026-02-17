@@ -47,6 +47,7 @@ import { getCriteriaInstructions } from './ai-criteria';
 import { getCurrentLocale, getTranslations } from '../i18n';
 import type { ZodType, ZodSchema } from 'zod';
 import { isAbortError } from './abort';
+import { track } from './telemetry';
 
 // Extended AI options with Phase 3 additions
 export interface AIOptions extends BaseAIOptions {
@@ -936,9 +937,11 @@ export async function refineItem(item: BacklogItem, options?: RefineOptions): Pr
     }
 
     if (!result.success) {
+      track('ai_generation_failed', { provider: effectiveProvider, type: 'refinement', error_type: 'validation' });
       return { success: false, error: result.error };
     }
 
+    track('ai_generation_completed', { provider: effectiveProvider, type: 'refinement' });
     return {
       success: true,
       refinedItem: {
@@ -968,6 +971,12 @@ export async function refineItem(item: BacklogItem, options?: RefineOptions): Pr
         latencyMs: Date.now() - startTime,
       });
     }
+    const refineErrorType = error instanceof Error && /\b(401|403)\b|unauthorized|invalid.*api/i.test(error.message)
+      ? 'auth'
+      : error instanceof Error && /\b429\b|rate.?limit/i.test(error.message)
+      ? 'rate_limit'
+      : 'unknown';
+    track('ai_generation_failed', { provider: effectiveProvider, type: 'refinement', error_type: refineErrorType });
     return {
       success: false,
       error: error instanceof Error ? error.message : getTranslations().aiErrors.unknownError,
@@ -1287,9 +1296,11 @@ export async function generateItemFromDescription(description: string, options?:
     }
 
     if (!result.success) {
+      track('ai_generation_failed', { provider: effectiveProvider, type: 'ticket', error_type: 'validation' });
       return { success: false, error: result.error };
     }
 
+    track('ai_generation_completed', { provider: effectiveProvider, type: 'ticket' });
     return {
       success: true,
       item: {
@@ -1325,6 +1336,14 @@ export async function generateItemFromDescription(description: string, options?:
         latencyMs: Date.now() - startTime,
       });
     }
+    const generateErrorType = error instanceof Error && /\b(401|403)\b|unauthorized|invalid.*api/i.test(error.message)
+      ? 'auth'
+      : error instanceof Error && /\b429\b|rate.?limit/i.test(error.message)
+      ? 'rate_limit'
+      : error instanceof Error && /network|fetch|ECONN/i.test(error.message)
+      ? 'network'
+      : 'unknown';
+    track('ai_generation_failed', { provider: effectiveProvider, type: 'ticket', error_type: generateErrorType });
     return {
       success: false,
       error: error instanceof Error ? error.message : getTranslations().aiErrors.unknownError,

@@ -9,6 +9,7 @@
 
 import { testProviderConnection } from './ai';
 import { createTimeoutController, clearControllerTimeout, isAbortError } from './abort';
+import { track } from './telemetry';
 
 /**
  * Result of a provider health check.
@@ -55,15 +56,18 @@ export async function testProviderHealth(
     await testProviderConnection(providerId);
 
     const latencyMs = Date.now() - startTime;
-    return {
+    const result: HealthCheckResult = {
       success: true,
       latencyMs,
     };
+    track('ai_health_check_run', { provider: providerId, success: true, latency_ms: latencyMs });
+    return result;
   } catch (error) {
     const latencyMs = Date.now() - startTime;
 
     // Classify error type for targeted user guidance
     if (isAbortError(error)) {
+      track('ai_health_check_run', { provider: providerId, success: false, latency_ms: latencyMs });
       return {
         success: false,
         latencyMs,
@@ -76,6 +80,7 @@ export async function testProviderHealth(
 
     // Authentication errors (401, 403, invalid key)
     if (/\b(401|403)\b|unauthorized|forbidden|invalid.*api.*key/i.test(errorMsg)) {
+      track('ai_health_check_run', { provider: providerId, success: false, latency_ms: latencyMs });
       return {
         success: false,
         latencyMs,
@@ -86,6 +91,7 @@ export async function testProviderHealth(
 
     // Rate limit errors (429, rate limit, quota)
     if (/\b429\b|rate.?limit|resource.?exhausted/i.test(errorMsg)) {
+      track('ai_health_check_run', { provider: providerId, success: false, latency_ms: latencyMs });
       return {
         success: false,
         latencyMs,
@@ -96,6 +102,7 @@ export async function testProviderHealth(
 
     // Network errors (connection refused, DNS, etc.)
     if (/network|fetch|ECONNREFUSED|ENOTFOUND|ERR_NAME/i.test(errorMsg)) {
+      track('ai_health_check_run', { provider: providerId, success: false, latency_ms: latencyMs });
       return {
         success: false,
         latencyMs,
@@ -105,6 +112,7 @@ export async function testProviderHealth(
     }
 
     // Unclassified error
+    track('ai_health_check_run', { provider: providerId, success: false, latency_ms: latencyMs });
     return {
       success: false,
       latencyMs,
