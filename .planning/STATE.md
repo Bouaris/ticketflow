@@ -46,6 +46,9 @@ Recent decisions for v2.2:
 - [v2.2 planning]: Rust IPC relay (ph_send_batch) mandatory — posthog-js silently drops events in Tauri WebView
 - [v2.2 planning]: TCOV-05 (telemetry unit tests) ships WITH Phase 27, not Phase 28 — consent gate tests are part of GDPR validation
 - [v2.2 planning]: autocapture: false + __preview_enable_fetch_instrumentation: false — prevents fetch corruption on AI calls
+- [26-01]: IPC-level mocking (mockIPC/mockWindows) chosen over JS module mocking — intercepts at transport layer preventing __TAURI_INTERNALS__ errors from plugin-sql
+- [26-01]: setupTauriMocks() in global setupFiles so __TAURI_INTERNALS__ is available before any module-level side effects run
+- [26-01]: jsdom stays at ^25.0.1 — Blob constructor incompatibility with jsdom 27+ and Vitest 4
 - [26-02]: Separate telemetry.db avoids schema coupling with tauri-plugin-sql (no Rust-side API)
 - [26-02]: reqwest with rustls-tls + default-features=false avoids native-tls dependency
 - [26-02]: startup_flush skips delivery when api_key is empty — key provided by frontend per-batch
