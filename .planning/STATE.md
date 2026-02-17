@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 26 of 28 (Infrastructure & Transport Foundation)
-Plan: 2 of 2 complete in current phase
-Status: Phase 26 complete
-Last activity: 2026-02-17 — Phase 26 plans 01+02 executed (Rust telemetry IPC relay, PostHog transport foundation)
+Plan: 3 of 3 complete in current phase
+Status: Phase 26 complete (including gap closure 26-03)
+Last activity: 2026-02-17 — Phase 26 plan 03 executed (gap closure: all 445 tests pass, pnpm test exits 0)
 
 Progress: [████████████████████░░░░░░░░░░] ~90% (26/28 phases effectively complete, Phase 26 done)
 
@@ -53,6 +53,9 @@ Recent decisions for v2.2:
 - [26-02]: reqwest with rustls-tls + default-features=false avoids native-tls dependency
 - [26-02]: startup_flush skips delivery when api_key is empty — key provided by frontend per-batch
 - [26-02]: WAL journal mode on telemetry.db for crash-safe event persistence
+- [26-03]: Custom render wrapper (renderWithProviders) over global provider in setupFiles — avoids polluting non-i18n tests
+- [26-03]: Test assertions must match fr.ts normalized strings (unaccented) — fr.ts deliberately uses unaccented chars for normalization
+- [26-03]: AIContextIndicator mock returns ContextStatus.files array, not hasClaude/hasAgents shape
 
 ### Pending Todos
 
@@ -79,9 +82,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 26 Plan 02 complete — Rust ph_send_batch + offline queue + PostHog CSP
-Resume file: .planning/phases/26-infrastructure-transport-foundation/26-02-SUMMARY.md
+Stopped at: Phase 26 Plan 03 complete — gap closure: 445 tests pass, pnpm test exits 0, SC1 satisfied
+Resume file: .planning/phases/26-infrastructure-transport-foundation/26-03-SUMMARY.md
 Next action: /gsd:execute-phase 27
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 Plan 02 complete*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 Plan 03 complete (gap closure)*
