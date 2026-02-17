@@ -72,9 +72,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: v2.2 roadmap created — Phases 26-28 defined, 17/17 requirements mapped
-Resume file: None
+Stopped at: Phase 26 context gathered
+Resume file: .planning/phases/26-infrastructure-transport-foundation/26-CONTEXT.md
 Next action: /gsd:plan-phase 26
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after v2.2 roadmap created*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 26 context gathered*
