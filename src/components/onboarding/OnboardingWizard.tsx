@@ -28,6 +28,8 @@ import { OnboardingStep } from './OnboardingStep';
 import { LogoIcon } from '../ui/Icons';
 import { AISetupStep } from './AISetupStep';
 import { GSDInfoStep } from './GSDInfoStep';
+import { track } from '../../lib/telemetry';
+import { hasApiKey, getProvider } from '../../lib/ai';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -85,6 +87,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   const goNext = useCallback(() => {
     if (step === TOTAL_STEPS - 1) {
+      track('onboarding_completed', {
+        steps_completed: TOTAL_STEPS,
+        ai_configured: hasApiKey(getProvider()),
+      });
       onComplete();
       return;
     }
@@ -99,8 +105,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   }, [step]);
 
   const handleSkip = useCallback(() => {
+    track('onboarding_completed', {
+      steps_completed: step,
+      ai_configured: hasApiKey(getProvider()),
+    });
     onComplete();
-  }, [onComplete]);
+  }, [step, onComplete]);
 
   // ── Step slide variants ──────────────────────────────────
 

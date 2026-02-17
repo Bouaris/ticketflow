@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { track } from '../../lib/telemetry';
 import { Modal } from '../ui/Modal';
 import { InputStep } from './InputStep';
 import { ProcessingStep } from './ProcessingStep';
@@ -225,6 +226,7 @@ export function BulkImportWizard({
 
       setCreatedCount(created.length);
       setStep('confirm');
+      track('bulk_import_completed', { items_imported: created.length });
       onCreated();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);

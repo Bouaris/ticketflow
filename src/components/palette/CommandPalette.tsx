@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { SearchIcon, SparklesIcon } from '../ui/Icons';
 import { PaletteResultItem } from './PaletteResultItem';
 import { PaletteResultGroup } from './PaletteResultGroup';
+import { track } from '../../lib/telemetry';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -104,6 +105,13 @@ export function CommandPalette({
   useEffect(() => {
     setSelectedIndex(0);
   }, [flatList.length, nlOffset]);
+
+  // Track command palette open
+  useEffect(() => {
+    if (isOpen) {
+      track('command_palette_opened');
+    }
+  }, [isOpen]);
 
   // Auto-focus input and select text when palette opens
   useEffect(() => {
