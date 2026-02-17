@@ -26,8 +26,8 @@ export const APP_CONFIG = {
 export const AI_CONFIG = {
   // Models
   GROQ_MODEL: 'llama-3.3-70b-versatile',
-  GEMINI_MODEL: 'gemini-2.0-flash',
-  OPENAI_MODEL: 'gpt-4o-mini',
+  GEMINI_MODEL: 'gemini-2.5-flash',
+  OPENAI_MODEL: 'gpt-4.1-mini',
 
   // Parameters
   MAX_TOKENS: 2048,

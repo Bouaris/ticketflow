@@ -25,11 +25,17 @@ import { AI_CONFIG } from '../constants/config';
 const MODEL_TOKEN_LIMITS: Record<string, number> = {
   // Groq
   'llama-3.3-70b-versatile': 32000,
-  'llama-3.1-70b-versatile': 32000,
+  'llama-4-scout-17b-16e-instruct': 131072,
+  'llama-4-maverick-17b-128e-instruct': 131072,
+  'llama-3.1-8b-instant': 8000,
   // Gemini
-  'gemini-1.5-flash': 1000000,
-  'gemini-2.0-flash': 1000000,
+  'gemini-2.5-flash': 1000000,
+  'gemini-2.5-flash-lite': 1000000,
+  'gemini-2.5-pro': 1000000,
   // OpenAI
+  'gpt-4.1': 1047576,
+  'gpt-4.1-mini': 1047576,
+  'gpt-4.1-nano': 1047576,
   'gpt-4o': 128000,
   'gpt-4o-mini': 128000,
 };

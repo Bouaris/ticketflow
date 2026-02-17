@@ -58,13 +58,17 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
     // Models that support JSON mode but not strict schema
     bestEffort: [
       'llama-3.3-70b-versatile',
-      'mixtral-8x7b-32768',
+      'llama-4-scout-17b-16e-instruct',
+      'llama-4-maverick-17b-128e-instruct',
       'gemma2-9b-it',
     ],
   },
   openai: {
-    // OpenAI models with strict structured outputs (Aug 2024+)
+    // OpenAI models with strict structured outputs
     strict: [
+      'gpt-4.1',
+      'gpt-4.1-mini',
+      'gpt-4.1-nano',
       'gpt-4o',
       'gpt-4o-mini',
       'gpt-4o-2024-08-06',
@@ -75,12 +79,12 @@ export const STRUCTURED_OUTPUT_SUPPORT: StructuredOutputSupport = {
   gemini: {
     // Gemini models that support responseSchema
     schema: [
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro',
-      'gemini-1.5-pro-latest',
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-pro',
       'gemini-2.0-flash',
-      'gemini-2.0-flash-exp',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
     ],
   },
 };
