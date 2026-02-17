@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 27 of 28 (Telemetry Core & Consent)
-Plan: 1 of 3 complete in current phase
-Status: Phase 27 in progress — Plan 01 complete (telemetry.ts, TCOV-05 tests, PRIVACY.md)
-Last activity: 2026-02-17 — Phase 27 plan 01 executed (telemetry core module, consent gate, 10 new tests)
+Plan: 2 of 3 complete in current phase
+Status: Phase 27 in progress — Plans 01+02 complete (telemetry.ts, consent dialog, settings privacy toggle)
+Last activity: 2026-02-17 — Phase 27 plan 02 executed (ConsentDialog, App.tsx wiring, AppSettingsModal Privacy section)
 
-Progress: [████████████████████░░░░░░░░░░] ~91% (Phase 27 Plan 1/3 done)
+Progress: [█████████████████████░░░░░░░░░] ~93% (Phase 27 Plan 2/3 done)
 
 ## Performance Metrics
 
@@ -58,6 +58,9 @@ Recent decisions for v2.2:
 - [26-03]: AIContextIndicator mock returns ContextStatus.files array, not hasClaude/hasAgents shape
 - [Phase 27]: Approach B confirmed: direct IPC relay without posthog-js runtime — zero external SDK, telemetry.ts routes events through invoke('ph_send_batch') in Tauri and direct fetch in web mode
 - [Phase 27]: vitest.config.ts requires __APP_VERSION__ define constant to mirror vite.config.ts — required for any test that imports src/lib/version.ts
+- [27-02]: ConsentDialog uses Modal component with closeOnBackdrop=false — prevents accidental dismissal, Escape maps to onDismiss (re-prompt once then permanent decline)
+- [27-02]: consent_revoked fires BEFORE setConsentState('declined') in settings toggle — captures last event before gate closes
+- [27-02]: All consent/privacy strings hardcoded English (never via i18n) — locked decision for GDPR clarity regardless of app locale
 
 ### Pending Todos
 
@@ -83,9 +86,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 27 Plan 01 complete — telemetry.ts, TCOV-05 tests (10 tests), PRIVACY.md, vitest.config.ts define fix; 455 tests pass
-Resume file: .planning/phases/27-telemetry-core-consent/27-01-SUMMARY.md
-Next action: /gsd:execute-phase 27 (continue with plan 02)
+Stopped at: Phase 27 Plan 02 complete — ConsentDialog.tsx (first-launch GDPR consent), App.tsx wiring (consent flow, project_created), AppSettingsModal Privacy section (toggle, dark_mode_toggled); 455 tests pass
+Resume file: .planning/phases/27-telemetry-core-consent/27-02-SUMMARY.md
+Next action: /gsd:execute-phase 27 (continue with plan 03)
 
 ---
 *STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 27 Plan 01 complete (telemetry core module)*
