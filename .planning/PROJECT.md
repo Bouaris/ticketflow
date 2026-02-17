@@ -47,7 +47,15 @@ TicketFlow est une application desktop (Tauri + Web) de gestion de Product Backl
 
 ### Active
 
-(No active milestone — all shipped through v2.1)
+## Current Milestone: v2.2 Quality & Insights
+
+**Goal:** Ajouter la telemetry d'usage (PostHog) avec opt-in et mettre en place l'infrastructure de tests (Vitest, Playwright) avec couverture des modules critiques.
+
+**Target features:**
+- PostHog telemetry integration (SDK, events d'usage, opt-in consent)
+- Test infrastructure (Vitest + Testing Library + Playwright)
+- Critical module test coverage (ai, db, hooks)
+- E2E tests for key user journeys
 
 ### Out of Scope
 
@@ -67,6 +75,8 @@ TicketFlow est une application desktop (Tauri + Web) de gestion de Product Backl
 - Smart provider switching — Deferred (PROV-08)
 - Streaming response preview — Deferred (GENX-06)
 - AI onboarding wizard for providers — Deferred (GENX-07)
+- Robustness audit / stress testing — Deferred to v2.3 (after test infra in place)
+- 100% test coverage — Unrealistic for 54K LOC in one milestone, targeting critical modules first
 
 ## Context
 
@@ -140,5 +150,7 @@ User -> UI -> useBacklogDB -> SQLite (per-project .db)
 | 5-type error classification | auth/rate_limit/timeout/network/unknown for actionable guidance | ✓ Good |
 | Custom provider edit = remove+add | Registry has no update fn — atomic remove+add instead | ✓ Good |
 
+| PostHog for telemetry | Free tier (<1M events/month), rich dashboard, zero infra to manage, lightweight SDK | — Pending |
+
 ---
-*Last updated: 2026-02-17 after v2.1 milestone shipped*
+*Last updated: 2026-02-17 after v2.2 milestone started*

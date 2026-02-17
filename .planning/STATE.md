@@ -6,16 +6,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
 
-**Current focus:** Planning next milestone
+**Current focus:** v2.2 Quality & Insights
 
 ## Current Position
 
-Phase: None (between milestones)
-Plan: N/A
-Status: v2.1 shipped
-Last activity: 2026-02-17 - Completed v2.1 "AI Refresh" milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v2.2 started
 
-Progress: All milestones shipped (v1.0, v1.5, v1.6, v2.0, v2.1)
+Progress: Milestones shipped (v1.0, v1.5, v1.6, v2.0, v2.1). v2.2 in definition.
 
 ## Performance Metrics
 
@@ -64,9 +64,9 @@ None — all milestones shipped.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed v2.1 milestone archival
+Stopped at: Milestone v2.2 definition started
 Resume file: None
-Next action: /gsd:new-milestone for next version
+Next action: Define requirements then create roadmap
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after v2.1 milestone complete*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after v2.2 milestone started*
