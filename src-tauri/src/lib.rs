@@ -1,3 +1,5 @@
+mod telemetry;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -57,7 +59,7 @@ pub fn run() {
                 window.set_focus().ok();
             }
         }))
-        .invoke_handler(tauri::generate_handler![force_quit])
+        .invoke_handler(tauri::generate_handler![force_quit, telemetry::ph_send_batch])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 // Prevent window close, hide to tray instead
@@ -74,6 +76,21 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // Initialize telemetry DB (separate from the main app DB managed by tauri-plugin-sql)
+            let data_dir = app.path().app_data_dir()
+                .expect("app data dir unavailable");
+            let telemetry_pool = tauri::async_runtime::block_on(
+                telemetry::init_telemetry_db(&data_dir)
+            );
+            app.manage(telemetry::TelemetryState {
+                pool: telemetry_pool,
+                api_host: "https://eu.i.posthog.com".to_string(),
+            });
+            // Flush any events that were queued before the last shutdown.
+            tauri::async_runtime::block_on(
+                telemetry::startup_flush(app.state::<telemetry::TelemetryState>())
+            );
 
             // Tray menu items
             let open_item = MenuItem::with_id(app, "open", "Ouvrir Ticketflow", true, None::<&str>)?;
