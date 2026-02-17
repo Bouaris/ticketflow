@@ -154,6 +154,15 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
               {t.settings.geminiRecommended}
             </span>
+            <span className="ml-1 relative group/tooltip inline-flex items-center">
+              <svg className="w-3.5 h-3.5 text-blue-500 cursor-help" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="7" cy="7" r="6.5" stroke="currentColor" strokeWidth="1" />
+                <text x="7" y="10.5" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">i</text>
+              </svg>
+              <span className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 text-xs bg-surface-alt text-on-surface-secondary rounded-lg shadow-lg border border-outline z-50 whitespace-normal">
+                {t.settings.geminiFreeTierTooltip}
+              </span>
+            </span>
           </span>
         )}
         {provider.id === 'openai' && t.settings.openaiDescription}

@@ -136,6 +136,7 @@ export interface Translations {
     geminiDescription: string;
     openaiDescription: string;
     geminiRecommended: string;
+    geminiFreeTierTooltip: string;
     modelLabel: string;
   };
 
