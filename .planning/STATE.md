@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 27 of 28 (Telemetry Core & Consent)
-Plan: 2 of 3 complete in current phase
-Status: Phase 27 in progress — Plans 01+02 complete (telemetry.ts, consent dialog, settings privacy toggle)
-Last activity: 2026-02-17 — Phase 27 plan 02 executed (ConsentDialog, App.tsx wiring, AppSettingsModal Privacy section)
+Plan: 3 of 3 complete in current phase
+Status: Phase 27 COMPLETE — all 3 plans done (telemetry.ts, consent dialog, event instrumentation)
+Last activity: 2026-02-17 — Phase 27 plan 03 executed (10 events across 6 files: ProjectWorkspace, ai.ts, ai-health.ts, CommandPalette, BulkImportWizard, OnboardingWizard)
 
-Progress: [█████████████████████░░░░░░░░░] ~93% (Phase 27 Plan 2/3 done)
+Progress: [██████████████████████░░░░░░░░] ~95% (Phase 27 complete, Phase 28 remaining)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [█████████████████████░░
 | v1.6 | 8 | 4 | 19/19 | Shipped 2026-02-14 |
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
-| v2.2 | TBD | 3 | 3/17 | In progress (27-01 done) |
+| v2.2 | TBD | 3 | 13/17 | In progress (Phase 27 complete) |
 | **Total** | **76+** | **28** | **183** | |
 
 ## Accumulated Context
@@ -61,6 +61,10 @@ Recent decisions for v2.2:
 - [27-02]: ConsentDialog uses Modal component with closeOnBackdrop=false — prevents accidental dismissal, Escape maps to onDismiss (re-prompt once then permanent decline)
 - [27-02]: consent_revoked fires BEFORE setConsentState('declined') in settings toggle — captures last event before gate closes
 - [27-02]: All consent/privacy strings hardcoded English (never via i18n) — locked decision for GDPR clarity regardless of app locale
+- [27-03]: handleViewModeChange wrapper centralizes view_switched tracking — replaces all direct backlog.setViewMode usages (Header, shortcuts, workspaceActions)
+- [27-03]: settings_opened uses 4 panel-specific wrappers (app/ai/type_config/project) for richer metadata at instrumentation points
+- [27-03]: ai_health_check_run fires at every return path in testProviderHealth (not just one point) to avoid missing events on early returns
+- [27-03]: hasApiKey(getProvider()) at onboarding_completed time determines ai_configured — simpler than tracking wizard-internal AI setup state
 
 ### Pending Todos
 
@@ -86,9 +90,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 27 Plan 02 complete — ConsentDialog.tsx (first-launch GDPR consent), App.tsx wiring (consent flow, project_created), AppSettingsModal Privacy section (toggle, dark_mode_toggled); 455 tests pass
-Resume file: .planning/phases/27-telemetry-core-consent/27-02-SUMMARY.md
-Next action: /gsd:execute-phase 27 (continue with plan 03)
+Stopped at: Phase 27 Plan 03 complete — 10 events instrumented across 6 files (project_opened, ticket_created, view_switched, settings_opened, ai_generation_completed, ai_generation_failed, ai_health_check_run, command_palette_opened, bulk_import_completed, onboarding_completed); 455 tests pass, pnpm build clean
+Resume file: .planning/phases/27-telemetry-core-consent/27-03-SUMMARY.md
+Next action: /gsd:execute-phase 28 (Phase 28: Analytics Dashboard)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 27 Plan 01 complete (telemetry core module)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 27 Plan 03 complete (event instrumentation — Phase 27 COMPLETE)*
