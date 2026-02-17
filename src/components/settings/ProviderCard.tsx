@@ -34,12 +34,12 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
   const isConfigured = hasApiKey(provider.id);
 
   // Load current API key when card becomes active
-  useState(() => {
+  useEffect(() => {
     if (isActive) {
       const currentKey = getApiKey(provider.id);
       setApiKeyInput(currentKey || '');
     }
-  });
+  }, [isActive, provider.id]);
 
   // Load persisted model selection when card becomes active
   useEffect(() => {
