@@ -71,7 +71,7 @@
 **Milestone Goal:** Add privacy-safe PostHog telemetry with GDPR-compliant opt-in consent, and harden the test infrastructure with Vitest 4, SQL plugin mocking, and critical module coverage.
 
 - [x] **Phase 26: Infrastructure & Transport Foundation** - Upgrade Vitest to 4.x, add Rust IPC relay for PostHog, mock SQL plugin, update CSP (completed 2026-02-17)
-- [ ] **Phase 27: Telemetry Core & Consent** - Full PostHog integration with consent dialog, telemetry wrapper, core events, and consent unit tests
+- [x] **Phase 27: Telemetry Core & Consent** - Full PostHog integration with consent dialog, telemetry wrapper, core events, and consent unit tests (completed 2026-02-17)
 - [ ] **Phase 28: Test Coverage & Quality Gates** - Parser/serializer/AI module tests, 70% coverage threshold, CI workflow
 
 ## Phase Details
@@ -139,7 +139,7 @@ Phases execute in numeric order: 26 → 27 → 28
 | 18-21. v2.0 phases | v2.0 | 8/8 | Complete | 2026-02-16 |
 | 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
 | 26. Infrastructure & Transport Foundation | v2.2 | Complete    | 2026-02-17 | - |
-| 27. Telemetry Core & Consent | v2.2 | 0/TBD | Not started | - |
+| 27. Telemetry Core & Consent | v2.2 | Complete    | 2026-02-17 | - |
 | 28. Test Coverage & Quality Gates | v2.2 | 0/TBD | Not started | - |
 
 ---
