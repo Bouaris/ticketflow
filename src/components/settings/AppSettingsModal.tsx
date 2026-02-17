@@ -17,6 +17,7 @@ import { Modal } from '../ui/Modal';
 import { WhatsNewModal } from '../ui/WhatsNewModal';
 import { useTranslation, SUPPORTED_LOCALES } from '../../i18n';
 import { useTheme, type Theme } from '../../theme';
+import { getConsentState, setConsentState, initTelemetry, track } from '../../lib/telemetry';
 
 interface AppSettingsModalProps {
   isOpen: boolean;
@@ -49,6 +50,10 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
   // Theme
   const { theme, setTheme } = useTheme();
 
+  // Telemetry / Privacy
+  const [telemetryEnabled, setTelemetryEnabled] = useState(getConsentState() === 'granted');
+  const [telemetryMessage, setTelemetryMessage] = useState<string | null>(null);
+
   // Load backups when modal opens and projectPath exists
   useEffect(() => {
     if (isOpen && projectPath) {
@@ -59,6 +64,32 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
         .finally(() => setIsLoadingBackups(false));
     }
   }, [isOpen, projectPath]);
+
+  // Sync telemetry toggle with localStorage when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTelemetryEnabled(getConsentState() === 'granted');
+      setTelemetryMessage(null);
+    }
+  }, [isOpen]);
+
+  const handleTelemetryToggle = useCallback(() => {
+    const newEnabled = !telemetryEnabled;
+    setTelemetryEnabled(newEnabled);
+
+    if (newEnabled) {
+      setConsentState('granted');
+      initTelemetry();
+      track('consent_granted');
+      setTelemetryMessage(null);
+    } else {
+      // Fire consent_revoked BEFORE changing state (last event)
+      track('consent_revoked');
+      setConsentState('declined');
+      setTelemetryMessage('Telemetry disabled. No data will be sent.');
+      setTimeout(() => setTelemetryMessage(null), 4000);
+    }
+  }, [telemetryEnabled]);
 
   const handleCheckUpdates = async () => {
     setUpdateCheckMessage(null);
@@ -171,7 +202,10 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
               ]).map(opt => (
                 <button
                   key={opt.value}
-                  onClick={() => setTheme(opt.value)}
+                  onClick={() => {
+                    setTheme(opt.value);
+                    track('dark_mode_toggled', { theme: opt.value });
+                  }}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                     theme === opt.value
                       ? 'bg-accent text-white shadow-sm'
@@ -229,6 +263,32 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
                 {t.settings.changelog}
               </button>
             </div>
+          </div>
+
+          {/* Privacy / Telemetry Section */}
+          <div className="pt-4 border-t border-outline">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-medium text-on-surface-secondary">Privacy</h4>
+                <p className="text-xs text-on-surface-muted">
+                  Anonymous usage data helps improve Ticketflow.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={telemetryEnabled}
+                  onChange={handleTelemetryToggle}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-surface-alt rounded-full peer peer-checked:bg-accent peer-focus:ring-2 peer-focus:ring-accent/50 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+            {telemetryMessage && (
+              <p className="mt-2 text-xs text-on-surface-muted px-3 py-1.5 rounded bg-surface-alt">
+                {telemetryMessage}
+              </p>
+            )}
           </div>
 
           {/* Export section (Tauri only) */}
