@@ -140,7 +140,7 @@ Phases execute in numeric order: 26 → 27 → 28
 | 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
 | 26. Infrastructure & Transport Foundation | v2.2 | Complete    | 2026-02-17 | - |
 | 27. Telemetry Core & Consent | v2.2 | Complete    | 2026-02-17 | - |
-| 28. Test Coverage & Quality Gates | v2.2 | 0/TBD | Not started | - |
+| 28. Test Coverage & Quality Gates | 1/3 | In Progress|  | - |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-17 (v2.2 roadmap added — Phases 26-28)*

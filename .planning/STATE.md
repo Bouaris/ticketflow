@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2 Quality & Insights — Phase 27: Telemetry Core & Consent
+**Current focus:** v2.2 Quality & Insights — Phase 28: Test Coverage & Quality Gates
 
 ## Current Position
 
-Phase: 27 of 28 (Telemetry Core & Consent)
-Plan: 3 of 3 complete in current phase
-Status: Phase 27 COMPLETE — all 3 plans done (telemetry.ts, consent dialog, event instrumentation)
-Last activity: 2026-02-17 — Phase 27 plan 03 executed (10 events across 6 files: ProjectWorkspace, ai.ts, ai-health.ts, CommandPalette, BulkImportWizard, OnboardingWizard)
+Phase: 28 of 28 (Test Coverage & Quality Gates)
+Plan: 2 of N complete in current phase
+Status: Phase 28 in progress — plans 01 (parser tests) and 02 (ai-retry/ai-health tests) done
+Last activity: 2026-02-18 — Phase 28 plan 02 executed (ai-retry.test.ts 14 tests 79.76% coverage, ai-health.test.ts 15 tests 100% coverage, 490 tests total passing)
 
-Progress: [██████████████████████░░░░░░░░] ~95% (Phase 27 complete, Phase 28 remaining)
+Progress: [████████████████████████░░░░░░] ~97% (Phase 28 in progress, 2 plans done)
 
 ## Performance Metrics
 
@@ -65,6 +65,8 @@ Recent decisions for v2.2:
 - [27-03]: settings_opened uses 4 panel-specific wrappers (app/ai/type_config/project) for richer metadata at instrumentation points
 - [27-03]: ai_health_check_run fires at every return path in testProviderHealth (not just one point) to avoid missing events on early returns
 - [27-03]: hasApiKey(getProvider()) at onboarding_completed time determines ai_configured — simpler than tracking wizard-internal AI setup state
+- [28-02]: isAbortError mock must implement real DOMException check — ai-health.ts calls isAbortError() to classify timeouts, a mock returning false routes AbortErrors to 'unknown' instead of 'timeout'
+- [28-02]: vi.mock() hoisted at top level before all imports for Vitest module mock hoisting to work correctly in pure logic module tests
 
 ### Pending Todos
 
@@ -89,10 +91,10 @@ Recent decisions for v2.2:
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: Phase 27 Plan 03 complete — 10 events instrumented across 6 files (project_opened, ticket_created, view_switched, settings_opened, ai_generation_completed, ai_generation_failed, ai_health_check_run, command_palette_opened, bulk_import_completed, onboarding_completed); 455 tests pass, pnpm build clean
-Resume file: .planning/phases/27-telemetry-core-consent/27-03-SUMMARY.md
-Next action: /gsd:execute-phase 28 (Phase 28: Analytics Dashboard)
+Last session: 2026-02-18
+Stopped at: Phase 28 Plan 02 complete — ai-retry.test.ts (14 tests, 79.76% line coverage) and ai-health.test.ts (15 tests, 100% line coverage); TCOV-03 and TCOV-04 delivered; 490 tests pass, pnpm build clean
+Resume file: .planning/phases/28-test-coverage-quality-gates/28-02-SUMMARY.md
+Next action: /gsd:execute-phase 28 plan 03 (Phase 28: remaining coverage targets)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-17 after Phase 27 Plan 03 complete (event instrumentation — Phase 27 COMPLETE)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 28 Plan 02 complete (ai-retry + ai-health unit tests, TCOV-03/04 delivered)*

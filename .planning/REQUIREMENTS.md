@@ -29,8 +29,8 @@ Requirements for milestone v2.2 "Quality & Insights". Each maps to roadmap phase
 
 - [ ] **TCOV-01**: parser.ts has unit tests covering round-trip correctness, edge cases (fused separators, empty sections, Unicode)
 - [ ] **TCOV-02**: serializer.ts has unit tests verifying serialize(parse(md)) invariant and idempotency
-- [ ] **TCOV-03**: ai-retry.ts has unit tests for exponential backoff, retry on 429/500, no retry on 401/403
-- [ ] **TCOV-04**: ai-health.ts has unit tests for 5-type error classification (auth/rate_limit/timeout/network/unknown)
+- [x] **TCOV-03**: ai-retry.ts has unit tests for exponential backoff, retry on 429/500, no retry on 401/403
+- [x] **TCOV-04**: ai-health.ts has unit tests for 5-type error classification (auth/rate_limit/timeout/network/unknown)
 - [ ] **TCOV-05**: telemetry.ts has unit tests verifying consent gate (no-op before consent) and event firing after consent
 
 ## Future Requirements
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TINF-04 | Phase 28 | Pending |
 | TCOV-01 | Phase 28 | Pending |
 | TCOV-02 | Phase 28 | Pending |
-| TCOV-03 | Phase 28 | Pending |
-| TCOV-04 | Phase 28 | Pending |
+| TCOV-03 | Phase 28 | Complete |
+| TCOV-04 | Phase 28 | Complete |
 | TCOV-05 | Phase 27 | Pending |
 
 **Coverage:**
