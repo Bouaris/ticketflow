@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2 Quality & Insights — Phase 28: Test Coverage & Quality Gates
+**Current focus:** v2.2 Quality & Insights — Phase 28 COMPLETE (all 3 plans done)
 
 ## Current Position
 
-Phase: 28 of 28 (Test Coverage & Quality Gates)
-Plan: 2 of 3 complete in current phase
-Status: Phase 28 in progress — plans 01 (parser/serializer round-trip tests + vitest thresholds) and 02 (ai-retry/ai-health tests) done; plan 03 (final validation) remaining
-Last activity: 2026-02-18 — Phase 28 plan 01 executed (parser tests 29-32, serializer tests 26-27, per-file 70% thresholds in vitest.config.ts, html reporter removed for Windows crash fix)
+Phase: 28 of 28 (Test Coverage & Quality Gates) — COMPLETE
+Plan: 3 of 3 complete in current phase
+Status: Phase 28 complete — plan 03 (CI workflow + end-to-end validation) done; v2.2 milestone delivered
+Last activity: 2026-02-18 — Phase 28 plan 03 executed (.github/workflows/ci.yml created, all 4 coverage thresholds confirmed passing, 490 tests green)
 
-Progress: [████████████████████████░░░░░░] ~97% (Phase 28 in progress, 2/3 plans done)
+Progress: [██████████████████████████████] ~100% (Phase 28 complete, v2.2 milestone shipped)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [███████████████████████
 | v1.6 | 8 | 4 | 19/19 | Shipped 2026-02-14 |
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
-| v2.2 | TBD | 3 | 13/17 | In progress (Phase 27 complete) |
-| **Total** | **76+** | **28** | **183** | |
+| v2.2 | 9 | 3 | 17/17 | Shipped 2026-02-18 |
+| **Total** | **78+** | **28** | **183+** | |
 
 ## Accumulated Context
 
@@ -70,6 +70,8 @@ Recent decisions for v2.2:
 - [28-01]: Per-file Vitest thresholds scoped to 4 specific files (not src/lib/**) — avoids false failures on Tauri-coupled modules at 0% coverage
 - [28-01]: html reporter removed from vitest.config.ts — fixes Windows TypeError (pathe v2 input.replace) in coverage runs; text+json sufficient
 - [28-01]: ai-health.test.ts mockResolvedValue(undefined) -> mockResolvedValue('') — testProviderConnection returns Promise<string> not void
+- [Phase 28-03]: ubuntu-latest chosen over windows-latest for CI — JS tests run in jsdom, no OS-specific behavior; ubuntu sidesteps the Windows pathe crash entirely
+- [Phase 28-03]: pnpm test:coverage exit code 0 confirmed via cmd /c on Windows — bash tool stderr propagation masked true exit code; vitest exits cleanly with all 4 per-file thresholds met
 
 ### Pending Todos
 
@@ -95,9 +97,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 28 Plan 01 complete — parser.test.ts (32 tests: 4 new round-trip/Unicode/fused/empty tests), serializer.test.ts (27 tests: 2 new round-trip invariants), vitest.config.ts (html removed, per-file 70% thresholds); TCOV-01/02/TINF-04 delivered; pnpm build clean
-Resume file: .planning/phases/28-test-coverage-quality-gates/28-01-SUMMARY.md
-Next action: /gsd:execute-phase 28 plan 03 (Phase 28: final validation — pnpm test:coverage full run)
+Stopped at: Phase 28 Plan 03 complete — .github/workflows/ci.yml created (ubuntu-latest, pnpm 9, Node 20, pnpm test:coverage), all 4 coverage thresholds confirmed passing (parser 86%, serializer 94%, ai-retry 80%, ai-health 100%), 490 tests green, TINF-03 delivered; Phase 28 and v2.2 milestone COMPLETE
+Resume file: .planning/phases/28-test-coverage-quality-gates/28-03-SUMMARY.md
+Next action: (Phase 28 and v2.2 milestone complete — no further phases planned)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 28 Plan 02 complete (ai-retry + ai-health unit tests, TCOV-03/04 delivered)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 28 Plan 03 complete (CI workflow + validation, TINF-03 delivered, v2.2 milestone complete)*

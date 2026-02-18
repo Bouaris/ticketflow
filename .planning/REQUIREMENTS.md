@@ -22,7 +22,7 @@ Requirements for milestone v2.2 "Quality & Insights". Each maps to roadmap phase
 
 - [ ] **TINF-01**: Vitest upgraded from 2.x to 4.x with @vitest/coverage-v8 matching version (Vite 7 compatibility)
 - [ ] **TINF-02**: @tauri-apps/plugin-sql mocked at module level in shared test setup; all hook tests run without __TAURI_INTERNALS__ errors
-- [ ] **TINF-03**: CI workflow (GitHub Actions) runs unit tests and coverage check on every push/PR
+- [x] **TINF-03**: CI workflow (GitHub Actions) runs unit tests and coverage check on every push/PR
 - [x] **TINF-04**: Coverage threshold enforced at 70% for src/lib/ modules
 
 ### Test Coverage
@@ -82,7 +82,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TELE-08 | Phase 26 | Pending |
 | TINF-01 | Phase 26 | Pending |
 | TINF-02 | Phase 26 | Pending |
-| TINF-03 | Phase 28 | Pending |
+| TINF-03 | Phase 28 | Complete |
 | TINF-04 | Phase 28 | Complete |
 | TCOV-01 | Phase 28 | Complete |
 | TCOV-02 | Phase 28 | Complete |
