@@ -7,7 +7,7 @@
 - ✅ **v1.6 Smart Import** — Phases 14-17 (shipped 2026-02-14)
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
 - ✅ **v2.1 AI Refresh** — Phases 22-25 (shipped 2026-02-17)
-- 🚧 **v2.2 Quality & Insights** — Phases 26-29 (in progress)
+- ✅ **v2.2 Quality & Insights** — Phases 26-29 (complete 2026-02-18)
 
 ## Phases
 
@@ -73,7 +73,7 @@
 - [x] **Phase 26: Infrastructure & Transport Foundation** - Upgrade Vitest to 4.x, add Rust IPC relay for PostHog, mock SQL plugin, update CSP (completed 2026-02-17)
 - [x] **Phase 27: Telemetry Core & Consent** - Full PostHog integration with consent dialog, telemetry wrapper, core events, and consent unit tests (completed 2026-02-17)
 - [x] **Phase 28: Test Coverage & Quality Gates** - Parser/serializer/AI module tests, 70% coverage threshold, CI workflow (completed 2026-02-18)
-- [ ] **Phase 29: Gap Closure & Tech Debt Cleanup** - Fix startup_flush no-op, remove dead Rust code, update stale documentation
+- [x] **Phase 29: Gap Closure & Tech Debt Cleanup** - Fix startup_flush no-op, remove dead Rust code, update stale documentation (completed 2026-02-18)
 
 ## Phase Details
 
@@ -140,7 +140,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 29-01-PLAN.md — Fix startup_flush, remove dead BatchPayload struct, update stale documentation
+- [x] 29-01-PLAN.md — Fix startup_flush, remove dead BatchPayload struct, update stale documentation
 
 ## Progress
 
@@ -157,8 +157,8 @@ Phases execute in numeric order: 26 → 27 → 28 → 29
 | 26. Infrastructure & Transport Foundation | v2.2 | Complete    | 2026-02-17 | - |
 | 27. Telemetry Core & Consent | v2.2 | Complete    | 2026-02-17 | - |
 | 28. Test Coverage & Quality Gates | 3/3 | Complete    | 2026-02-18 | - |
-| 29. Gap Closure & Tech Debt Cleanup | v2.2 | 0/1 | Pending | - |
+| 29. Gap Closure & Tech Debt Cleanup | v2.2 | 1/1 | Complete | 2026-02-18 |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-18 (gap closure Phase 29 added — Phases 26-29)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-18 (Phase 29 plan 01 complete — startup_flush fixed, BatchPayload removed, docs updated; v2.2 fully complete)*
 *Full milestone details: .planning/milestones/*

@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2 Quality & Insights — Phase 28 COMPLETE (all 3 plans done)
+**Current focus:** v2.2 Gap Closure — Phase 29 in progress (plan 01 complete)
 
 ## Current Position
 
-Phase: 28 of 28 (Test Coverage & Quality Gates) — COMPLETE
-Plan: 3 of 3 complete in current phase
-Status: Phase 28 complete — plan 03 (CI workflow + end-to-end validation) done; v2.2 milestone delivered
-Last activity: 2026-02-18 — Phase 28 plan 03 executed (.github/workflows/ci.yml created, all 4 coverage thresholds confirmed passing, 490 tests green)
+Phase: 29 of 29 (Gap Closure & Tech Debt Cleanup) — Plan 01 complete
+Plan: 1 of 1 complete in current phase
+Status: Phase 29 plan 01 complete — startup_flush fixed with option_env! compile-time key, dead BatchPayload struct removed, 26-02-SUMMARY.md frontmatter updated
+Last activity: 2026-02-18 — Phase 29 plan 01 executed (startup_flush no-op bug fixed, BatchPayload removed, 26-02-SUMMARY requirements-completed added)
 
-Progress: [██████████████████████████████] ~100% (Phase 28 complete, v2.2 milestone shipped)
+Progress: [██████████████████████████████] ~100% (Phase 29 plan 01 complete, all v2.2 tech debt addressed)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 75 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 11, quick: 2)
+- Total plans completed: 76 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 11, v2.2-gap: 1, quick: 2)
 - Average duration: ~5.8 min per plan
 - Total execution time: ~7.5 hours
 
@@ -33,7 +33,8 @@ Progress: [███████████████████████
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
 | v2.2 | 9 | 3 | 17/17 | Shipped 2026-02-18 |
-| **Total** | **78+** | **28** | **183+** | |
+| v2.2-gap | 1 | 1 | 0/0 | Complete 2026-02-18 |
+| **Total** | **79+** | **29** | **183+** | |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions for v2.2:
 - [28-01]: ai-health.test.ts mockResolvedValue(undefined) -> mockResolvedValue('') — testProviderConnection returns Promise<string> not void
 - [Phase 28-03]: ubuntu-latest chosen over windows-latest for CI — JS tests run in jsdom, no OS-specific behavior; ubuntu sidesteps the Windows pathe crash entirely
 - [Phase 28-03]: pnpm test:coverage exit code 0 confirmed via cmd /c on Windows — bash tool stderr propagation masked true exit code; vitest exits cleanly with all 4 per-file thresholds met
+- [29-01]: option_env!("VITE_POSTHOG_KEY") is correct Rust mechanism for compile-time env vars — produces Option<&'static str>, None in dev builds, Some(key) in release builds with CI secret
+- [29-01]: startup_flush uses let-else pattern on Option<&str> for idiomatic Rust Option guard before calling flush_queue
 
 ### Pending Todos
 
@@ -97,9 +100,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 28 Plan 03 complete — .github/workflows/ci.yml created (ubuntu-latest, pnpm 9, Node 20, pnpm test:coverage), all 4 coverage thresholds confirmed passing (parser 86%, serializer 94%, ai-retry 80%, ai-health 100%), 490 tests green, TINF-03 delivered; Phase 28 and v2.2 milestone COMPLETE
-Resume file: .planning/phases/28-test-coverage-quality-gates/28-03-SUMMARY.md
-Next action: (Phase 28 and v2.2 milestone complete — no further phases planned)
+Stopped at: Phase 29 Plan 01 complete — startup_flush no-op bug fixed with option_env!(VITE_POSTHOG_KEY), dead BatchPayload struct removed, 26-02-SUMMARY.md requirements-completed frontmatter added; all v2.2 tech debt addressed
+Resume file: .planning/phases/29-gap-closure-tech-debt-cleanup/29-01-SUMMARY.md
+Next action: (Phase 29 plan 01 complete — all gap closure items resolved, no further phases planned)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 28 Plan 03 complete (CI workflow + validation, TINF-03 delivered, v2.2 milestone complete)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 29 Plan 01 complete (startup_flush fix, BatchPayload removed, docs updated)*
