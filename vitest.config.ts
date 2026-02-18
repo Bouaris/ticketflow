@@ -19,13 +19,19 @@ export default defineConfig({
     setupFiles: ['./src/test-utils/setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json'],
       include: ['src/lib/**', 'src/hooks/**', 'src/types/**', 'src/components/ui/**'],
       exclude: [
         'src/**/*.test.ts',
         'src/**/*.test.tsx',
         'src/test-utils/**',
       ],
+      thresholds: {
+        'src/lib/parser.ts': { lines: 70, functions: 70 },
+        'src/lib/serializer.ts': { lines: 70, functions: 70 },
+        'src/lib/ai-retry.ts': { lines: 70, functions: 70 },
+        'src/lib/ai-health.ts': { lines: 70, functions: 70 },
+      },
     },
   },
 });

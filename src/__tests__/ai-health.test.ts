@@ -55,7 +55,7 @@ describe('testProviderHealth — Error Classification', () => {
   });
 
   test('1. returns success with latencyMs on healthy provider', async () => {
-    vi.mocked(testProviderConnection).mockResolvedValue(undefined);
+    vi.mocked(testProviderConnection).mockResolvedValue('');
 
     const result = await testProviderHealth('groq');
 
@@ -166,7 +166,7 @@ describe('testProviderHealth — Error Classification', () => {
   });
 
   test('12. calls track() for success outcome with correct event name', async () => {
-    vi.mocked(testProviderConnection).mockResolvedValue(undefined);
+    vi.mocked(testProviderConnection).mockResolvedValue('');
 
     await testProviderHealth('groq');
 
@@ -188,7 +188,7 @@ describe('testProviderHealth — Error Classification', () => {
   });
 
   test('13. always calls clearControllerTimeout in finally block', async () => {
-    vi.mocked(testProviderConnection).mockResolvedValue(undefined);
+    vi.mocked(testProviderConnection).mockResolvedValue('');
 
     await testProviderHealth('groq');
 

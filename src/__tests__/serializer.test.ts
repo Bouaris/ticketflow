@@ -19,6 +19,7 @@ import {
   exportItemForClipboard,
   removeSectionFromMarkdown,
 } from '../lib/serializer';
+import { parseBacklog, getAllItems } from '../lib/parser';
 import type { BacklogItem, Backlog, Section, Criterion } from '../types/backlog';
 
 // ============================================================
@@ -402,5 +403,64 @@ Content here
     expect(result).toContain('[BUGS]');
     expect(result).toContain('[Légende]');
     expect(result).not.toContain('[Court Terme]');
+  });
+});
+
+// ============================================================
+// ROUND-TRIP INVARIANTS (26-27)
+// ============================================================
+
+const ROUND_TRIP_MARKDOWN = `# Test Backlog
+
+## 1. BUGS
+
+### BUG-001 | First Bug
+**Description:** A description for bug one
+
+---
+
+### BUG-002 | Second Bug
+**Description:** A description for bug two
+
+---
+
+## 2. FEATURES
+
+### CT-001 | Feature One
+**Description:** A description for feature one
+
+---
+`;
+
+describe('Round-Trip Invariants', () => {
+  test('26. serialize(parse(md)) produces valid markdown that re-parses identically', () => {
+    const parsed = parseBacklog(ROUND_TRIP_MARKDOWN);
+    const serialized = serializeBacklog(parsed);
+    const reparsed = parseBacklog(serialized);
+
+    // Section count must be preserved
+    expect(reparsed.sections.length).toBe(parsed.sections.length);
+
+    // Item IDs must match
+    const ids1 = getAllItems(parsed).map(i => i.id);
+    const ids2 = getAllItems(reparsed).map(i => i.id);
+    expect(ids2).toEqual(ids1);
+  });
+
+  test('27. parse(serialize(parse(md))) idempotency — item data is stable across cycles', () => {
+    const parsed = parseBacklog(ROUND_TRIP_MARKDOWN);
+    const serialized = serializeBacklog(parsed);
+    const reparsed = parseBacklog(serialized);
+
+    const items1 = getAllItems(parsed);
+    const items2 = getAllItems(reparsed);
+
+    // Data must be stable: id, type, title must match for each item
+    expect(items2.length).toBe(items1.length);
+    for (let i = 0; i < items1.length; i++) {
+      expect(items2[i].id).toBe(items1[i].id);
+      expect(items2[i].type).toBe(items1[i].type);
+      expect(items2[i].title).toBe(items1[i].title);
+    }
   });
 });
