@@ -157,7 +157,7 @@ Phases execute in numeric order: 26 → 27 → 28 → 29
 | 26. Infrastructure & Transport Foundation | v2.2 | Complete    | 2026-02-17 | - |
 | 27. Telemetry Core & Consent | v2.2 | Complete    | 2026-02-17 | - |
 | 28. Test Coverage & Quality Gates | 3/3 | Complete    | 2026-02-18 | - |
-| 29. Gap Closure & Tech Debt Cleanup | v2.2 | 1/1 | Complete | 2026-02-18 |
+| 29. Gap Closure & Tech Debt Cleanup | v2.2 | Complete    | 2026-02-18 | 2026-02-18 |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-18 (Phase 29 plan 01 complete — startup_flush fixed, BatchPayload removed, docs updated; v2.2 fully complete)*
