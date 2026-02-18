@@ -13,6 +13,7 @@ TicketFlow is a local-first desktop app that turns your chaotic brain dumps into
 ![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+[![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
 
 ## Why TicketFlow?
 
@@ -186,6 +187,10 @@ ticketflow/
 └── public/                # Static assets
 ```
 
+## Built with GSD
+
+TicketFlow's development is powered by [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done) — a framework for shipping software with AI. GSD's `.planning/` project files (roadmap, phases, requirements) feed directly into TicketFlow's AI ticket generation, giving maximum project-aware context for every generated ticket.
+
 ## Contributing
 
 Contributions are welcome. Open an issue or submit a PR.
@@ -200,4 +205,4 @@ MIT © 2026 Bouaris — see [LICENSE](LICENSE)
 
 ---
 
-**Built with [Claude Code](https://claude.ai/claude-code)**
+**Built with [Claude Code](https://claude.ai/claude-code) and [GSD](https://github.com/gsd-build/get-shit-done)**

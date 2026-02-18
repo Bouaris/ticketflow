@@ -17,10 +17,10 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 ### Performance Profiling
 
-- [ ] **PERF-01**: CRUD operation latency benchmarked at 100/500/1000 ticket scale with documented results
-- [ ] **PERF-02**: UI rendering performance validated (list/kanban views remain responsive at 1000+ items)
-- [ ] **PERF-03**: Memory usage profiled and peak consumption documented under sustained load
-- [ ] **PERF-04**: Performance bottlenecks identified and documented as prioritized backlog items
+- [x] **PERF-01**: CRUD operation latency benchmarked at 100/500/1000 ticket scale with documented results
+- [x] **PERF-02**: UI rendering performance validated (list/kanban views remain responsive at 1000+ items)
+- [x] **PERF-03**: Memory usage profiled and peak consumption documented under sustained load
+- [x] **PERF-04**: Performance bottlenecks identified and documented as prioritized backlog items
 
 ### Code Audit
 
@@ -28,7 +28,7 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 - [x] **AUDIT-02**: Anti-patterns and code smells documented with severity classification
 - [x] **AUDIT-03**: Security delta review against OWASP Top 10 since v2.0 audit
 - [x] **AUDIT-04**: Dependency audit (outdated packages, known vulnerabilities, license compliance)
-- [ ] **AUDIT-05**: All findings compiled into prioritized issue list with fix recommendations
+- [x] **AUDIT-05**: All findings compiled into prioritized issue list with fix recommendations
 
 ### README Showcase
 
@@ -70,15 +70,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRESS-03 | Phase 30 | Complete |
 | STRESS-04 | Phase 30 | Complete |
 | STRESS-05 | Phase 30 | Complete |
-| PERF-01 | Phase 30 | Pending |
-| PERF-02 | Phase 30 | Pending |
-| PERF-03 | Phase 30 | Pending |
-| PERF-04 | Phase 30 | Pending |
+| PERF-01 | Phase 30 | Complete |
+| PERF-02 | Phase 30 | Complete |
+| PERF-03 | Phase 30 | Complete |
+| PERF-04 | Phase 30 | Complete |
 | AUDIT-01 | Phase 31 | Complete |
 | AUDIT-02 | Phase 31 | Complete |
 | AUDIT-03 | Phase 31 | Complete |
 | AUDIT-04 | Phase 31 | Complete |
-| AUDIT-05 | Phase 31 | Pending |
+| AUDIT-05 | Phase 31 | Complete |
 | SHOW-01 | Phase 32 | Pending |
 | SHOW-02 | Phase 32 | Pending |
 | SHOW-03 | Phase 32 | Pending |

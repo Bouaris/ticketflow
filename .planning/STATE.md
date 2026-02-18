@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2.1 "Battle-Ready" — Phase 31: Code Audit & Security Review
+**Current focus:** v2.2.1 "Battle-Ready" — Phase 32: Release Preparation (next)
 
 ## Current Position
 
-Phase: 31 of 32 (Code Audit & Security Review)
-Plan: 2 of 3 in current phase
-Status: Executing plans
-Last activity: 2026-02-18 — Completed 31-02 (OWASP delta review: 8 PASS, 2 NEEDS ATTENTION; cargo audit: 4 vulns; npm audit: 2 moderate dev-only)
+Phase: 31 of 32 (Code Audit & Security Review) — COMPLETE
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Phase 31 complete — all 3 plans done, AUDIT-REPORT.md delivered
+Last activity: 2026-02-18 — Completed 31-03 (AUDIT-REPORT.md: 44 findings, 0 P1, 7 P2, 24 P3, 13 P4; Phase 31 complete)
 
 Progress: [██████████████████████░░░] 85% (milestones v1.0–v2.2 complete)
 
@@ -33,8 +33,8 @@ Progress: [██████████████████████░
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
 | v2.2 | 10 | 4 | 17/17 | Shipped 2026-02-18 |
-| v2.2.1 | 2 | 3 | 5/18 | In progress |
-| **Total** | **84+** | **32** | **200+** | |
+| v2.2.1 | 3 | 3 | 18/18 | In progress |
+| **Total** | **89+** | **32** | **200+** | |
 
 ## Accumulated Context
 
@@ -58,6 +58,10 @@ Recent decisions affecting v2.2.1:
 - [Phase 31-02]: CI actions tag-pinned not SHA-pinned — improvement opportunity, low urgency for personal OSS
 - [Phase 31-02]: devtools: true always enabled — pre-existing accepted risk for BYOK desktop app
 - [Phase 31-02]: 4 Cargo vulns (bytes/rkyv/rsa/time) all transitive via Tauri — await upstream resolution
+- [Phase 30-stress-testing-performance]: test.each([100,500,1000]) for CRUD benchmarks — parametrizes cleanly without duplication
+- [Phase 30-stress-testing-performance]: PERF-REPORT.md bottlenecks: sequential bulk inserts (High), FTS5 rebuild on schema init (Medium), dbItemToBacklogItem JSON parse overhead (Medium)
+- [Phase 31]: No P1 (Critical) findings in v2.2 audit — no exploitable security vulnerabilities or data loss risks
+- [Phase 31]: AUDIT-REPORT.md at project root consolidates 44 prioritized findings: 7 P2 (immediate), 24 P3 (next sprint/backlog), 13 P4 (low)
 
 ### Pending Todos
 
@@ -85,9 +89,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed plan 31-02 (OWASP delta review + dependency audit)
-Resume file: .planning/phases/31-code-audit-security-review/31-02-SUMMARY.md
-Next action: Execute plan 31-03 (audit consolidation — final AUDIT-REPORT.md)
+Stopped at: Completed plan 31-03 (audit consolidation — AUDIT-REPORT.md at project root, Phase 31 complete)
+Resume file: .planning/phases/31-code-audit-security-review/31-03-SUMMARY.md
+Next action: Execute Phase 32 (Release Preparation — v2.2.1 tag)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after plan 31-02 completion*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after plan 31-03 completion (Phase 31 complete)*

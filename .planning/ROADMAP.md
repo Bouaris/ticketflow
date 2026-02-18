@@ -81,8 +81,8 @@
 
 **Milestone Goal:** Stress-test every critical path, characterize performance under load, audit the codebase for hidden issues, and polish the public-facing README with visual showcase content.
 
-- [ ] **Phase 30: Stress Testing & Performance** - Prove the database and UI hold up under 1000+ ticket load with documented latency and memory profiles
-- [ ] **Phase 31: Code Audit & Security Review** - Sweep the codebase for dead code, anti-patterns, and security drift since v2.0; compile prioritized findings
+- [x] **Phase 30: Stress Testing & Performance** - Prove the database and UI hold up under 1000+ ticket load with documented latency and memory profiles (completed 2026-02-18)
+- [x] **Phase 31: Code Audit & Security Review** - Sweep the codebase for dead code, anti-patterns, and security drift since v2.0; compile prioritized findings (completed 2026-02-18)
 - [ ] **Phase 32: README Showcase** - Publish light mode screenshot, animated workflow GIFs, and GSD attribution to the public repo
 
 ## Phase Details
@@ -128,7 +128,10 @@ Plans:
   2. At least 3 animated GIFs are embedded, each demonstrating one key workflow: AI generation, bulk import, and command palette
   3. README contains a "Built with GSD" section with a link to github.com/gsd-build/get-shit-done
   4. README media gallery shows multiple app views including the item editor, AI chat panel, and settings
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 32-01-PLAN.md — GSD attribution (badge + section) and media asset capture
+- [ ] 32-02-PLAN.md — README restructure with hero, GIF section, and media gallery
 
 ## Progress
 
@@ -140,9 +143,9 @@ Plans:
 | 18-21. v2.0 phases | v2.0 | 8/8 | Complete | 2026-02-16 |
 | 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
 | 26-29. v2.2 phases | v2.2 | 10/10 | Complete | 2026-02-18 |
-| 30. Stress Testing & Performance | 2/3 | In Progress|  | - |
-| 31. Code Audit & Security Review | 2/3 | In Progress|  | - |
-| 32. README Showcase | v2.2.1 | 0/TBD | Not started | - |
+| 30. Stress Testing & Performance | 3/3 | Complete   | 2026-02-18 | - |
+| 31. Code Audit & Security Review | 3/3 | Complete    | 2026-02-18 | - |
+| 32. README Showcase | v2.2.1 | 0/2 | Planned | - |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-18 (31-01 complete: dead code + anti-pattern audit, 29 findings)*
