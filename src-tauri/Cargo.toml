@@ -1,6 +1,6 @@
 [package]
 name = "ticketflow"
-version = "1.6.0"
+version = "2.2.0"
 description = "Application de gestion de backlog produit avec génération IA"
 authors = ["Boris"]
 license = "MIT"
