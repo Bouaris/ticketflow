@@ -15,6 +15,10 @@ TicketFlow is a local-first desktop app that turns your chaotic brain dumps into
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
 
+<div align="center">
+  <img src="./assets/screenshot-light.png" alt="TicketFlow — Kanban board with AI-generated tickets" width="80%">
+</div>
+
 ## Why TicketFlow?
 
 Before TicketFlow, my workflow looked like this:
@@ -79,15 +83,22 @@ One place. Every idea captured, organized, contextualized with your project, and
 - **Auto-update** — Get notified when a new version is available
 - **System tray** — Minimize to tray
 
-## Screenshots
+## See it in action
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/screenshot-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/screenshot-light.png">
-  <img alt="TicketFlow Kanban board" src="./assets/screenshot-light.png" width="800">
-</picture>
+### AI Ticket Generation
+> Describe your idea, click generate — AI fills in every field.
 
-> Kanban board with drag-and-drop, AI-generated tickets, and dark mode support.
+<img src="./assets/gif-ai-generation.gif" alt="AI generates a complete ticket from a brief description" width="80%">
+
+### Bulk Import
+> Paste raw text, AI structures it into tickets — confirm and import.
+
+<img src="./assets/gif-bulk-import.gif" alt="Bulk import: paste text, AI extracts tickets" width="80%">
+
+### Drag & Drop Kanban
+> Move tickets between columns with smooth drag-and-drop.
+
+<img src="./assets/gif-drag-drop.gif" alt="Drag and drop tickets across Kanban columns" width="80%">
 
 ## Installation
 
