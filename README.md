@@ -2,9 +2,9 @@
 
 # TicketFlow
 
-**Stop scattering your ideas across .txt files, Discord messages, and mental post-its.**
+A local-first desktop app that turns your chaotic brain dumps into organized, AI-powered tickets — ready to feed to your coding CLI.
 
-TicketFlow is a local-first desktop app that turns your chaotic brain dumps into organized, AI-powered tickets — ready to feed to your coding CLI.
+**Stop scattering your ideas across .txt files, Discord messages, and mental post-its.**
 
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -17,9 +17,13 @@ TicketFlow is a local-first desktop app that turns your chaotic brain dumps into
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
 
+<br>
+
 <img src="./assets/screenshot-light.png" alt="TicketFlow — Kanban board with AI-generated tickets" width="80%">
 
 </div>
+
+---
 
 ## Why TicketFlow?
 
