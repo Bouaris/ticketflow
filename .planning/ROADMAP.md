@@ -125,7 +125,7 @@ Plans:
 **Requirements**: SHOW-01, SHOW-02, SHOW-03, SHOW-04
 **Success Criteria** (what must be TRUE):
   1. README displays a light mode screenshot alongside the existing dark mode screenshot
-  2. At least 3 animated GIFs are embedded, each demonstrating one key workflow: AI generation, bulk import, and command palette
+  2. At least 3 animated GIFs are embedded, each demonstrating one key workflow: AI generation, bulk import, and drag-and-drop Kanban
   3. README contains a "Built with GSD" section with a link to github.com/gsd-build/get-shit-done
   4. README media gallery shows multiple app views including the item editor, AI chat panel, and settings
 **Plans**: 2 plans
@@ -143,7 +143,7 @@ Plans:
 | 18-21. v2.0 phases | v2.0 | 8/8 | Complete | 2026-02-16 |
 | 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
 | 26-29. v2.2 phases | v2.2 | 10/10 | Complete | 2026-02-18 |
-| 30. Stress Testing & Performance | 3/3 | Complete   | 2026-02-18 | - |
+| 30. Stress Testing & Performance | 3/3 | Complete    | 2026-02-18 | - |
 | 31. Code Audit & Security Review | 3/3 | Complete    | 2026-02-18 | - |
 | 32. README Showcase | v2.2.1 | 0/2 | Planned | - |
 

@@ -490,6 +490,10 @@ export interface Translations {
     errorEmpty: string;
     errorNoText: string;
     errorFailed: string;
+    // Fallback (AI-free basic import)
+    fallbackButton: string;
+    fallbackHint: string;
+    fallbackReviewDescription: string;
     // Action buttons
     extract: string;
     back: string;

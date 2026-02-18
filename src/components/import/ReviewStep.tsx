@@ -24,6 +24,7 @@ interface ReviewStepProps {
   selected: Set<string>;
   editedFields: Map<string, Partial<BulkProposal>>;
   typeConfigs: TypeDefinition[];
+  isFallbackMode?: boolean;
   onToggleSelect: (tempId: string) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
@@ -59,6 +60,7 @@ export function ReviewStep({
   selected,
   editedFields,
   typeConfigs,
+  isFallbackMode,
   onToggleSelect,
   onSelectAll,
   onDeselectAll,
@@ -112,7 +114,9 @@ export function ReviewStep({
             {t.bulkImport.reviewTitle}
           </h3>
           <p className="text-sm text-on-surface-muted">
-            {t.bulkImport.reviewDescription.replace('{count}', String(proposals.length))}
+            {isFallbackMode
+              ? t.bulkImport.fallbackReviewDescription.replace('{count}', String(proposals.length))
+              : t.bulkImport.reviewDescription.replace('{count}', String(proposals.length))}
           </p>
         </div>
         <div className="flex items-center gap-3">

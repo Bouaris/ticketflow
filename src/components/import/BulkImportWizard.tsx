@@ -94,6 +94,7 @@ export function BulkImportWizard({
   const [isCreating, setIsCreating] = useState(false);
   const [createdCount, setCreatedCount] = useState(0);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
+  const [isFallbackMode, setIsFallbackMode] = useState(false);
   const abortRef = useRef(false);
   const creatingRef = useRef(false);
 
@@ -121,6 +122,7 @@ export function BulkImportWizard({
       setIsCreating(false);
       setCreatedCount(0);
       setBulkProgress(null);
+      setIsFallbackMode(false);
       abortRef.current = false;
       creatingRef.current = false;
     }
@@ -186,6 +188,47 @@ export function BulkImportWizard({
     setIsProcessing(false);
     setStep('input');
   }, []);
+
+  /**
+   * Fallback: create basic proposals from raw text lines (no AI).
+   * Each non-empty line becomes a ticket with just a title.
+   * Uses the first available type as the default suggestedType.
+   */
+  const handleFallbackImport = useCallback(() => {
+    if (!rawText.trim()) return;
+
+    const defaultType = typeConfigs.length > 0 ? typeConfigs[0].id : 'CT';
+    const lines = rawText
+      .split('\n')
+      .map(line => line.replace(/^[\s]*[-*\u2022]\s*/, '').replace(/^[\s]*\d+[.)]\s*/, '').trim())
+      .filter(line => line.length > 0);
+
+    if (lines.length === 0) return;
+
+    const basicProposals: BulkProposal[] = lines.map((line, index) => ({
+      tempId: `TEMP-${String(index + 1).padStart(3, '0')}`,
+      title: line,
+      description: undefined,
+      userStory: undefined,
+      specs: [],
+      criteria: [],
+      suggestedType: defaultType,
+      suggestedPriority: null,
+      suggestedSeverity: null,
+      suggestedEffort: null,
+      suggestedModule: null,
+      emoji: null,
+      dependencies: [],
+      constraints: [],
+    }));
+
+    setProposals(basicProposals);
+    setSelected(new Set(basicProposals.map(p => p.tempId)));
+    setIsFallbackMode(true);
+    setError(null);
+    setStep('review');
+    track('bulk_import_fallback', { items_count: basicProposals.length });
+  }, [rawText, typeConfigs]);
 
   const handleConfirm = useCallback(async () => {
     if (creatingRef.current) return;
@@ -320,17 +363,33 @@ export function BulkImportWizard({
         ))}
       </div>
 
-      {/* Error banner */}
+      {/* Error banner with fallback option */}
       {error && (
-        <div className="mb-4 p-3 bg-danger/10 border border-danger/30 rounded-lg flex items-start gap-2">
-          <span className="text-sm text-danger flex-1">{error}</span>
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            className="p-0.5 text-danger/70 hover:text-danger"
-          >
-            <CloseIcon className="w-4 h-4" />
-          </button>
+        <div className="mb-4 p-3 bg-danger/10 border border-danger/30 rounded-lg space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-sm text-danger flex-1">{error}</span>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="p-0.5 text-danger/70 hover:text-danger flex-shrink-0"
+            >
+              <CloseIcon className="w-4 h-4" />
+            </button>
+          </div>
+          {step === 'input' && rawText.trim() && (
+            <div className="flex items-center gap-3 pt-1 border-t border-danger/20">
+              <button
+                type="button"
+                onClick={handleFallbackImport}
+                className="px-3 py-1.5 bg-surface border border-outline rounded-lg text-sm font-medium text-on-surface hover:bg-surface-alt transition-colors"
+              >
+                {t.bulkImport.fallbackButton}
+              </button>
+              <span className="text-xs text-on-surface-muted">
+                {t.bulkImport.fallbackHint}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -358,6 +417,7 @@ export function BulkImportWizard({
           selected={selected}
           editedFields={editedFields}
           typeConfigs={typeConfigs}
+          isFallbackMode={isFallbackMode}
           onToggleSelect={handleToggleSelect}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
