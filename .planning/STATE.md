@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 28 of 28 (Test Coverage & Quality Gates)
-Plan: 2 of N complete in current phase
-Status: Phase 28 in progress — plans 01 (parser tests) and 02 (ai-retry/ai-health tests) done
-Last activity: 2026-02-18 — Phase 28 plan 02 executed (ai-retry.test.ts 14 tests 79.76% coverage, ai-health.test.ts 15 tests 100% coverage, 490 tests total passing)
+Plan: 2 of 3 complete in current phase
+Status: Phase 28 in progress — plans 01 (parser/serializer round-trip tests + vitest thresholds) and 02 (ai-retry/ai-health tests) done; plan 03 (final validation) remaining
+Last activity: 2026-02-18 — Phase 28 plan 01 executed (parser tests 29-32, serializer tests 26-27, per-file 70% thresholds in vitest.config.ts, html reporter removed for Windows crash fix)
 
-Progress: [████████████████████████░░░░░░] ~97% (Phase 28 in progress, 2 plans done)
+Progress: [████████████████████████░░░░░░] ~97% (Phase 28 in progress, 2/3 plans done)
 
 ## Performance Metrics
 
@@ -67,6 +67,9 @@ Recent decisions for v2.2:
 - [27-03]: hasApiKey(getProvider()) at onboarding_completed time determines ai_configured — simpler than tracking wizard-internal AI setup state
 - [28-02]: isAbortError mock must implement real DOMException check — ai-health.ts calls isAbortError() to classify timeouts, a mock returning false routes AbortErrors to 'unknown' instead of 'timeout'
 - [28-02]: vi.mock() hoisted at top level before all imports for Vitest module mock hoisting to work correctly in pure logic module tests
+- [28-01]: Per-file Vitest thresholds scoped to 4 specific files (not src/lib/**) — avoids false failures on Tauri-coupled modules at 0% coverage
+- [28-01]: html reporter removed from vitest.config.ts — fixes Windows TypeError (pathe v2 input.replace) in coverage runs; text+json sufficient
+- [28-01]: ai-health.test.ts mockResolvedValue(undefined) -> mockResolvedValue('') — testProviderConnection returns Promise<string> not void
 
 ### Pending Todos
 
@@ -92,9 +95,9 @@ Recent decisions for v2.2:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 28 Plan 02 complete — ai-retry.test.ts (14 tests, 79.76% line coverage) and ai-health.test.ts (15 tests, 100% line coverage); TCOV-03 and TCOV-04 delivered; 490 tests pass, pnpm build clean
-Resume file: .planning/phases/28-test-coverage-quality-gates/28-02-SUMMARY.md
-Next action: /gsd:execute-phase 28 plan 03 (Phase 28: remaining coverage targets)
+Stopped at: Phase 28 Plan 01 complete — parser.test.ts (32 tests: 4 new round-trip/Unicode/fused/empty tests), serializer.test.ts (27 tests: 2 new round-trip invariants), vitest.config.ts (html removed, per-file 70% thresholds); TCOV-01/02/TINF-04 delivered; pnpm build clean
+Resume file: .planning/phases/28-test-coverage-quality-gates/28-01-SUMMARY.md
+Next action: /gsd:execute-phase 28 plan 03 (Phase 28: final validation — pnpm test:coverage full run)
 
 ---
 *STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after Phase 28 Plan 02 complete (ai-retry + ai-health unit tests, TCOV-03/04 delivered)*

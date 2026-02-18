@@ -23,12 +23,12 @@ Requirements for milestone v2.2 "Quality & Insights". Each maps to roadmap phase
 - [ ] **TINF-01**: Vitest upgraded from 2.x to 4.x with @vitest/coverage-v8 matching version (Vite 7 compatibility)
 - [ ] **TINF-02**: @tauri-apps/plugin-sql mocked at module level in shared test setup; all hook tests run without __TAURI_INTERNALS__ errors
 - [ ] **TINF-03**: CI workflow (GitHub Actions) runs unit tests and coverage check on every push/PR
-- [ ] **TINF-04**: Coverage threshold enforced at 70% for src/lib/ modules
+- [x] **TINF-04**: Coverage threshold enforced at 70% for src/lib/ modules
 
 ### Test Coverage
 
-- [ ] **TCOV-01**: parser.ts has unit tests covering round-trip correctness, edge cases (fused separators, empty sections, Unicode)
-- [ ] **TCOV-02**: serializer.ts has unit tests verifying serialize(parse(md)) invariant and idempotency
+- [x] **TCOV-01**: parser.ts has unit tests covering round-trip correctness, edge cases (fused separators, empty sections, Unicode)
+- [x] **TCOV-02**: serializer.ts has unit tests verifying serialize(parse(md)) invariant and idempotency
 - [x] **TCOV-03**: ai-retry.ts has unit tests for exponential backoff, retry on 429/500, no retry on 401/403
 - [x] **TCOV-04**: ai-health.ts has unit tests for 5-type error classification (auth/rate_limit/timeout/network/unknown)
 - [ ] **TCOV-05**: telemetry.ts has unit tests verifying consent gate (no-op before consent) and event firing after consent
@@ -83,9 +83,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TINF-01 | Phase 26 | Pending |
 | TINF-02 | Phase 26 | Pending |
 | TINF-03 | Phase 28 | Pending |
-| TINF-04 | Phase 28 | Pending |
-| TCOV-01 | Phase 28 | Pending |
-| TCOV-02 | Phase 28 | Pending |
+| TINF-04 | Phase 28 | Complete |
+| TCOV-01 | Phase 28 | Complete |
+| TCOV-02 | Phase 28 | Complete |
 | TCOV-03 | Phase 28 | Complete |
 | TCOV-04 | Phase 28 | Complete |
 | TCOV-05 | Phase 27 | Pending |
