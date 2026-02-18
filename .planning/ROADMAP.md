@@ -83,7 +83,7 @@
 
 - [x] **Phase 30: Stress Testing & Performance** - Prove the database and UI hold up under 1000+ ticket load with documented latency and memory profiles (completed 2026-02-18)
 - [x] **Phase 31: Code Audit & Security Review** - Sweep the codebase for dead code, anti-patterns, and security drift since v2.0; compile prioritized findings (completed 2026-02-18)
-- [ ] **Phase 32: README Showcase** - Publish light mode screenshot, animated workflow GIFs, and GSD attribution to the public repo
+- [x] **Phase 32: README Showcase** - Publish light mode screenshot, animated workflow GIFs, and GSD attribution to the public repo (completed 2026-02-18)
 
 ## Phase Details
 
@@ -145,7 +145,7 @@ Plans:
 | 26-29. v2.2 phases | v2.2 | 10/10 | Complete | 2026-02-18 |
 | 30. Stress Testing & Performance | 3/3 | Complete    | 2026-02-18 | - |
 | 31. Code Audit & Security Review | 3/3 | Complete    | 2026-02-18 | - |
-| 32. README Showcase | 1/2 | In Progress|  | - |
+| 32. README Showcase | 2/2 | Complete   | 2026-02-18 | - |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-18 (31-01 complete: dead code + anti-pattern audit, 29 findings)*

@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 31 of 32 (Code Audit & Security Review) — COMPLETE
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Phase 31 complete — all 3 plans done, AUDIT-REPORT.md delivered
-Last activity: 2026-02-18 — Completed 31-03 (AUDIT-REPORT.md: 44 findings, 0 P1, 7 P2, 24 P3, 13 P4; Phase 31 complete)
+Phase: 32 of 32 (README Showcase) — IN PROGRESS
+Plan: 2 of 2 in current phase — COMPLETE
+Status: Phase 32 plan 02 complete — hero image, GIF section, media gallery added to README
+Last activity: 2026-02-18 — Completed 32-02 (README restructured: hero screenshot, 3 GIFs, 3x2 gallery; Phase 32 complete)
 
 Progress: [██████████████████████░░░] 85% (milestones v1.0–v2.2 complete)
 
@@ -62,6 +62,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 30-stress-testing-performance]: PERF-REPORT.md bottlenecks: sequential bulk inserts (High), FTS5 rebuild on schema init (Medium), dbItemToBacklogItem JSON parse overhead (Medium)
 - [Phase 31]: No P1 (Critical) findings in v2.2 audit — no exploitable security vulnerabilities or data loss risks
 - [Phase 31]: AUDIT-REPORT.md at project root consolidates 44 prioritized findings: 7 P2 (immediate), 24 P3 (next sprint/backlog), 13 P4 (low)
+- [Phase 32-02]: 3x2 gallery table used instead of planned 2x2 — all 6 available assets included; gallery-ai-chat.png does not exist, replaced by gallery-bulkimport.png and gallery-gsd-integration.png
+- [Phase 32-02]: Light mode screenshot as hero image, dark mode screenshot placed in gallery section bottom-right
 
 ### Pending Todos
 
@@ -89,9 +91,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed plan 31-03 (audit consolidation — AUDIT-REPORT.md at project root, Phase 31 complete)
-Resume file: .planning/phases/31-code-audit-security-review/31-03-SUMMARY.md
-Next action: Execute Phase 32 (Release Preparation — v2.2.1 tag)
+Stopped at: Completed plan 32-02 (README visual showcase — hero, GIFs, gallery; Phase 32 complete)
+Resume file: .planning/phases/32-readme-showcase/32-02-SUMMARY.md
+Next action: Create v2.2.1 release tag (all phases complete)
 
 ---
 *STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after plan 31-03 completion (Phase 31 complete)*

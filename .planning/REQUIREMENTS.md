@@ -32,10 +32,10 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 ### README Showcase
 
-- [ ] **SHOW-01**: README updated with light mode screenshot alongside existing dark mode
-- [ ] **SHOW-02**: At least 3 animated GIFs demonstrating key workflows (AI generation, bulk import, command palette)
+- [x] **SHOW-01**: README updated with light mode screenshot alongside existing dark mode
+- [x] **SHOW-02**: At least 3 animated GIFs demonstrating key workflows (AI generation, bulk import, command palette)
 - [ ] **SHOW-03**: README includes "Built with GSD" section linking to github.com/gsd-build/get-shit-done
-- [ ] **SHOW-04**: README media gallery refreshed with multiple app views (editor, AI chat, settings)
+- [x] **SHOW-04**: README media gallery refreshed with multiple app views (editor, AI chat, settings)
 
 ## Future Requirements
 
@@ -79,10 +79,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIT-03 | Phase 31 | Complete |
 | AUDIT-04 | Phase 31 | Complete |
 | AUDIT-05 | Phase 31 | Complete |
-| SHOW-01 | Phase 32 | Pending |
-| SHOW-02 | Phase 32 | Pending |
+| SHOW-01 | Phase 32 | Complete |
+| SHOW-02 | Phase 32 | Complete |
 | SHOW-03 | Phase 32 | Pending |
-| SHOW-04 | Phase 32 | Pending |
+| SHOW-04 | Phase 32 | Complete |
 
 **Coverage:**
 - v2.2.1 requirements: 18 total
