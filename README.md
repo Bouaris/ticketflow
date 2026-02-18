@@ -100,6 +100,41 @@ One place. Every idea captured, organized, contextualized with your project, and
 
 <img src="./assets/gif-drag-drop.gif" alt="Drag and drop tickets across Kanban columns" width="80%">
 
+## Gallery
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/gallery-editor.png" alt="AI creation modal with generated ticket fields" width="100%">
+      <br><em>AI Ticket Creation</em>
+    </td>
+    <td align="center">
+      <img src="./assets/gallery-ai-settings.png" alt="AI Settings with provider configuration" width="100%">
+      <br><em>AI Settings</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./assets/gallery-settings.png" alt="General Settings panel" width="100%">
+      <br><em>General Settings</em>
+    </td>
+    <td align="center">
+      <img src="./assets/gallery-bulkimport.png" alt="Bulk Import wizard" width="100%">
+      <br><em>Bulk Import</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./assets/gallery-gsd-integration.png" alt="GSD Integration settings" width="100%">
+      <br><em>GSD Integration</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshot-dark.png" alt="TicketFlow in dark mode" width="100%">
+      <br><em>Dark Mode</em>
+    </td>
+  </tr>
+</table>
+
 ## Installation
 
 ### Download (Recommended)
