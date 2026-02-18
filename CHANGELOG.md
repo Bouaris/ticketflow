@@ -4,6 +4,67 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.2.0] - 2026-02-18
+
+> **"Quality & Insights"** — Test infrastructure, telemetry, and CI pipeline.
+
+### Added — Telemetry & Privacy
+- **PostHog telemetry** with full GDPR consent flow (ConsentDialog, settings toggle, 15 instrumented events)
+- **Rust IPC relay** for telemetry (ph_send_batch, SQLite offline queue, startup_flush on app launch)
+- **PRIVACY.md** documenting all data collection practices and user rights
+
+### Added — Test Infrastructure
+- **Vitest 4.x** test infrastructure with Tauri IPC mocks (setupTauriMocks)
+- **490+ unit tests** across 22 files: parser 86%, serializer 94%, ai-retry 80%, ai-health 100%
+- **GitHub Actions CI workflow** — automated tests + coverage on every push/PR to master
+- **Per-file coverage thresholds** at 70% on all critical modules
+
+### Fixed
+- **startup_flush timing** — Rust telemetry relay now correctly flushes queued events on app startup
+
+### Removed
+- Dead code: `BatchPayload` type, unused imports across telemetry modules
+
+## [2.1.0] - 2026-02-17
+
+> **"AI Refresh"** — Full AI provider registry overhaul with custom endpoint support.
+
+### Added — AI Provider Registry
+- **Provider Registry SSOT** (`ai-provider-registry.ts`) with built-in providers + full CRUD for custom providers
+- **Custom OpenAI-compatible providers** — add Ollama, LM Studio, or any OpenAI-compatible endpoint
+- **Settings split** — App Settings (language, theme, updates, backups) and AI Settings (providers, keys, models) as separate modals
+- **Provider health check** — 5-type error classification (auth, rate_limit, timeout, network, unknown)
+- **AbortSignal cancellation** for AI generation with visible cancel button
+- **Generation progress UX** — per-step status indicators during AI generation
+- **Model resolution** with 3-tier fallback (persisted preference > registry default > hardcoded)
+- **Model selector dropdown** per provider in AI settings
+
+### Fixed
+- `resolveModelForProvider()` missing function (gap closure)
+
+### Changed
+- **CSP** updated with `https:` scheme-source to support custom AI provider endpoints
+
+## [2.0.0] - 2026-02-16
+
+> **"Public Release"** — Open-source release with clean history, signed binaries, and CI/CD.
+
+### Added
+- **Fresh git repository** with clean history (zero leaked secrets, gitleaks audit passed)
+- **MIT License**
+- **SECURITY.md** — OWASP Desktop Top 10 compliance, CSP documentation, key storage transparency
+- **README.md** — Full feature documentation for public OSS release
+- **Signed release binaries** (Ed25519 minisign) — all releases signed for auto-updater verification
+- **GitHub Actions CI/CD** — automated release pipeline with `tauri-action` for Windows `.exe`/`.msi`
+- **Auto-updater** with signature verification via `latest.json` endpoint
+
+### Changed
+- **Signing key rotated** (breaking change from v1.x — users on v1.x must manually reinstall to receive v2.x updates)
+
+### Security
+- ✅ Zero secrets in source code (gitleaks audit)
+- ✅ Zero high/critical vulnerabilities (pnpm audit)
+
 ## [1.6.0] - 2026-02-14
 
 > **Repository Migration:** Git history was reset at v1.6.0 for security and hygiene.

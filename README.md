@@ -10,7 +10,7 @@ TicketFlow is a local-first desktop app that turns your chaotic brain dumps into
 ![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -51,6 +51,8 @@ One place. Every idea captured, organized, contextualized with your project, and
 - **AI chat panel** (Ctrl+J) — Ask questions about your backlog, get proactive suggestions
 - **Screenshot vision** — Paste a screenshot, AI analyzes it (Gemini/OpenAI)
 - **3 providers** — Groq (free), Google Gemini, OpenAI — bring your own API key
+- **Custom providers** — Add any OpenAI-compatible endpoint (Ollama, LM Studio, etc.)
+- **Provider health check** — Verify your API key and connection before generating
 - **Locale-aware** — AI generates tickets in your language (FR/EN)
 
 ### Power User
@@ -68,10 +70,11 @@ One place. Every idea captured, organized, contextualized with your project, and
 - **Onboarding** — 7-step wizard with AI setup and guided tour
 - **Analytics dashboard** — See your backlog health at a glance
 - **Saved views** — Persist custom filters for quick access
+- **Telemetry** — Optional anonymous usage analytics with full GDPR consent (off by default)
 
 ### Desktop
 - **Native Windows app** — Tauri 2 (Rust backend), no Electron bloat
-- **Local-first** — Your data stays on your machine. No cloud, no account, no tracking.
+- **Local-first** — Your data stays on your machine. No cloud, no account. Optional anonymous telemetry (off by default, see [Privacy Policy](PRIVACY.md)).
 - **Auto-update** — Get notified when a new version is available
 - **System tray** — Minimize to tray
 
@@ -121,6 +124,14 @@ Due to a security requirement (signing key rotation), users on v1.6.0 or earlier
 
 Future updates (v2.0.0 and later) will auto-update normally.
 
+## What's New in v2.2.0
+
+- **AI Provider Registry** — Add custom OpenAI-compatible providers (Ollama, LM Studio, etc.)
+- **Provider Health Check** — Verify API keys before generating
+- **Telemetry** — Optional anonymous usage analytics with GDPR consent (off by default)
+- **490+ Tests** — Parser, serializer, and AI modules at 70%+ coverage
+- **CI Pipeline** — Automated tests on every push via GitHub Actions
+
 ## Quick Start
 
 1. **Create a project** — Give it a name, pick a folder
@@ -144,6 +155,7 @@ Future updates (v2.0.0 and later) will auto-update normally.
 | Animations | Framer Motion |
 | Validation | Zod 4 |
 | Drag & Drop | dnd-kit |
+| Testing | Vitest 4, 490+ tests |
 
 ## Project Structure
 
