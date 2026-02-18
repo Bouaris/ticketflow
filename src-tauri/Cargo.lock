@@ -5142,7 +5142,7 @@ dependencies = [
 
 [[package]]
 name = "ticketflow"
-version = "1.6.0"
+version = "2.2.0"
 dependencies = [
  "log",
  "reqwest",

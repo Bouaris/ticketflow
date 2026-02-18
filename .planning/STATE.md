@@ -11,14 +11,14 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 Phase: All complete (29 phases across 6 milestones)
 Status: v2.2 "Quality & Insights" milestone archived
-Last activity: 2026-02-18 — Milestone v2.2 completed and archived
+Last activity: 2026-02-18 - Completed quick task 16: Mise à jour documentation, versioning + readme pour release clean
 
 Progress: [██████████████████████████████] 100% — All milestones shipped (v1.0 → v2.2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 85 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 11, v2.2: 10, quick: 2)
+- Total plans completed: 86 (v1.0: 22, v1.5: 24, v1.6: 8, v2.0: 8, v2.1: 11, v2.2: 10, quick: 3)
 - Average duration: ~5.5 min per plan
 - Total execution time: ~8 hours
 
@@ -61,12 +61,13 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | 13 | Optimize bulk import: higher tokens, progress callback, category-aware splitting, retry with backoff | 2026-02-13 | a528c3f | [13-optimize-bulk-import](./quick/13-optimize-bulk-import-higher-tokens-progr/) |
 | 14 | Refonte page d'accueil: fix projets recents, favoris, renommage bouton, ameliorations UX/UI | 2026-02-14 | 7d29abf | [14-refonte-page-d-accueil](./quick/14-refonte-page-d-accueil-fix-projets-r-cen/) |
 | 15 | Update AI model lists (Llama 4, Gemini 2.5, GPT-4.1) + Gemini free tier tooltip | 2026-02-17 | c870626 | [15-recherche-mod-les-ia](./quick/15-recherche-mod-les-ia-tooltip-recommandat/) |
+| 16 | Update all documentation to v2.2.0: version bumps, CHANGELOG v2.0/v2.1/v2.2, README badge + features, SECURITY.md telemetry/CSP | 2026-02-18 | d64d29a | [16-mise-jour-de-toute-la-documentation-vers](./quick/16-mise-jour-de-toute-la-documentation-vers/) |
 
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Milestone v2.2 "Quality & Insights" archived
+Stopped at: Quick task 16 — documentation sync to v2.2.0 complete
 Next action: /gsd:new-milestone (fresh context recommended)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after v2.2 milestone archived*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after quick task 16 — docs sync to v2.2.0*
