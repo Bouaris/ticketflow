@@ -119,12 +119,12 @@ Plans:
   3. `ai-retry.ts` tests verify exponential backoff triggers on 429/500 and does NOT retry on 401/403
   4. `ai-health.ts` tests verify all 5 error classifications (auth, rate_limit, timeout, network, unknown) produce the correct result type
   5. A GitHub Actions CI workflow runs all unit tests and coverage check on every push and PR to `master`, separate from `release.yml`
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 28-01: TBD
-- [ ] 28-02: TBD
-- [ ] 28-03: TBD
+- [ ] 28-01-PLAN.md — Parser/serializer test augmentation (idempotency, Unicode, edge cases) + Vitest coverage thresholds
+- [ ] 28-02-PLAN.md — ai-retry.ts and ai-health.ts unit tests (retry logic, 5-type error classification)
+- [ ] 28-03-PLAN.md — GitHub Actions CI workflow + end-to-end coverage validation
 
 ## Progress
 
