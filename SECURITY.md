@@ -4,6 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 2.2.x   | :white_check_mark: |
+| 2.1.x   | :white_check_mark: |
 | 2.0.x   | :white_check_mark: |
 | < 2.0   | :x:                |
 
@@ -17,7 +19,7 @@ If you discover a security vulnerability in TicketFlow, please report it respons
 
 ## Security Model
 
-TicketFlow is a **local-first desktop application**. All data stays on your machine. There is no server, no cloud sync, and no telemetry sent externally.
+TicketFlow is a **local-first desktop application**. All data stays on your machine. There is no server and no cloud sync. Anonymous telemetry is available but disabled by default and requires explicit user consent (see [Privacy Policy](PRIVACY.md)).
 
 ### What TicketFlow accesses
 
@@ -26,14 +28,15 @@ TicketFlow is a **local-first desktop application**. All data stays on your mach
 | Local filesystem | Read/write project SQLite databases | User-selected directories only (via file picker) |
 | AI provider APIs | Generate backlog items, chat assistance | Groq, Gemini, or OpenAI (user's choice) |
 | GitHub releases | Check for app updates | github.com/Bouaris/ticketflow only |
+| PostHog (opt-in) | Anonymous usage analytics | eu.i.posthog.com (only if user consents) |
 
 ### Content Security Policy (CSP)
 
 The production build enforces a strict CSP:
 
 - **No `unsafe-eval`** — prevents code injection
-- **Whitelisted network access** — only Groq, Gemini, and OpenAI API endpoints
-- **No wildcard domains** — each allowed domain is explicitly listed (`api.groq.com`, `generativelanguage.googleapis.com`, `api.openai.com`)
+- **Whitelisted network access** — Groq, Gemini, OpenAI API endpoints, and PostHog (opt-in telemetry)
+- **`https:` scheme-source** — allows custom OpenAI-compatible providers (Ollama, LM Studio, etc.) added in v2.1
 - **Known exception:** `unsafe-inline` in `style-src` is required by Tailwind CSS for dynamic styling. No user-controlled CSS injection vectors exist.
 
 **Full production CSP:**
@@ -41,7 +44,7 @@ The production build enforces a strict CSP:
 default-src 'self';
 script-src 'self';
 style-src 'self' 'unsafe-inline';
-connect-src ipc: http://ipc.localhost https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com;
+connect-src ipc: http://ipc.localhost https://api.groq.com https://generativelanguage.googleapis.com https://api.openai.com https://eu.i.posthog.com https://us.i.posthog.com https:;
 object-src 'none';
 base-uri 'self'
 ```
@@ -125,7 +128,7 @@ untrusted comment: minisign public key: 5CED179762C1B128
 RWQoscFilxftXNhV9NpjOOL0SuxZr69lFv+f579+tdopDK+xhh+r4gcw
 ```
 
-**Note:** The signing key will be rotated in the next release (after v1.6.0). Users will need to manually reinstall the application to receive future updates. This is a one-time security improvement.
+**Note:** The signing key was rotated at v2.0.0. Users on v1.x must manually reinstall to receive updates.
 
 ## Security Audits
 
@@ -151,6 +154,6 @@ RWQoscFilxftXNhV9NpjOOL0SuxZr69lFv+f579+tdopDK+xhh+r4gcw
 
 ---
 
-**Version:** 2.0
-**Last updated:** 2026-02-15
+**Version:** 2.2
+**Last updated:** 2026-02-18
 **Contact:** See [GitHub Security Advisories](https://github.com/Bouaris/ticketflow/security/advisories)
