@@ -44,18 +44,13 @@ TicketFlow est une application desktop (Tauri + Web) de gestion de Product Backl
 - ✓ **PROV-01..06**: Provider management (registry, custom providers, health check, CSP) — v2.1 Phases 22-25
 - ✓ **GENX-01..05**: Generation UX (progress, cancel, provider override, Gemini badge, errors) — v2.1 Phases 24-25
 - ✓ **INTL-01..03**: AI internals (provider registry, client cache, i18n) — v2.1 Phases 22-24
+- ✓ **TELE-01..08**: PostHog telemetry with GDPR consent, Rust IPC relay, 15 usage events — v2.2 Phases 26-27
+- ✓ **TINF-01..04**: Test infrastructure (Vitest 4.x, Tauri IPC mocks, CI workflow, 70% coverage) — v2.2 Phases 26, 28
+- ✓ **TCOV-01..05**: Critical module test coverage (parser, serializer, AI retry, AI health, telemetry) — v2.2 Phases 27-28
 
 ### Active
 
-## Current Milestone: v2.2 Quality & Insights
-
-**Goal:** Ajouter la telemetry d'usage (PostHog) avec opt-in et mettre en place l'infrastructure de tests (Vitest, Playwright) avec couverture des modules critiques.
-
-**Target features:**
-- PostHog telemetry integration (SDK, events d'usage, opt-in consent)
-- Test infrastructure (Vitest + Testing Library + Playwright)
-- Critical module test coverage (ai, db, hooks)
-- E2E tests for key user journeys
+(No active milestone — next milestone to be defined)
 
 ### Out of Scope
 
@@ -75,8 +70,10 @@ TicketFlow est une application desktop (Tauri + Web) de gestion de Product Backl
 - Smart provider switching — Deferred (PROV-08)
 - Streaming response preview — Deferred (GENX-06)
 - AI onboarding wizard for providers — Deferred (GENX-07)
-- Robustness audit / stress testing — Deferred to v2.3 (after test infra in place)
-- 100% test coverage — Unrealistic for 54K LOC in one milestone, targeting critical modules first
+- Robustness audit / stress testing — Deferred to v2.3 (test infra now in place)
+- 100% test coverage — 70% enforced on critical modules; full coverage deferred
+- PostHog session recording / autocapture — PII risk in desktop app, disabled by design
+- Playwright E2E — Deferred to v2.3+ (XCOV-03)
 
 ## Context
 
@@ -88,9 +85,11 @@ TicketFlow est une application desktop (Tauri + Web) de gestion de Product Backl
 
 **v2.0 complete (2026-02-16):** 4 phases, 8 plans. Security audit (gitleaks, CSP, OWASP), fresh git history, OSS docs (README, LICENSE, SECURITY.md), signed v2.0.0 release on GitHub.
 
-**v2.1 complete (2026-02-17):** 4 phases, 11 plans. Provider registry with custom provider CRUD, settings split (App + AI), health check with error classification, AbortSignal cancellation, generation progress UX, model resolution fix + model selector UI. 54,353 LOC TypeScript.
+**v2.1 complete (2026-02-17):** 4 phases, 11 plans. Provider registry with custom provider CRUD, settings split (App + AI), health check with error classification, AbortSignal cancellation, generation progress UX, model resolution fix + model selector UI.
 
-**Tech stack:** React 19, TypeScript 5.9, Vite 7, Tailwind 4, Tauri 2, SQLite, framer-motion, MiniSearch, react-dropzone.
+**v2.2 complete (2026-02-18):** 4 phases, 10 plans. PostHog telemetry with GDPR consent flow (ConsentDialog + settings toggle), Rust IPC relay with SQLite offline queue, 15 instrumented events. Vitest 4.x with Tauri IPC mocks, parser/serializer/AI module tests at 70%+ coverage. GitHub Actions CI workflow. 490+ tests across 22 files.
+
+**Tech stack:** React 19, TypeScript 5.9, Vite 7, Tailwind 4, Tauri 2, SQLite, Vitest 4, framer-motion, MiniSearch, react-dropzone.
 
 **Public repo:** github.com/Bouaris/ticketflow (MIT license, v2.0.0 released)
 
@@ -150,7 +149,14 @@ User -> UI -> useBacklogDB -> SQLite (per-project .db)
 | 5-type error classification | auth/rate_limit/timeout/network/unknown for actionable guidance | ✓ Good |
 | Custom provider edit = remove+add | Registry has no update fn — atomic remove+add instead | ✓ Good |
 
-| PostHog for telemetry | Free tier (<1M events/month), rich dashboard, zero infra to manage, lightweight SDK | — Pending |
+| PostHog for telemetry | Free tier (<1M events/month), rich dashboard, zero infra to manage | ✓ Good |
+| Direct IPC relay (no posthog-js) | Zero external SDK at runtime, events via Rust ph_send_batch | ✓ Good |
+| Rust SQLite offline queue | Crash-safe WAL mode, 500-event max, 5-retry limit | ✓ Good |
+| option_env! for compile-time keys | Rust bakes PostHog key into binary at release, None in dev | ✓ Good |
+| Consent strings hardcoded English | GDPR clarity regardless of app locale | ✓ Good |
+| Per-file Vitest thresholds (not glob) | Avoids false failures on Tauri-coupled modules at 0% | ✓ Good |
+| ubuntu-latest for CI | JS tests run in jsdom, faster/cheaper, avoids Windows pathe crash | ✓ Good |
+| IPC-level Tauri mocking | Transport-layer mock prevents __TAURI_INTERNALS__ errors | ✓ Good |
 
 ---
-*Last updated: 2026-02-17 after v2.2 milestone started*
+*Last updated: 2026-02-18 after v2.2 milestone complete*

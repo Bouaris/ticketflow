@@ -153,3 +153,29 @@
 
 ---
 
+
+### v2.2 — Quality & Insights
+**Completed:** 2026-02-18
+**Duration:** ~103 min (10 plans across 4 phases)
+**Core Value:** Privacy-safe telemetry and test infrastructure for production-quality codebase
+
+**Phases:**
+- Phase 26: Infrastructure & Transport Foundation (3 plans)
+- Phase 27: Telemetry Core & Consent (3 plans)
+- Phase 28: Test Coverage & Quality Gates (3 plans)
+- Phase 29: Gap Closure & Tech Debt Cleanup (1 plan — gap closure)
+
+**Key Deliverables:**
+- Vitest 4.x upgrade with shared Tauri IPC mock infrastructure (setupTauriMocks, test-wrapper)
+- Rust ph_send_batch IPC relay with SQLite-backed offline queue for PostHog telemetry delivery
+- GDPR-compliant consent flow: ConsentDialog (first-launch), Settings privacy toggle, 15 usage events
+- Parser/serializer/AI-retry/AI-health unit tests with per-file 70% coverage thresholds enforced
+- GitHub Actions CI workflow (ci.yml) running tests+coverage on every push/PR to master
+- startup_flush fixed with compile-time option_env!, dead BatchPayload removed, 490+ tests green
+
+**Requirements:** 17/17 complete (TELE-01..08, TINF-01..04, TCOV-01..05)
+
+**Last Phase:** 29 (Gap Closure & Tech Debt Cleanup)
+
+---
+
