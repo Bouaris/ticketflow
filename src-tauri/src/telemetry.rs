@@ -11,6 +11,10 @@ const MAX_RETRY_COUNT: i64 = 5;
 const HTTP_TIMEOUT_SECS: u64 = 10;
 const FLUSH_BATCH_SIZE: i64 = 50;
 
+/// PostHog API key read at compile time from VITE_POSTHOG_KEY env var.
+/// `None` when the env var is not set (dev builds without telemetry).
+const POSTHOG_API_KEY: Option<&str> = option_env!("VITE_POSTHOG_KEY");
+
 /// DDL executed once at startup to create the offline event queue.
 const QUEUE_SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS ph_event_queue (
@@ -32,13 +36,6 @@ pub struct PhEvent {
     pub event: String,
     pub properties: serde_json::Value,
     pub timestamp: Option<String>,
-}
-
-/// The batch payload accepted by the `ph_send_batch` command.
-#[derive(Debug, Deserialize)]
-pub struct BatchPayload {
-    pub events: Vec<PhEvent>,
-    pub api_key: String,
 }
 
 /// Return value of `ph_send_batch` indicating how many events were sent or queued.
@@ -97,15 +94,16 @@ pub async fn init_telemetry_db(app_data_dir: &std::path::Path) -> SqlitePool {
 /// events.
 #[tauri::command]
 pub async fn ph_send_batch(
-    payload: BatchPayload,
+    events: Vec<PhEvent>,
+    api_key: String,
     state: tauri::State<'_, TelemetryState>,
 ) -> Result<BatchResult, String> {
-    let event_count = payload.events.len();
+    let event_count = events.len();
 
     // Build the PostHog batch request body.
     let body = serde_json::json!({
-        "api_key": payload.api_key,
-        "batch": payload.events,
+        "api_key": api_key,
+        "batch": events,
     });
 
     let client = reqwest::Client::new();
@@ -121,7 +119,7 @@ pub async fn ph_send_batch(
     match response {
         Ok(resp) if resp.status().is_success() => {
             // Successful delivery — opportunistically drain the offline queue.
-            flush_queue(&state.pool, &client, &state.api_host, &payload.api_key).await;
+            flush_queue(&state.pool, &client, &state.api_host, &api_key).await;
             Ok(BatchResult {
                 sent: event_count,
                 queued: 0,
@@ -134,7 +132,7 @@ pub async fn ph_send_batch(
                 resp.status(),
                 event_count
             );
-            let queued = queue_events(&state.pool, &payload.events).await;
+            let queued = queue_events(&state.pool, &events).await;
             Ok(BatchResult { sent: 0, queued })
         }
         Err(err) => {
@@ -144,7 +142,7 @@ pub async fn ph_send_batch(
                 err,
                 event_count
             );
-            let queued = queue_events(&state.pool, &payload.events).await;
+            let queued = queue_events(&state.pool, &events).await;
             Ok(BatchResult { sent: 0, queued })
         }
     }
@@ -157,13 +155,14 @@ pub async fn ph_send_batch(
 /// Attempt to drain the offline queue on app startup.
 /// Errors are logged but never propagated — this is best-effort.
 pub async fn startup_flush(state: tauri::State<'_, TelemetryState>) {
-    // We need the api_key for the flush. Without a key we cannot send, so
-    // skip. The key is read per-batch from the frontend; at startup we do not
-    // have a live api_key from the caller, so we read it from a placeholder
-    // stored alongside events. For now, we attempt flush only if there are
-    // queued events — the api_key will come from the stored event properties.
+    let Some(api_key) = POSTHOG_API_KEY else {
+        return; // No key compiled in — graceful no-op (dev/test without key)
+    };
+    if api_key.is_empty() {
+        return;
+    }
     let client = reqwest::Client::new();
-    flush_queue(&state.pool, &client, &state.api_host, "").await;
+    flush_queue(&state.pool, &client, &state.api_host, api_key).await;
 }
 
 // ---------------------------------------------------------------------------
