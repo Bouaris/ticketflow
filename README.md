@@ -1,3 +1,5 @@
+<div align="center">
+
 # TicketFlow
 
 **Stop scattering your ideas across .txt files, Discord messages, and mental post-its.**
@@ -15,8 +17,8 @@ TicketFlow is a local-first desktop app that turns your chaotic brain dumps into
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
 
-<div align="center">
-  <img src="./assets/screenshot-light.png" alt="TicketFlow — Kanban board with AI-generated tickets" width="80%">
+<img src="./assets/screenshot-light.png" alt="TicketFlow — Kanban board with AI-generated tickets" width="80%">
+
 </div>
 
 ## Why TicketFlow?
