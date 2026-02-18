@@ -14,6 +14,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { parseBacklog, getAllItems, getItemsByType } from '../lib/parser';
+import { serializeBacklog } from '../lib/serializer';
 import type { BacklogItem, TableGroup } from '../types/backlog';
 
 // ============================================================
@@ -481,5 +482,104 @@ Description here
     expect(result.sections[0].title).toBe('BUGS');
     // ID should be auto-generated
     expect(result.sections[0].id).toBe('1');
+  });
+});
+
+// ============================================================
+// ROUND-TRIP & EDGE CASES (29-32)
+// ============================================================
+
+describe('parseBacklog - Round-Trip & Edge Cases', () => {
+  test('29. parse(serialize(parse(md))) idempotency invariant', () => {
+    const result1 = parseBacklog(MULTI_SECTION_BACKLOG);
+    const serialized = serializeBacklog(result1);
+    const result2 = parseBacklog(serialized);
+
+    // Section count must be preserved
+    expect(result2.sections.length).toBe(result1.sections.length);
+
+    // Item IDs must be identical after the cycle
+    const ids1 = getAllItems(result1).map(i => i.id);
+    const ids2 = getAllItems(result2).map(i => i.id);
+    expect(ids2).toEqual(ids1);
+
+    // Item titles and descriptions must be stable
+    const items1 = getAllItems(result1);
+    const items2 = getAllItems(result2);
+    for (let i = 0; i < items1.length; i++) {
+      expect(items2[i].title).toBe(items1[i].title);
+      expect(items2[i].description).toBe(items1[i].description);
+    }
+  });
+
+  test('30. handles Unicode content in titles and descriptions', () => {
+    const unicodeMd = `# Backlog
+
+## 1. BUGS
+
+### BUG-001 | Probleme d'encodage UTF-8
+**Description:** Texte avec accents \u00e9\u00e0\u00fc et caract\u00e8res sp\u00e9ciaux: \u20ac \u00a9 \u00ae
+
+---
+`;
+    const result = parseBacklog(unicodeMd);
+
+    expect(result.sections.length).toBeGreaterThanOrEqual(1);
+    const item = result.sections[0].items[0] as BacklogItem;
+    expect(item.id).toBe('BUG-001');
+    // Title contains the apostrophe
+    expect(item.title).toContain("Probleme d'encodage");
+    // Description contains the special characters
+    expect(item.description).toContain('\u20ac');
+    expect(item.description).toContain('\u00a9');
+  });
+
+  test('31. handles fused section separators (---## pattern)', () => {
+    const fusedMd = `# Backlog
+
+---## 1. BUGS
+
+### BUG-001 | Fused test
+**Description:** Test
+
+---
+`;
+    const result = parseBacklog(fusedMd);
+
+    expect(result.sections.length).toBeGreaterThanOrEqual(1);
+    expect(result.sections[0].title).toBe('BUGS');
+    const item = result.sections[0].items[0] as BacklogItem;
+    expect(item.id).toBe('BUG-001');
+    expect(item.title).toBe('Fused test');
+  });
+
+  test('32. handles empty sections without items', () => {
+    const emptyFirstSection = `# Backlog
+
+## 1. EMPTY SECTION
+
+## 2. FEATURES
+
+### CT-001 | Feature
+**Description:** Test
+
+---
+`;
+    const result = parseBacklog(emptyFirstSection);
+
+    expect(result.sections.length).toBe(2);
+
+    // First section has zero BacklogItem entries
+    const firstSectionBacklogItems = result.sections[0].items.filter(
+      item => item.type !== 'raw-section' && item.type !== 'table-group'
+    );
+    expect(firstSectionBacklogItems).toHaveLength(0);
+
+    // Second section has one item with id CT-001
+    const secondSectionItems = result.sections[1].items.filter(
+      item => item.type !== 'raw-section' && item.type !== 'table-group'
+    );
+    expect(secondSectionItems).toHaveLength(1);
+    expect((secondSectionItems[0] as BacklogItem).id).toBe('CT-001');
   });
 });
