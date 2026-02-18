@@ -7,7 +7,7 @@
 - ✅ **v1.6 Smart Import** — Phases 14-17 (shipped 2026-02-14)
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
 - ✅ **v2.1 AI Refresh** — Phases 22-25 (shipped 2026-02-17)
-- 🚧 **v2.2 Quality & Insights** — Phases 26-28 (in progress)
+- 🚧 **v2.2 Quality & Insights** — Phases 26-29 (in progress)
 
 ## Phases
 
@@ -72,7 +72,8 @@
 
 - [x] **Phase 26: Infrastructure & Transport Foundation** - Upgrade Vitest to 4.x, add Rust IPC relay for PostHog, mock SQL plugin, update CSP (completed 2026-02-17)
 - [x] **Phase 27: Telemetry Core & Consent** - Full PostHog integration with consent dialog, telemetry wrapper, core events, and consent unit tests (completed 2026-02-17)
-- [x] **Phase 28: Test Coverage & Quality Gates** - Parser/serializer/AI module tests, 70% coverage threshold, CI workflow (completed 2026-02-18)
+- [x] **Phase 28: Test Coverage & Quality Gates** - Parser/serializer/AI module tests, 70% coverage threshold, CI workflow (completed 2026-02-18)
+- [ ] **Phase 29: Gap Closure & Tech Debt Cleanup** - Fix startup_flush no-op, remove dead Rust code, update stale documentation
 
 ## Phase Details
 
@@ -126,10 +127,25 @@ Plans:
 - [ ] 28-02-PLAN.md — ai-retry.ts and ai-health.ts unit tests (retry logic, 5-type error classification)
 - [ ] 28-03-PLAN.md — GitHub Actions CI workflow + end-to-end coverage validation
 
+### Phase 29: Gap Closure & Tech Debt Cleanup
+**Goal**: All tech debt from the v2.2 audit is resolved: startup_flush delivers queued events on app launch, dead Rust code is removed, and all documentation (checkboxes, frontmatter) accurately reflects delivered state.
+**Depends on**: Phase 28
+**Requirements**: None (all requirements already satisfied; this phase addresses tech debt and documentation gaps)
+**Gap Closure**: Closes integration gap (startup_flush_noop), flow gap (offline_recovery_partial), and 5 tech debt items from v2.2-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. `startup_flush` in `telemetry.rs` reads the PostHog API key from environment and passes it to `flush_queue`, so queued offline events are delivered on app startup
+  2. The unused `BatchPayload` struct is removed from `src-tauri/src/telemetry.rs`
+  3. All 17 requirement checkboxes in REQUIREMENTS.md are `[x]` (none stale)
+  4. `26-02-SUMMARY.md` has `requirements-completed` frontmatter listing TELE-04 and TELE-08
+**Plans**: 1 plan
+
+Plans:
+- [ ] 29-01-PLAN.md — Fix startup_flush, remove dead BatchPayload struct, update stale documentation
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 26 → 27 → 28
+Phases execute in numeric order: 26 → 27 → 28 → 29
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -140,8 +156,9 @@ Phases execute in numeric order: 26 → 27 → 28
 | 22-25. v2.1 phases | v2.1 | 13/13 | Complete | 2026-02-17 |
 | 26. Infrastructure & Transport Foundation | v2.2 | Complete    | 2026-02-17 | - |
 | 27. Telemetry Core & Consent | v2.2 | Complete    | 2026-02-17 | - |
-| 28. Test Coverage & Quality Gates | 3/3 | Complete   | 2026-02-18 | - |
+| 28. Test Coverage & Quality Gates | 3/3 | Complete    | 2026-02-18 | - |
+| 29. Gap Closure & Tech Debt Cleanup | v2.2 | 0/1 | Pending | - |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-17 (v2.2 roadmap added — Phases 26-28)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-18 (gap closure Phase 29 added — Phases 26-29)*
 *Full milestone details: .planning/milestones/*

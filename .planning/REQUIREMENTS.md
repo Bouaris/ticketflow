@@ -9,19 +9,19 @@ Requirements for milestone v2.2 "Quality & Insights". Each maps to roadmap phase
 
 ### Telemetry
 
-- [ ] **TELE-01**: User sees a first-launch consent dialog explaining what data is collected; can accept or decline with equal-weight buttons
-- [ ] **TELE-02**: User can toggle telemetry on/off in App Settings at any time; revocation takes effect immediately
-- [ ] **TELE-03**: PostHog SDK initializes only after explicit consent (lazy-loaded via dynamic import, zero PII collected)
-- [ ] **TELE-04**: Telemetry events are delivered from Tauri desktop builds via Rust IPC relay command (ph_send_batch)
-- [ ] **TELE-05**: 10 core usage events are instrumented (app_launched, project_created, ticket_created, ai_generation_completed, ai_generation_failed, view_switched, settings_opened, consent_granted, consent_revoked, project_opened)
-- [ ] **TELE-06**: Secondary events are instrumented (command_palette_opened, bulk_import_completed, onboarding_completed, dark_mode_toggled, ai_health_check_run)
-- [ ] **TELE-07**: App version and platform sent as super-properties on every event; EU endpoint (eu.i.posthog.com) used for GDPR
-- [ ] **TELE-08**: PostHog API key stored as VITE_POSTHOG_KEY env var (never in source); CSP updated for PostHog endpoints in dev and prod
+- [x] **TELE-01**: User sees a first-launch consent dialog explaining what data is collected; can accept or decline with equal-weight buttons
+- [x] **TELE-02**: User can toggle telemetry on/off in App Settings at any time; revocation takes effect immediately
+- [x] **TELE-03**: PostHog SDK initializes only after explicit consent (lazy-loaded via dynamic import, zero PII collected)
+- [x] **TELE-04**: Telemetry events are delivered from Tauri desktop builds via Rust IPC relay command (ph_send_batch)
+- [x] **TELE-05**: 10 core usage events are instrumented (app_launched, project_created, ticket_created, ai_generation_completed, ai_generation_failed, view_switched, settings_opened, consent_granted, consent_revoked, project_opened)
+- [x] **TELE-06**: Secondary events are instrumented (command_palette_opened, bulk_import_completed, onboarding_completed, dark_mode_toggled, ai_health_check_run)
+- [x] **TELE-07**: App version and platform sent as super-properties on every event; EU endpoint (eu.i.posthog.com) used for GDPR
+- [x] **TELE-08**: PostHog API key stored as VITE_POSTHOG_KEY env var (never in source); CSP updated for PostHog endpoints in dev and prod
 
 ### Test Infrastructure
 
-- [ ] **TINF-01**: Vitest upgraded from 2.x to 4.x with @vitest/coverage-v8 matching version (Vite 7 compatibility)
-- [ ] **TINF-02**: @tauri-apps/plugin-sql mocked at module level in shared test setup; all hook tests run without __TAURI_INTERNALS__ errors
+- [x] **TINF-01**: Vitest upgraded from 2.x to 4.x with @vitest/coverage-v8 matching version (Vite 7 compatibility)
+- [x] **TINF-02**: @tauri-apps/plugin-sql mocked at module level in shared test setup; all hook tests run without __TAURI_INTERNALS__ errors
 - [x] **TINF-03**: CI workflow (GitHub Actions) runs unit tests and coverage check on every push/PR
 - [x] **TINF-04**: Coverage threshold enforced at 70% for src/lib/ modules
 
@@ -31,7 +31,7 @@ Requirements for milestone v2.2 "Quality & Insights". Each maps to roadmap phase
 - [x] **TCOV-02**: serializer.ts has unit tests verifying serialize(parse(md)) invariant and idempotency
 - [x] **TCOV-03**: ai-retry.ts has unit tests for exponential backoff, retry on 429/500, no retry on 401/403
 - [x] **TCOV-04**: ai-health.ts has unit tests for 5-type error classification (auth/rate_limit/timeout/network/unknown)
-- [ ] **TCOV-05**: telemetry.ts has unit tests verifying consent gate (no-op before consent) and event firing after consent
+- [x] **TCOV-05**: telemetry.ts has unit tests verifying consent gate (no-op before consent) and event firing after consent
 
 ## Future Requirements
 
@@ -72,23 +72,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TELE-01 | Phase 27 | Pending |
-| TELE-02 | Phase 27 | Pending |
-| TELE-03 | Phase 27 | Pending |
-| TELE-04 | Phase 26 | Pending |
-| TELE-05 | Phase 27 | Pending |
-| TELE-06 | Phase 27 | Pending |
-| TELE-07 | Phase 27 | Pending |
-| TELE-08 | Phase 26 | Pending |
-| TINF-01 | Phase 26 | Pending |
-| TINF-02 | Phase 26 | Pending |
+| TELE-01 | Phase 27 | Complete |
+| TELE-02 | Phase 27 | Complete |
+| TELE-03 | Phase 27 | Complete |
+| TELE-04 | Phase 26 | Complete |
+| TELE-05 | Phase 27 | Complete |
+| TELE-06 | Phase 27 | Complete |
+| TELE-07 | Phase 27 | Complete |
+| TELE-08 | Phase 26 | Complete |
+| TINF-01 | Phase 26 | Complete |
+| TINF-02 | Phase 26 | Complete |
 | TINF-03 | Phase 28 | Complete |
 | TINF-04 | Phase 28 | Complete |
 | TCOV-01 | Phase 28 | Complete |
 | TCOV-02 | Phase 28 | Complete |
 | TCOV-03 | Phase 28 | Complete |
 | TCOV-04 | Phase 28 | Complete |
-| TCOV-05 | Phase 27 | Pending |
+| TCOV-05 | Phase 27 | Complete |
 
 **Coverage:**
 - v2.2 requirements: 17 total
@@ -97,4 +97,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after roadmap creation (traceability complete)*
+*Last updated: 2026-02-18 after gap closure Phase 29 added (all 17 checkboxes updated to [x])*
