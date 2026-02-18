@@ -30,7 +30,7 @@ import { toggleCriterion, updateItem as serializerUpdateItem } from '../lib/seri
 // DB queries
 import { getOrCreateProject } from '../db/queries/projects';
 import { getAllSections, insertSection, deleteSection as dbDeleteSection } from '../db/queries/sections';
-import { getAllItems, insertItem, updateItem as dbUpdateItem, deleteItem as dbDeleteItem } from '../db/queries/items';
+import { getItemsGroupedBySection, insertItem, updateItem as dbUpdateItem, deleteItem as dbDeleteItem } from '../db/queries/items';
 import { getNextItemNumber } from '../db/queries/counters';
 import { searchItemIds } from '../db/queries/search';
 import { getTypeConfigs, getDefaultTypeConfigs, bulkUpsertTypeConfigs } from '../db/queries/type-configs';
@@ -192,19 +192,16 @@ export function useBacklogDB(projectPath: string | null): UseBacklogDBReturn {
       }
       setTypeConfigs(configs);
 
-      // Load sections and items
+      // Load sections and items (grouped by section_id FK for correct association)
       const dbSections = await getAllSections(projectPath, pid);
-      const allDbItems = await getAllItems(projectPath, pid);
+      const itemsBySection = await getItemsGroupedBySection(projectPath, pid);
 
-      // Build the Backlog object with items grouped by section
+      // Build the Backlog object with items grouped by section_id
       const loadedBacklog: Backlog = {
         header: '',
         tableOfContents: '',
-        sections: dbSections.map((dbSection, index) => {
-          // Get items for this section based on their sectionIndex matching section position
-          const sectionItems = allDbItems.filter(
-            item => item.sectionIndex === index || item.sectionIndex === dbSection.position
-          );
+        sections: dbSections.map((dbSection) => {
+          const sectionItems = itemsBySection.get(dbSection.id) || [];
           return dbSectionToSection(dbSection, sectionItems);
         }),
         footer: undefined,

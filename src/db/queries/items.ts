@@ -43,6 +43,37 @@ export async function getAllItems(
 }
 
 /**
+ * Get all items grouped by their section_id.
+ *
+ * Uses the DB's section_id foreign key for correct grouping,
+ * unlike sectionIndex which is the item's position within a section.
+ *
+ * @param projectPath - Absolute path to the project directory
+ * @param projectId - The project ID
+ * @returns Map of section_id to BacklogItem arrays
+ */
+export async function getItemsGroupedBySection(
+  projectPath: string,
+  projectId: number
+): Promise<Map<number, BacklogItem[]>> {
+  const db = await getDatabase(projectPath);
+  const rows = await db.select<DbBacklogItem[]>(
+    `SELECT * FROM backlog_items
+     WHERE project_id = $1
+     ORDER BY section_id ASC, position ASC`,
+    [projectId]
+  );
+
+  const grouped = new Map<number, BacklogItem[]>();
+  for (const row of rows) {
+    const items = grouped.get(row.section_id) || [];
+    items.push(dbItemToBacklogItem(row));
+    grouped.set(row.section_id, items);
+  }
+  return grouped;
+}
+
+/**
  * Get a single item by its ID.
  *
  * @param projectPath - Absolute path to the project directory

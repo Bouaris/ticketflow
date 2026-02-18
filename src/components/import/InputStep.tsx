@@ -10,6 +10,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadIcon, CloseIcon, WarningIcon } from '../ui/Icons';
+import { ProviderToggle } from '../ui/ProviderToggle';
+import type { AIProvider } from '../../lib/ai';
 import { useTranslation } from '../../i18n';
 
 // ============================================================
@@ -22,7 +24,8 @@ interface InputStepProps {
   images: File[];
   onImagesChange: (images: File[]) => void;
   supportsVision: boolean;
-  providerName: string;
+  provider: AIProvider;
+  onProviderChange: (provider: AIProvider) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
 }
@@ -37,7 +40,8 @@ export function InputStep({
   images,
   onImagesChange,
   supportsVision,
-  providerName,
+  provider,
+  onProviderChange,
   onSubmit,
   isSubmitting,
 }: InputStepProps) {
@@ -123,7 +127,7 @@ export function InputStep({
             <p className="text-sm text-on-surface-muted">{t.bulkImport.imageUploadLabel}</p>
             <div className="inline-flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded text-xs">
               <WarningIcon className="w-3.5 h-3.5" />
-              {t.bulkImport.imageProviderWarning.replace('{provider}', providerName)}
+              {t.bulkImport.imageProviderWarning.replace('{provider}', provider)}
             </div>
           </div>
         ) : isDragActive ? (
@@ -167,8 +171,9 @@ export function InputStep({
         </div>
       )}
 
-      {/* Submit button */}
-      <div className="flex justify-end">
+      {/* Footer: provider toggle + submit */}
+      <div className="flex items-center justify-between">
+        <ProviderToggle value={provider} onChange={onProviderChange} size="sm" />
         <button
           type="button"
           onClick={onSubmit}

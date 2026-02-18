@@ -15,8 +15,8 @@ import { InputStep } from './InputStep';
 import { ProcessingStep } from './ProcessingStep';
 import { ReviewStep } from './ReviewStep';
 import { ConfirmStep } from './ConfirmStep';
-import { getEffectiveAIConfig } from '../../lib/ai';
-import type { ImageData } from '../../lib/ai';
+import { getProvider } from '../../lib/ai';
+import type { AIProvider, ImageData } from '../../lib/ai';
 import { generateBulkItems, supportsVision } from '../../lib/ai-bulk';
 import type { BulkProposal } from '../../lib/ai-bulk';
 import { bulkCreateItems } from '../../db/queries/items';
@@ -95,18 +95,12 @@ export function BulkImportWizard({
   const [createdCount, setCreatedCount] = useState(0);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(() => getProvider());
   const abortRef = useRef(false);
   const creatingRef = useRef(false);
 
-  // -- Provider info --
-  const { providerName, visionSupported } = useMemo(() => {
-    const config = getEffectiveAIConfig(projectPath);
-    const prov = config.provider;
-    return {
-      providerName: prov,
-      visionSupported: supportsVision(prov),
-    };
-  }, [projectPath]);
+  // -- Provider info (derived from selectedProvider) --
+  const visionSupported = useMemo(() => supportsVision(selectedProvider), [selectedProvider]);
 
   // -- Reset on close --
   useEffect(() => {
@@ -123,6 +117,7 @@ export function BulkImportWizard({
       setCreatedCount(0);
       setBulkProgress(null);
       setIsFallbackMode(false);
+      setSelectedProvider(getProvider());
       abortRef.current = false;
       creatingRef.current = false;
     }
@@ -152,6 +147,7 @@ export function BulkImportWizard({
       const result = await generateBulkItems(
         rawText,
         {
+          provider: selectedProvider,
           projectPath,
           images: imageData.length > 0 ? imageData : undefined,
           items,
@@ -181,7 +177,7 @@ export function BulkImportWizard({
     } finally {
       setIsProcessing(false);
     }
-  }, [isProcessing, rawText, images, projectPath, items, typeConfigs, projectId, t]);
+  }, [isProcessing, rawText, images, selectedProvider, projectPath, items, typeConfigs, projectId, t]);
 
   const handleCancel = useCallback(() => {
     abortRef.current = true;
@@ -401,7 +397,8 @@ export function BulkImportWizard({
           images={images}
           onImagesChange={setImages}
           supportsVision={visionSupported}
-          providerName={providerName}
+          provider={selectedProvider}
+          onProviderChange={setSelectedProvider}
           onSubmit={handleExtract}
           isSubmitting={isProcessing}
         />
