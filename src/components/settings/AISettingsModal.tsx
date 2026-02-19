@@ -11,8 +11,7 @@ import { getProvider, setProvider } from '../../lib/ai';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { ProviderCard } from './ProviderCard';
 import { CustomProviderList } from './CustomProviderList';
-import { getFeedbackStats, type FeedbackStats } from '../../lib/ai-feedback';
-import { getOrCreateProject } from '../../db/queries/projects';
+import { useAIFeedbackStats } from '../../hooks/useAIFeedbackStats';
 import { StarIcon, TrendUpIcon, TrendDownIcon, MinusIcon, InfoIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 import { useTranslation } from '../../i18n';
@@ -27,23 +26,12 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'providers' | 'custom'>('providers');
   const [selectedProvider, setSelectedProvider] = useState(getProvider());
-  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
+  const { stats: feedbackStats } = useAIFeedbackStats(projectPath, isOpen);
 
   // AI Questioning mode toggle
   const [questioningEnabled, setQuestioningEnabled] = useState(
     localStorage.getItem(STORAGE_KEYS.QUESTIONING_MODE) !== 'false'
   );
-
-  // Load feedback stats when modal opens and projectPath exists
-  useEffect(() => {
-    if (isOpen && projectPath) {
-      const projectName = projectPath.split(/[\\/]/).pop() || 'Project';
-      getOrCreateProject(projectPath, projectName)
-        .then(projectId => getFeedbackStats(projectId))
-        .then(setFeedbackStats)
-        .catch(() => setFeedbackStats(null));
-    }
-  }, [isOpen, projectPath]);
 
   // Load current provider when modal opens
   useEffect(() => {
