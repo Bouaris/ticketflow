@@ -82,6 +82,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 35-architecture-performance]: memo with named inner function pattern for DevTools: function KanbanCardInner + export const KanbanCard = memo(KanbanCardInner)
 - [Phase 35]: SMELL-007 resolved: ProjectWorkspace extracted into 5 focused hooks + WorkspaceDialogs component — reduced from 1569 to 555 lines (65%)
 - [Phase 35]: SMELL-005 resolved: useWorkspaceTypeSync documents all eslint-disable-line rationale — stable useRef identity, stable projectPath per mount, stable initializeWithTypes reference
+- [Phase 35-architecture-performance]: SMELL-006 resolved: ai.ts split from 2235 to 487 lines across 6 modules (ai-client, ai-config, ai-maintenance, ai-analysis, ai-prompts, ai). Leaf module pattern prevents circular deps. All existing import paths preserved via re-exports.
+- [Phase 35-architecture-performance]: generateCompletion exported (not private) from ai-client.ts — maintenance/analysis modules call it directly without retry wrapping, which is correct for format analysis flows
 
 ### Pending Todos
 

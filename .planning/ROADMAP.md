@@ -86,7 +86,7 @@
 - [x] **Phase 32: README Showcase** - Publish light mode screenshot, animated workflow GIFs, and GSD attribution to the public repo (completed 2026-02-18)
 - [x] **Phase 33: Type Safety & Critical Bug Fixes** - Fix all P2 correctness issues: type casts, telemetry idempotency bug, useEffect deps, storage key centralization (gap closure) (completed 2026-02-19)
 - [x] **Phase 34: Dead Code Sweep & Code Quality** - Remove all 11 dead code findings, clean orphaned exports, improve telemetry code quality (gap closure) (completed 2026-02-19)
-- [ ] **Phase 35: Architecture Refactoring & Performance** - Split god files, extract hooks, add React.memo and virtualization (gap closure)
+- [x] **Phase 35: Architecture Refactoring & Performance** - Split god files, extract hooks, add React.memo and virtualization (gap closure) (completed 2026-02-19)
 - [ ] **Phase 36: Security, Dependencies & Cleanup** - SHA-pin CI, harden IPC, update all dependencies, restore README gallery (gap closure)
 
 ## Phase Details
@@ -222,7 +222,7 @@ Plans:
 | 32. README Showcase | 2/2 | Complete    | 2026-02-18 | - |
 | 33. Type Safety & Critical Bug Fixes | 2/2 | Complete    | 2026-02-19 | - |
 | 34. Dead Code Sweep & Code Quality | 2/2 | Complete    | 2026-02-19 | - |
-| 35. Architecture Refactoring & Performance | 3/4 | In Progress|  | - |
+| 35. Architecture Refactoring & Performance | 4/4 | Complete   | 2026-02-19 | - |
 | 36. Security, Dependencies & Cleanup | 0/3 | Pending | - | - |
 
 ---
