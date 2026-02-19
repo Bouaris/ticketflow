@@ -185,6 +185,11 @@ Plans:
   7. TypeConfig sync effect dependencies documented or fixed
   8. `pnpm build` passes; existing test suite remains green
 **Plans**: 4 plans
+Plans:
+- [ ] 35-01-PLAN.md — Split ai.ts into ai-client.ts, ai-config.ts, ai-maintenance.ts (FIX-09)
+- [ ] 35-02-PLAN.md — Extract 4 hooks from ProjectWorkspace.tsx, document TypeConfig sync deps (FIX-10)
+- [ ] 35-03-PLAN.md — Extract useAIFeedbackStats hook, ProviderCard cleanup (FIX-11, FIX-13)
+- [ ] 35-04-PLAN.md — React.memo for KanbanCard/ListView + ListView virtualization (FIX-12)
 
 ### Phase 36: Security, Dependencies & Cleanup
 **Goal**: All security findings hardened, all dependencies updated to latest compatible versions, README gallery restored, orphaned assets cleaned
