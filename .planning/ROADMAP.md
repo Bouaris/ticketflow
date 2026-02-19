@@ -166,6 +166,9 @@ Plans:
   4. Telemetry code quality: magic number 200 extracted to named constant, consent boolean simplified, error severity policy documented
   5. `pnpm build` passes with zero TypeScript errors after all removals
 **Plans**: 2 plans
+Plans:
+- [ ] 34-01-PLAN.md — Dead code removal: unused exports, orphaned components, icon dedup, console.log guards (FIX-05, FIX-08)
+- [ ] 34-02-PLAN.md — Remove _projectPath parameter, telemetry code quality improvements (FIX-06, FIX-07)
 
 ### Phase 35: Architecture Refactoring & Performance
 **Goal**: God files are split into focused modules, React rendering is optimized with memo and virtualization, and remaining architectural smells are resolved
@@ -212,7 +215,7 @@ Plans:
 | 30. Stress Testing & Performance | 3/3 | Complete    | 2026-02-18 | - |
 | 31. Code Audit & Security Review | 3/3 | Complete    | 2026-02-18 | - |
 | 32. README Showcase | 2/2 | Complete    | 2026-02-18 | - |
-| 33. Type Safety & Critical Bug Fixes | 2/2 | Complete   | 2026-02-19 | - |
+| 33. Type Safety & Critical Bug Fixes | 2/2 | Complete    | 2026-02-19 | - |
 | 34. Dead Code Sweep & Code Quality | 0/2 | Pending | - | - |
 | 35. Architecture Refactoring & Performance | 0/4 | Pending | - | - |
 | 36. Security, Dependencies & Cleanup | 0/3 | Pending | - | - |
