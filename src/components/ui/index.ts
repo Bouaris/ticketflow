@@ -49,7 +49,7 @@ export { Spinner, FullPageSpinner, InlineSpinner } from './Spinner';
 export { Progress, LabeledProgress, CriteriaProgress } from './Progress';
 
 // Badge
-export { Badge, DynamicBadge } from './Badge';
+export { Badge } from './Badge';
 
 // ListEditor
 export { ListEditor, CheckboxListEditor } from './ListEditor';

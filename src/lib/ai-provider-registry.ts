@@ -138,32 +138,11 @@ export function getProviderById(id: string): ProviderConfig | null {
 }
 
 /**
- * Get a built-in provider by its ID.
- * Throws if not found (programming error — built-ins are guaranteed).
- */
-export function getBuiltInProvider(id: BuiltInProviderId): ProviderConfig {
-  const provider = BUILT_IN_PROVIDERS.find((p) => p.id === id);
-  if (!provider) {
-    throw new Error(`[AI Registry] Built-in provider not found: ${id}`);
-  }
-  return provider;
-}
-
-/**
  * Check if a provider ID belongs to a built-in provider.
  * Type predicate: narrows `id` to `BuiltInProviderId` after the guard check.
  */
 export function isBuiltInProvider(id: string): id is BuiltInProviderId {
   return BUILT_IN_PROVIDERS.some((p) => p.id === id);
-}
-
-/**
- * Get the default model ID for a provider.
- * Returns null if provider not found.
- */
-export function getDefaultModelForProvider(providerId: string): string | null {
-  const provider = getProviderById(providerId);
-  return provider?.defaultModel ?? null;
 }
 
 // ============================================================

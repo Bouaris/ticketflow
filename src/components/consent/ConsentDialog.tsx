@@ -9,8 +9,7 @@
  */
 
 import { Modal } from '../ui/Modal';
-import { isTauri } from '../../lib/tauri-bridge';
-import { openExternalUrl } from '../../lib/tauri-bridge';
+import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 
 // ============================================================
 // TYPES

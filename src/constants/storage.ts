@@ -104,14 +104,6 @@ export function getContextFilesKey(projectPath: string): string {
 }
 
 /**
- * Build a project AI config key for a specific project path
- */
-export function getProjectAIConfigKey(projectPath: string): string {
-  const hash = hashPath(projectPath);
-  return `${STORAGE_KEYS.PROJECT_AI_CONFIG_PREFIX}-${hash}`;
-}
-
-/**
  * Build an AI analysis cache key for a specific project path
  */
 export function getAIAnalysisCacheKey(projectPath: string): string {
