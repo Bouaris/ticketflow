@@ -62,8 +62,8 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 ### Gap Closure — Security & Dependencies (Phase 36)
 
 - [x] **FIX-14**: Security findings hardened: IPC key validation, SHA-pinned CI, devtools conditional (SEC-D2, SEC-D8, SEC-D10)
-- [ ] **FIX-15**: Cargo dependencies updated where fixes available; unfixable tracked in SECURITY.md (DEP-001)
-- [ ] **FIX-16**: All npm dependencies updated (patch + minor + major) with build verification (DEP-002, DEP-003, DEP-004)
+- [x] **FIX-15**: Cargo dependencies updated where fixes available; unfixable tracked in SECURITY.md (DEP-001)
+- [x] **FIX-16**: All npm dependencies updated (patch + minor + major) with build verification (DEP-002, DEP-003, DEP-004)
 - [ ] **FIX-17**: README gallery restored to 3x2 or orphaned assets cleaned from repository
 
 ## Future Requirements
@@ -126,8 +126,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-12 | Phase 35 | Complete |
 | FIX-13 | Phase 35 | Complete |
 | FIX-14 | Phase 36 | Complete |
-| FIX-15 | Phase 36 | Pending |
-| FIX-16 | Phase 36 | Pending |
+| FIX-15 | Phase 36 | Complete |
+| FIX-16 | Phase 36 | Complete |
 | FIX-17 | Phase 36 | Pending |
 
 **Coverage:**

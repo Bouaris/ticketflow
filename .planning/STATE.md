@@ -40,6 +40,7 @@ Progress: [███████████████████████
 | Phase 35-architecture-performance P03 | 4 | 2 tasks | 3 files |
 | Phase 35-architecture-performance P04 | 25 | 2 tasks | 3 files |
 | Phase 36 P01 | 15 | 2 tasks | 2 files |
+| Phase 36-security-dependencies-cleanup P02 | 18 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting v2.2.1:
 - [Phase 36]: SHA-pinned pnpm/action-setup to v2.4.1 (latest v2.x) — the floating v2 major tag returned 404 on GitHub API; dereferenced annotated tag SHA for commit pin
 - [Phase 36]: SEC-D2 (IPC api_key pass-through) accepted risk: exploiting requires bypassing Tauri CSP (already full compromise); documented in SECURITY.md
 - [Phase 36]: SEC-D10 (devtools always enabled) accepted risk: local-first BYOK desktop app, user is sole operator; no meaningful security benefit from disabling; documented in SECURITY.md
+- [Phase 36-02]: eslint 9.x->10.x deferred: major rewrite with flat config migration needed, defer to next milestone
+- [Phase 36-02]: jsdom 25->28 deferred: dev-only, test env risk; react-dropzone 14->15 deferred: production dep with breaking API in BulkImportWizard
+- [Phase 36-02]: Cargo.toml tauri pin changed from '2.9.5' to '2.10' semver range to allow future patch auto-updates; bytes and time CVEs resolved by cargo update
 
 ### Pending Todos
 
