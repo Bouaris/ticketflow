@@ -50,6 +50,9 @@ interface TelemetryEvent {
 const pendingEvents: TelemetryEvent[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Guard to prevent duplicate error tracking listeners (SMELL-010 fix) */
+let errorTrackingSetUp = false;
+
 // ============================================================
 // CONSENT STATE
 // ============================================================
@@ -207,6 +210,9 @@ export function track(event: string, properties: Record<string, unknown> = {}): 
  * No stack traces (could contain file paths or PII).
  */
 function setupErrorTracking(): void {
+  if (errorTrackingSetUp) return;
+  errorTrackingSetUp = true;
+
   window.addEventListener('unhandledrejection', (event) => {
     if (getConsentState() !== 'granted') return;
     const message =
@@ -235,8 +241,8 @@ function setupErrorTracking(): void {
  * - From App.tsx useEffect when consent is already 'granted' on startup
  * - From the consent dialog's onAccept handler immediately after setConsentState('granted')
  *
- * This function is safe to call multiple times (idempotent via the
- * error tracking setup — handlers accumulate but are guarded by consent check).
+ * This function is safe to call multiple times (idempotent — module-level guard
+ * prevents duplicate error tracking listeners).
  * For Approach B, no external SDK needs initialization.
  */
 export function initTelemetry(): void {

@@ -174,7 +174,7 @@ export function ProjectWorkspace({
     if (isChatOpen && backlog.projectId) {
       chatPanel.loadHistory();
     }
-  }, [isChatOpen, backlog.projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isChatOpen, backlog.projectId, chatPanel.loadHistory]);
 
   // ---- project_opened telemetry (fires once after data loads) ----
   const hasFiredProjectOpened = useRef(false);
