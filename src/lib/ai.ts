@@ -2,17 +2,13 @@
  * AI Integration - Multi-provider support
  *
  * Supports: Groq (default, free), Gemini, OpenAI
+ *
+ * This module is the public composition layer. It re-exports from sub-modules
+ * and contains business logic for item generation and refinement.
  */
 
-import Groq from 'groq-sdk';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import OpenAI from 'openai';
 import type { BacklogItem } from '../types/backlog';
 import type { TypeDefinition } from '../types/typeConfig';
-import { STORAGE_KEYS } from '../constants/storage';
-import { getCustomProviderApiKeyKey, getModelStorageKey } from '../constants/storage';
-import { AI_CONFIG } from '../constants/config';
-import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
 import {
   RefineResponseSchema,
   GenerateItemResponseSchema,
@@ -27,8 +23,6 @@ import {
   type BlockingBug,
 } from '../types/ai';
 import { buildPromptWithContext, type AIOptions as BaseAIOptions } from './ai-context';
-import { getProviderById } from './ai-provider-registry';
-import type { ProviderConfig } from '../types/aiProvider';
 import {
   generateWithRetry,
   getStructuredOutputMode,
@@ -45,9 +39,33 @@ import {
 } from './ai-telemetry';
 import { getCriteriaInstructions } from './ai-criteria';
 import { getCurrentLocale, getTranslations } from '../i18n';
-import type { ZodType, ZodSchema } from 'zod';
-import { isAbortError } from './abort';
 import { track } from './telemetry';
+
+// Sub-module imports
+import {
+  generateCompletion,
+  generateCompletionWithRetry,
+  generateChatCompletion,
+  testProviderConnection,
+  getApiKey,
+  setApiKey,
+  clearApiKey,
+  hasApiKey,
+  getClientConfig,
+  resetClient,
+  initSecureStorage,
+} from './ai-client';
+import {
+  getProvider,
+  setProvider,
+  getEffectiveAIConfig,
+  resolveModelForProvider,
+  getProviderDisplayName,
+  getSelectedModel,
+  setSelectedModel,
+} from './ai-config';
+import type { ImageData, CompletionOptions, ChatCompletionMessage } from './ai-client';
+import type { AIProvider, ProviderId } from './ai-config';
 
 // Extended AI options with Phase 3 additions
 export interface AIOptions extends BaseAIOptions {
@@ -67,682 +85,36 @@ export interface AIOptions extends BaseAIOptions {
 export { generateWithRetry, getStructuredOutputMode, zodToSimpleJsonSchema };
 export { recordTelemetry, getErrorRate, getTelemetryStats } from './ai-telemetry';
 
-// ============================================================
-// TYPES
-// ============================================================
-
-export type AIProvider = 'groq' | 'gemini' | 'openai';
-
-/** Extended provider ID that includes custom provider IDs */
-export type ProviderId = string;
-
-/** Base64-encoded image data for multimodal AI requests */
-export interface ImageData {
-  /** Base64-encoded image content (no data: prefix) */
-  base64: string;
-  /** MIME type (e.g. 'image/png', 'image/jpeg') */
-  mimeType: string;
-}
-
-interface AIClientConfig {
-  provider: AIProvider;
-  apiKey: string;
-}
-
-// ============================================================
-// CONFIG MANAGEMENT
-// ============================================================
-
-export function getProvider(): AIProvider {
-  return (localStorage.getItem(STORAGE_KEYS.AI_PROVIDER) as AIProvider) || 'groq';
-}
-
-export function setProvider(provider: AIProvider): void {
-  localStorage.setItem(STORAGE_KEYS.AI_PROVIDER, provider);
-}
-
-function getApiKeyStorageKey(provider: string): string {
-  switch (provider) {
-    case 'groq': return STORAGE_KEYS.GROQ_API_KEY;
-    case 'gemini': return STORAGE_KEYS.GEMINI_API_KEY;
-    case 'openai': return STORAGE_KEYS.OPENAI_API_KEY;
-    default: return getCustomProviderApiKeyKey(provider);
-  }
-}
-
-export function getApiKey(provider?: string): string | null {
-  const p = provider || getProvider();
-  return getSecureItem(getApiKeyStorageKey(p));
-}
-
-export function setApiKey(key: string, provider?: string): void {
-  const p = provider || getProvider();
-  setSecureItem(getApiKeyStorageKey(p), key);
-}
-
-export function clearApiKey(provider?: string): void {
-  const p = provider || getProvider();
-  removeSecureItem(getApiKeyStorageKey(p));
-}
-
-/**
- * Initialize secure storage - migrate legacy plaintext keys
- * Call this once on app startup
- */
-export function initSecureStorage(): void {
-  migrateToSecureStorage([
-    STORAGE_KEYS.GROQ_API_KEY,
-    STORAGE_KEYS.GEMINI_API_KEY,
-    STORAGE_KEYS.OPENAI_API_KEY,
-  ]);
-}
-
-export function hasApiKey(provider?: string): boolean {
-  return !!getApiKey(provider);
-}
-
-export function getClientConfig(overrideProvider?: string): AIClientConfig | null {
-  const provider = overrideProvider || getProvider();
-  const apiKey = getApiKey(provider);
-  if (!apiKey) return null;
-  return { provider: provider as AIProvider, apiKey };
-}
-
-// ============================================================
-// AI CLIENTS (singletons with API key change detection)
-// ============================================================
-
-// Groq and Gemini keep simple singleton (one instance each, keyed by apiKey)
-let groqClient: Groq | null = null;
-let groqClientKey: string | null = null;
-let geminiClient: GoogleGenerativeAI | null = null;
-let geminiClientKey: string | null = null;
-
-// OpenAI-compatible clients: Map-based cache keyed by "apiKey::baseURL"
-const openaiClientCache = new Map<string, OpenAI>();
-
-function getOpenAICacheKey(apiKey: string, baseURL?: string): string {
-  return baseURL ? `${apiKey}::${baseURL}` : apiKey;
-}
-
-function getGroqClient(apiKey: string): Groq {
-  if (!groqClient || groqClientKey !== apiKey) {
-    groqClient = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-    groqClientKey = apiKey;
-  }
-  return groqClient;
-}
-
-function getGeminiClient(apiKey: string): GoogleGenerativeAI {
-  if (!geminiClient || geminiClientKey !== apiKey) {
-    geminiClient = new GoogleGenerativeAI(apiKey);
-    geminiClientKey = apiKey;
-  }
-  return geminiClient;
-}
-
-function getOpenAIClient(apiKey: string, baseURL?: string): OpenAI {
-  const cacheKey = getOpenAICacheKey(apiKey, baseURL);
-  if (!openaiClientCache.has(cacheKey)) {
-    openaiClientCache.set(cacheKey, new OpenAI({
-      apiKey,
-      ...(baseURL && { baseURL }),
-      dangerouslyAllowBrowser: true,
-    }));
-  }
-  return openaiClientCache.get(cacheKey)!;
-}
-
-/**
- * Reset AI client singletons and their tracked keys.
- * Forces recreation on next usage.
- *
- * @param providerId - Optional: clear only a specific provider's cache.
- *   If omitted, clears all caches.
- */
-export function resetClient(providerId?: string): void {
-  if (!providerId) {
-    // Clear all caches
-    groqClient = null;
-    geminiClient = null;
-    openaiClientCache.clear();
-    groqClientKey = null;
-    geminiClientKey = null;
-    return;
-  }
-
-  if (providerId === 'groq') {
-    groqClient = null;
-    groqClientKey = null;
-  } else if (providerId === 'gemini') {
-    geminiClient = null;
-    geminiClientKey = null;
-  } else {
-    // Clear specific openai-compatible provider entries
-    const providerConfig = getProviderById(providerId);
-    if (providerConfig) {
-      for (const [key] of openaiClientCache) {
-        if (providerConfig.baseURL && key.endsWith(`::${providerConfig.baseURL}`)) {
-          openaiClientCache.delete(key);
-        } else if (!providerConfig.baseURL && !key.includes('::')) {
-          openaiClientCache.delete(key);
-        }
-      }
-    } else {
-      // Unknown provider -- clear all openai cache as safety measure
-      openaiClientCache.clear();
-    }
-  }
-}
-
-// ============================================================
-// AI CONFIGURATION
-// ============================================================
-
-/**
- * Get user's selected model for a provider from localStorage.
- * Returns null if no selection persisted (use provider default).
- */
-export function getSelectedModel(providerId: string): string | null {
-  return localStorage.getItem(getModelStorageKey(providerId));
-}
-
-/**
- * Persist user's selected model for a provider.
- */
-export function setSelectedModel(providerId: string, modelId: string): void {
-  localStorage.setItem(getModelStorageKey(providerId), modelId);
-}
-
-/**
- * Get effective AI configuration.
- * Uses global settings only (project-level config removed in v2.1).
- */
-export function getEffectiveAIConfig(): {
-  provider: AIProvider;
-  modelId: string;
-} {
-  const globalProvider = getProvider();
-  const providerConfig = getProviderById(globalProvider);
-
-  // Read persisted model selection, falling back to provider default
-  const selectedModel = getSelectedModel(globalProvider);
-  const defaultModel = providerConfig?.defaultModel
-    ?? (globalProvider === 'groq' ? AI_CONFIG.GROQ_MODEL
-      : globalProvider === 'gemini' ? AI_CONFIG.GEMINI_MODEL
-      : AI_CONFIG.OPENAI_MODEL);
-
-  return {
-    provider: globalProvider,
-    modelId: selectedModel || defaultModel,
-  };
-}
-
-/**
- * Resolve the correct model ID for a given provider.
- * Uses: persisted user selection > provider's defaultModel > hardcoded fallback.
- * This is the authoritative model resolution -- use when provider may be overridden.
- */
-export function resolveModelForProvider(providerId: string): string {
-  const selected = getSelectedModel(providerId);
-  if (selected) return selected;
-
-  const providerConfig = getProviderById(providerId);
-  if (providerConfig?.defaultModel) return providerConfig.defaultModel;
-
-  // Ultimate fallback for unknown/deleted providers
-  if (providerId === 'groq') return AI_CONFIG.GROQ_MODEL;
-  if (providerId === 'gemini') return AI_CONFIG.GEMINI_MODEL;
-  return AI_CONFIG.OPENAI_MODEL;
-}
-
-/**
- * Get display name for a provider.
- * Uses the registry for known providers, falls back to capitalizing the ID.
- */
-export function getProviderDisplayName(provider: string): string {
-  const config = getProviderById(provider);
-  if (config) return config.name;
-  // Fallback for unknown providers
-  return provider.charAt(0).toUpperCase() + provider.slice(1);
-}
-
-// ============================================================
-// UNIFIED COMPLETION API
-// ============================================================
-
-interface CompletionOptions {
-  provider?: string;
-  modelId?: string;
-  /** Optional Zod schema for structured output (provider-native when supported) */
-  schema?: ZodType;
-  /** Base64-encoded images for multimodal requests (Gemini/OpenAI only) */
-  images?: ImageData[];
-  /** Override max_tokens for this request (defaults to AI_CONFIG.MAX_TOKENS) */
-  maxTokens?: number;
-  /** Enable cancellation of in-flight requests */
-  signal?: AbortSignal;
-}
-
-/**
- * Helper: race a promise against an abort signal.
- * Used for Gemini SDK which doesn't natively support AbortSignal.
- */
-async function withAbortSignal<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      signal.addEventListener('abort', () => {
-        reject(new DOMException('Aborted', 'AbortError'));
-      }, { once: true });
-    }),
-  ]);
-}
-
-async function generateCompletion(prompt: string, options?: CompletionOptions): Promise<string> {
-  const providerId = options?.provider || getProvider();
-  const config = getClientConfig(providerId);
-  if (!config) {
-    const t = getTranslations();
-    throw new Error(`${getProviderDisplayName(providerId)} ${t.aiErrors.apiKeyNotConfigured}`);
-  }
-
-  // Resolve provider type from registry
-  const providerDef: ProviderConfig | null = getProviderById(providerId);
-  const providerType = providerDef?.type ?? providerId; // fallback to ID as type for built-ins
-
-  const modelId = options?.modelId || (
-    providerDef?.defaultModel
-    ?? (providerId === 'groq' ? AI_CONFIG.GROQ_MODEL
-      : providerId === 'gemini' ? AI_CONFIG.GEMINI_MODEL
-      : AI_CONFIG.OPENAI_MODEL)
-  );
-
-  // Check structured output support when schema is provided
-  const structuredMode = options?.schema
-    ? getStructuredOutputMode(providerId, modelId)
-    : 'none';
-  const jsonSchema = options?.schema && structuredMode !== 'none'
-    ? zodToSimpleJsonSchema(options.schema)
-    : null;
-
-  if (providerType === 'groq') {
-    const client = getGroqClient(config.apiKey);
-
-    // Build base request - stream: false ensures we get ChatCompletion not Stream
-    const baseRequest = {
-      model: modelId,
-      messages: [{ role: 'user' as const, content: prompt }],
-      temperature: AI_CONFIG.TEMPERATURE,
-      max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
-      stream: false as const,
-    };
-
-    // Add structured output if supported
-    const request = jsonSchema && (structuredMode === 'strict' || structuredMode === 'bestEffort')
-      ? {
-          ...baseRequest,
-          response_format: {
-            type: 'json_schema' as const,
-            json_schema: {
-              name: 'ai_response',
-              strict: structuredMode === 'strict',
-              schema: jsonSchema as Record<string, unknown>,
-            },
-          },
-        }
-      : baseRequest;
-
-    const response = await client.chat.completions.create(
-      request,
-      options?.signal ? { signal: options.signal } : undefined
-    );
-    return response.choices[0]?.message?.content || '';
-
-  } else if (providerType === 'gemini') {
-    const client = getGeminiClient(config.apiKey);
-
-    // Gemini uses a different schema format (SchemaType enum) - we use JSON mode only
-    // Full responseSchema support would require converting to Gemini's Schema type
-    const generationConfig = jsonSchema && structuredMode === 'schema'
-      ? { responseMimeType: 'application/json' as const }
-      : undefined;
-
-    const model = client.getGenerativeModel({
-      model: modelId,
-      ...(generationConfig && { generationConfig }),
-    });
-
-    // Multimodal: send images as inlineData parts alongside text
-    if (options?.images && options.images.length > 0) {
-      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-        { text: prompt },
-        ...options.images.map(img => ({
-          inlineData: { mimeType: img.mimeType, data: img.base64 },
-        })),
-      ];
-      const result = await withAbortSignal(
-        model.generateContent({ contents: [{ role: 'user', parts }] }),
-        options?.signal
-      );
-      return result.response.text();
-    }
-
-    const result = await withAbortSignal(
-      model.generateContent(prompt),
-      options?.signal
-    );
-    return result.response.text();
-
-  } else {
-    // OpenAI-compatible (built-in OpenAI + all custom providers)
-    const client = getOpenAIClient(config.apiKey, providerDef?.baseURL);
-
-    // Build message content: multimodal with image_url parts or plain text
-    const messageContent = options?.images && options.images.length > 0
-      ? [
-          { type: 'text' as const, text: prompt },
-          ...options.images.map(img => ({
-            type: 'image_url' as const,
-            image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
-          })),
-        ]
-      : prompt;
-
-    // Build base request - stream: false ensures we get ChatCompletion not Stream
-    const baseRequest = {
-      model: modelId,
-      messages: [{ role: 'user' as const, content: messageContent }],
-      temperature: AI_CONFIG.TEMPERATURE,
-      max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
-      stream: false as const,
-    };
-
-    // Add structured output if supported (OpenAI strict mode)
-    const request = jsonSchema && structuredMode === 'strict'
-      ? {
-          ...baseRequest,
-          response_format: {
-            type: 'json_schema' as const,
-            json_schema: {
-              name: 'ai_response',
-              strict: true,
-              schema: jsonSchema as Record<string, unknown>,
-            },
-          },
-        }
-      : baseRequest;
-
-    const response = await client.chat.completions.create(
-      request,
-      options?.signal ? { signal: options.signal } : undefined
-    );
-    return response.choices[0]?.message?.content || '';
-  }
-}
-
-// ============================================================
-// MULTI-TURN CHAT COMPLETION API
-// ============================================================
-
-/**
- * A message in a multi-turn conversation.
- */
-export interface ChatCompletionMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-interface ChatCompletionOptions {
-  provider?: string;
-  modelId?: string;
-  /** Override max_tokens for this request (defaults to AI_CONFIG.MAX_TOKENS) */
-  maxTokens?: number;
-  /** Enable cancellation of in-flight requests */
-  signal?: AbortSignal;
-}
-
-/**
- * Generate a chat completion from a multi-turn conversation.
- *
- * Unlike generateCompletion (single prompt), this accepts a full messages array
- * with system, user, and assistant roles for multi-turn context.
- *
- * @param messages - Array of conversation messages
- * @param options - Provider and model configuration
- * @returns The assistant's response text
- */
-export async function generateChatCompletion(
-  messages: ChatCompletionMessage[],
-  options?: ChatCompletionOptions
-): Promise<string> {
-  const providerId = options?.provider || getProvider();
-  const config = getClientConfig(providerId);
-  if (!config) {
-    const t = getTranslations();
-    throw new Error(`${getProviderDisplayName(providerId)} ${t.aiErrors.apiKeyNotConfigured}`);
-  }
-
-  // Resolve provider type from registry
-  const providerDef: ProviderConfig | null = getProviderById(providerId);
-  const providerType = providerDef?.type ?? providerId;
-
-  const modelId = options?.modelId || (
-    providerDef?.defaultModel
-    ?? (providerId === 'groq' ? AI_CONFIG.GROQ_MODEL
-      : providerId === 'gemini' ? AI_CONFIG.GEMINI_MODEL
-      : AI_CONFIG.OPENAI_MODEL)
-  );
-
-  if (providerType === 'groq') {
-    const client = getGroqClient(config.apiKey);
-    const response = await client.chat.completions.create({
-      model: modelId,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: AI_CONFIG.TEMPERATURE,
-      max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
-      stream: false as const,
-    }, options?.signal ? { signal: options.signal } : undefined);
-    return response.choices[0]?.message?.content || '';
-
-  } else if (providerType === 'gemini') {
-    const client = getGeminiClient(config.apiKey);
-
-    // Extract system instruction from messages
-    const systemMessage = messages.find(m => m.role === 'system');
-    const systemInstruction = systemMessage?.content || undefined;
-
-    // Convert remaining messages to Gemini format
-    // Gemini uses 'model' instead of 'assistant' for the AI role
-    const nonSystemMessages = messages.filter(m => m.role !== 'system');
-
-    const model = client.getGenerativeModel({
-      model: modelId,
-      ...(systemInstruction && { systemInstruction }),
-    });
-
-    if (nonSystemMessages.length <= 1) {
-      // Single message: use generateContent directly
-      const lastContent = nonSystemMessages[nonSystemMessages.length - 1]?.content || '';
-      const result = await withAbortSignal(
-        model.generateContent(lastContent),
-        options?.signal
-      );
-      return result.response.text();
-    }
-
-    // Multi-turn: use startChat with history
-    const history = nonSystemMessages.slice(0, -1).map(m => ({
-      role: m.role === 'assistant' ? 'model' : m.role,
-      parts: [{ text: m.content }],
-    }));
-
-    const chat = model.startChat({ history });
-    const lastMessage = nonSystemMessages[nonSystemMessages.length - 1];
-    const result = await withAbortSignal(
-      chat.sendMessage(lastMessage.content),
-      options?.signal
-    );
-    return result.response.text();
-
-  } else {
-    // OpenAI-compatible (built-in OpenAI + all custom providers)
-    const client = getOpenAIClient(config.apiKey, providerDef?.baseURL);
-    const response = await client.chat.completions.create({
-      model: modelId,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: AI_CONFIG.TEMPERATURE,
-      max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
-      stream: false as const,
-    }, options?.signal ? { signal: options.signal } : undefined);
-    return response.choices[0]?.message?.content || '';
-  }
-}
-
-/**
- * Check if an error is a rate-limit (429) that can be retried after a delay.
- */
-function isRateLimitError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  if (/\b429\b/.test(msg) || /resource.?exhausted/i.test(msg) || /too.?many.?requests/i.test(msg)) {
-    return true;
-  }
-  if (typeof err === 'object' && err !== null && 'status' in err) {
-    if ((err as { status: number }).status === 429) return true;
-  }
-  return false;
-}
-
-/**
- * Check if an error is an auth (401/403) error that should not be retried.
- */
-function isNonRetryableError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  if (/\b(401|403)\b/.test(msg) || /unauthorized|forbidden|invalid.*api.?key/i.test(msg)) {
-    return true;
-  }
-  if (typeof err === 'object' && err !== null && 'status' in err) {
-    const status = (err as { status: number }).status;
-    if (status === 401 || status === 403) return true;
-  }
-  return false;
-}
-
-/**
- * Silently retry a function on 429 rate-limit errors with exponential backoff.
- * Keeps the loading spinner going — user sees no error until all retries exhausted.
- */
-async function withRateLimitRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDelayMs = 3000): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      // Don't retry abort errors - propagate immediately
-      if (isAbortError(err)) throw err;
-      if (!isRateLimitError(err) || attempt === maxRetries) throw err;
-      // Exponential backoff: 3s, 6s, 12s
-      const backoffMs = baseDelayMs * Math.pow(2, attempt);
-      await new Promise(r => setTimeout(r, backoffMs));
-    }
-  }
-  throw lastError;
-}
-
-/**
- * Format an API error into a user-friendly message.
- */
-function formatAPIError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
-  const t = getTranslations();
-  if (/\b429\b/.test(msg) || /resource.?exhausted/i.test(msg) || /too.?many.?requests/i.test(msg)) {
-    return t.aiErrors.rateLimitReached;
-  }
-  if (/\b401\b/.test(msg) || /unauthorized/i.test(msg) || /invalid.*api.?key/i.test(msg)) {
-    return t.aiErrors.invalidApiKey;
-  }
-  if (/\b403\b/.test(msg) || /forbidden/i.test(msg)) {
-    return t.aiErrors.accessDenied;
-  }
-  return msg;
-}
-
-/**
- * Generate AI completion with structured output validation and retry.
- *
- * Attempts structured output first (if supported), then validates with Zod.
- * On validation failure, retries with error feedback.
- *
- * @param prompt - The prompt to send to the AI
- * @param schema - Zod schema for validation
- * @param options - Completion options (provider, model)
- * @returns Result with validated data or error
- */
-export async function generateCompletionWithRetry<T>(
-  prompt: string,
-  schema: ZodSchema<T>,
-  options?: Omit<CompletionOptions, 'schema'> & { images?: ImageData[] }
-): Promise<RetryResult<T>> {
-  // Check if already aborted
-  if (options?.signal?.aborted) {
-    return { success: false, error: 'Operation cancelled', retryCount: 0 };
-  }
-
-  // First try with structured output if available
-  // 429 errors are silently retried (up to 2 retries, 3s apart) to avoid user-facing rate-limit errors
-  try {
-    const text = await withRateLimitRetry(
-      () => generateCompletion(prompt, { ...options, schema, images: options?.images })
-    );
-
-    // Extract and validate JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      const result = schema.safeParse(parsed);
-      if (result.success) {
-        return { success: true, data: result.data, retryCount: 0 };
-      }
-    }
-  } catch (err) {
-    // Don't retry on auth (401/403) errors - propagate immediately
-    if (isNonRetryableError(err)) {
-      return { success: false, error: formatAPIError(err), retryCount: 0 };
-    }
-    // Rate-limit exhausted all silent retries - propagate as error
-    if (isRateLimitError(err)) {
-      return { success: false, error: formatAPIError(err), retryCount: 0 };
-    }
-    // Other errors: fall through to retry
-  }
-
-  // Structured output failed or not available - use retry with error feedback
-  // Note: images only sent on first attempt; retries use text-only prompt
-  return generateWithRetry(
-    prompt,
-    schema,
-    (p) => withRateLimitRetry(() => generateCompletion(p, options)),
-    1 // maxRetries
-  );
-}
-
-/**
- * Test provider connectivity with minimal token usage.
- * Used by health check — no retry, no telemetry, no context.
- */
-export async function testProviderConnection(providerId?: string): Promise<string> {
-  return generateCompletion('Test', { provider: providerId, maxTokens: 5 });
-}
+// Re-export from sub-modules to maintain existing import paths
+export type { AIProvider, ProviderId };
+export type { ImageData, CompletionOptions, ChatCompletionMessage };
+export type { RetryResult };
+
+export {
+  getProvider,
+  setProvider,
+  getEffectiveAIConfig,
+  resolveModelForProvider,
+  getProviderDisplayName,
+  getSelectedModel,
+  setSelectedModel,
+};
+
+export {
+  getApiKey,
+  setApiKey,
+  clearApiKey,
+  hasApiKey,
+  getClientConfig,
+  resetClient,
+  initSecureStorage,
+};
+
+export {
+  generateCompletionWithRetry,
+  generateChatCompletion,
+  testProviderConnection,
+};
 
 // ============================================================
 // ITEM REFINEMENT
@@ -2128,7 +1500,9 @@ export async function analyzeBacklog(
       // Extract JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        console.warn(`[AI Analysis] Batch ${i + 1}/${batches.length}: Invalid response`);
+        if (import.meta.env.DEV) {
+          console.warn(`[AI Analysis] Batch ${i + 1}/${batches.length}: Invalid response`);
+        }
         // Record telemetry for failed batch
         if (options?.projectId) {
           await recordTelemetry({
@@ -2161,7 +1535,9 @@ export async function analyzeBacklog(
           });
         }
       } else {
-        console.warn(`[AI Analysis] Batch ${i + 1}/${batches.length}: Validation failed`);
+        if (import.meta.env.DEV) {
+          console.warn(`[AI Analysis] Batch ${i + 1}/${batches.length}: Validation failed`);
+        }
         // Record telemetry for validation failure
         if (options?.projectId) {
           await recordTelemetry({
