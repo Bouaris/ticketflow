@@ -223,12 +223,22 @@ TicketFlow's development is powered by [GSD (Get Shit Done)](https://github.com/
   </tr>
   <tr>
     <td align="center">
+      <img src="./assets/gallery-bulkimport.png" alt="Bulk import wizard with AI-extracted tickets" width="100%">
+      <br><em>Bulk Import Wizard</em>
+    </td>
+    <td align="center">
       <img src="./assets/gallery-settings.png" alt="General Settings panel" width="100%">
       <br><em>General Settings</em>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="./assets/gallery-gsd-integration.png" alt="GSD Integration settings" width="100%">
       <br><em>GSD Integration</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshot-dark.png" alt="TicketFlow in dark mode — Kanban board view" width="100%">
+      <br><em>Dark Mode</em>
     </td>
   </tr>
 </table>
