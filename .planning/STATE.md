@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2.1 "Battle-Ready" — Phase 33: Type Safety & Critical Bug Fixes — COMPLETE
+**Current focus:** Phase 34: Dead Code Sweep — AI config parameter cleanup + telemetry quality
 
 ## Current Position
 
-Phase: 33 of 33 (Type Safety & Critical Bug Fixes) — COMPLETE
+Phase: 34 of 34 (Dead Code Sweep) — In Progress
 Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 33 fully complete — all SMELL-001/002/003 findings closed, v2.2.1 milestone done
-Last activity: 2026-02-19 — Completed 33-01 (isBuiltInProvider type predicate, AISettingsModal as any removal, ProviderCard typed colors, ai-bulk BulkTicket type)
+Status: Phase 34 plan 02 complete — FIX-06/07 resolved, DEAD-004/010/SMELL-011/016/017/018 closed
+Last activity: 2026-02-19 — Completed 34-02 (getEffectiveAIConfig parameter removal, telemetry quality improvements)
 
 Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
@@ -34,7 +34,8 @@ Progress: [███████████████████████
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
 | v2.2 | 10 | 4 | 17/17 | Shipped 2026-02-18 |
 | v2.2.1 | 3 | 3 | 18/18 | Complete 2026-02-19 |
-| **Total** | **92+** | **33** | **200+** | |
+| v2.2.2 (dead-code) | 2+ | 1 | 9+ | In Progress 2026-02-19 |
+| **Total** | **94+** | **34** | **200+** | |
 
 ## Accumulated Context
 
@@ -68,16 +69,17 @@ Recent decisions affecting v2.2.1:
 - [Phase 33-02]: AISettingsModal.tsx questioning-mode key replacements left for plan 33-01 (file ownership boundary)
 - [Phase 33-01]: Type predicate for isBuiltInProvider eliminates downstream as any casts at all call sites
 - [Phase 33-01]: Storage key centralization: STORAGE_KEYS.QUESTIONING_MODE replaces hardcoded string in AISettingsModal
+- [Phase 34-dead-code-sweep]: getEffectiveAIConfig() parameter removed — projectPath in options types left untouched as they serve other purposes (DB access, context loading)
+- [Phase 34-dead-code-sweep]: shutdownTelemetry removed (DEAD-004): Rust WAL persistence in telemetry.rs makes JS-side shutdown redundant; documented as comment for future re-wiring
 
 ### Pending Todos
 
 - Idee future: L'IA auto-cree des relations dans item_relations quand elle detecte des dependances
 - Idee future: Ameliorer le systeme de raffinage IA pour les projets en cours
 - SettingsModal maintenance feature temporarily disabled (needs redesign for ProjectWorkspace architecture)
-- getEffectiveAIConfig unused _projectPath parameter cleanup (16 call sites)
 - OpenAI-compatible API adapter layer (error formats, rate-limit headers)
 - PostHog account + VITE_POSTHOG_KEY must exist before telemetry validation can run against live dashboard
-- shutdownTelemetry() not wired to app-quit event handler (low priority — consent_revoked may be lost on rapid close)
+- shutdownTelemetry re-wire: if needed in future, wire to window 'beforeunload' or Tauri 'close-requested' event
 
 ### Blockers/Concerns
 
@@ -95,9 +97,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 33-01-PLAN.md — Phase 33 fully complete, all SMELL fixes closed
-Resume file: .planning/phases/33-type-safety-critical-fixes/33-01-SUMMARY.md
-Next action: v2.2.1 milestone complete — create release tag when ready
+Stopped at: Completed 34-02-PLAN.md — AI config parameter cleanup + telemetry quality improvements
+Resume file: .planning/phases/34-dead-code-sweep/34-02-SUMMARY.md
+Next action: Phase 34 plan 02 complete — proceed to plan 03 if it exists, otherwise phase closure
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 33-01 completion (Phase 33 complete — v2.2.1 done)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 34-02 completion (AI config cleanup + telemetry quality)*
