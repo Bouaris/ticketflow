@@ -206,6 +206,10 @@ Plans:
   7. README gallery restored to 3x2 with all 6 assets, or orphaned files cleaned from assets/
   8. `pnpm build` and `pnpm tauri build` pass after all dependency changes
 **Plans**: 3 plans
+Plans:
+- [ ] 36-01-PLAN.md — SHA-pin CI actions, document accepted security risks in SECURITY.md (FIX-14)
+- [ ] 36-02-PLAN.md — Update all npm + Cargo dependencies, Tauri ecosystem to 2.10.x (FIX-15, FIX-16)
+- [ ] 36-03-PLAN.md — Restore README gallery to 3x2 + final build verification (FIX-17)
 
 ## Progress
 
