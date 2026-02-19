@@ -1,10 +1,12 @@
 /**
  * ListView component - Table view of backlog items.
  * Phase 11: Supports inline editing of title and badge fields.
+ * Phase 35: Virtualized rendering via @tanstack/react-virtual for 500+ items performance.
+ *           ListViewRow wrapped in React.memo to prevent unnecessary re-renders.
  */
 
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useMemo, memo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { BacklogItem, Priority, Effort, Severity } from '../../types/backlog';
 import type { ItemPriorityScore, BlockingBug } from '../../types/ai';
 import { PRIORITY_LABELS } from '../../constants/labels';
@@ -16,7 +18,6 @@ import { ScoreBadgeInline } from '../ai/AIPriorityScore';
 import { AIBlockingBadge } from '../ai/AIBlockingIndicator';
 import { InlineEditField } from '../ui/InlineEditField';
 import { InlineSelect, type InlineSelectOption } from '../ui/InlineSelect';
-import { SPRING_PRESETS } from '../../lib/animation-presets';
 
 // Phase 11: Inline editing option constants
 const PRIORITY_OPTIONS: InlineSelectOption<Priority>[] = [
@@ -56,6 +57,255 @@ interface ListViewProps {
 type SortField = 'id' | 'type' | 'title' | 'priority' | 'effort' | 'severity' | 'aiScore';
 type SortDirection = 'asc' | 'desc';
 
+// ============================================================
+// ListViewRow — memo-wrapped for performance
+// ============================================================
+
+interface ListViewRowProps {
+  item: BacklogItem;
+  aiScore: ItemPriorityScore | null | undefined;
+  blockingInfo: BlockingBug | null | undefined;
+  isSelected: boolean;
+  hasAIAnalysis: boolean;
+  severityOptions: InlineSelectOption<Severity>[];
+  onRowClick: (item: BacklogItem, e: React.MouseEvent) => void;
+  onInlineUpdate?: (itemId: string, updates: Partial<BacklogItem>) => void;
+  onSelectionClick?: (itemId: string, event: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }) => void;
+  onQuickDelete?: (item: BacklogItem) => void;
+  onQuickValidate?: (item: BacklogItem) => void;
+  onQuickExport?: (item: BacklogItem) => void;
+  onQuickArchive?: (item: BacklogItem) => void;
+  t: ReturnType<typeof useTranslation>['t'];
+}
+
+const ListViewRow = memo(function ListViewRow({
+  item,
+  aiScore,
+  blockingInfo,
+  isSelected,
+  hasAIAnalysis,
+  severityOptions,
+  onRowClick,
+  onInlineUpdate,
+  onSelectionClick,
+  onQuickDelete,
+  onQuickValidate,
+  onQuickExport,
+  onQuickArchive,
+  t,
+}: ListViewRowProps) {
+  return (
+    <tr
+      onClick={(e) => onRowClick(item, e)}
+      className={`group hover:bg-surface-alt cursor-pointer transition-colors ${
+        isSelected ? 'bg-accent/10' : ''
+      }`}
+    >
+      {/* Selection checkbox cell */}
+      {onSelectionClick && (
+        <td className="px-2 py-3 whitespace-nowrap">
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mx-auto ${
+            isSelected
+              ? 'bg-accent border-accent text-white'
+              : 'bg-surface border-outline'
+          }`}>
+            {isSelected && <CheckIcon className="w-3 h-3" />}
+          </div>
+        </td>
+      )}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-mono text-on-surface">{item.id}</span>
+          {blockingInfo && (
+            <AIBlockingBadge
+              blocksCount={blockingInfo.blocksCount}
+              severity={blockingInfo.severity}
+            />
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <ItemBadge type={item.type} />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          {item.emoji && <span>{item.emoji}</span>}
+          {/* Phase 11: Inline title editing */}
+          <InlineEditField
+            value={item.title}
+            onSave={(newTitle) => onInlineUpdate?.(item.id, { title: newTitle })}
+            className="text-sm text-on-surface line-clamp-1"
+            disabled={!onInlineUpdate}
+          />
+          {item.screenshots && item.screenshots.length > 0 && (
+            <span className="text-on-surface-faint flex-shrink-0" title={`${item.screenshots.length} capture(s)`}>
+              <CameraIcon />
+            </span>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        {item.priority && (
+          onInlineUpdate ? (
+            <InlineSelect<Priority>
+              value={item.priority}
+              options={PRIORITY_OPTIONS}
+              onSelect={(priority) => onInlineUpdate(item.id, { priority })}
+              allowClear={false}
+              renderTrigger={({ onClick: triggerClick }) => (
+                <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
+                  item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
+                  item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {PRIORITY_LABELS[item.priority!]}
+                </span>
+              )}
+            />
+          ) : (
+            <span className={`text-xs font-medium px-2 py-1 rounded ${
+              item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
+              item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {PRIORITY_LABELS[item.priority]}
+            </span>
+          )
+        )}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        {item.effort && (
+          onInlineUpdate ? (
+            <InlineSelect<Effort>
+              value={item.effort}
+              options={EFFORT_OPTIONS}
+              onSelect={(effort) => onInlineUpdate(item.id, { effort })}
+              allowClear={false}
+              renderTrigger={({ onClick: triggerClick }) => (
+                <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
+                  item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
+                  item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {item.effort}
+                </span>
+              )}
+            />
+          ) : (
+            <span className={`text-xs font-medium px-2 py-1 rounded ${
+              item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
+              item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
+              'bg-red-100 text-red-700'
+            }`}>
+              {item.effort}
+            </span>
+          )
+        )}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        {item.severity && (
+          onInlineUpdate ? (
+            <InlineSelect<Severity>
+              value={item.severity}
+              options={severityOptions}
+              onSelect={(severity) => onInlineUpdate(item.id, { severity })}
+              allowClear={false}
+              renderTrigger={({ onClick: triggerClick }) => (
+                <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
+                  item.severity === 'P0' ? 'bg-red-100 text-red-700' :
+                  item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
+                  item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {item.severity}
+                </span>
+              )}
+            />
+          ) : (
+            <span className={`text-xs font-medium px-2 py-1 rounded ${
+              item.severity === 'P0' ? 'bg-red-100 text-red-700' :
+              item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
+              item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {item.severity}
+            </span>
+          )
+        )}
+      </td>
+      {hasAIAnalysis && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          {aiScore && (
+            <ScoreBadgeInline score={aiScore.score} />
+          )}
+        </td>
+      )}
+      <td className="px-4 py-3 whitespace-nowrap">
+        {item.criteria && item.criteria.length > 0 && (
+          <CriteriaProgress
+            completed={item.criteria.filter(c => c.checked).length}
+            total={item.criteria.length}
+            size="sm"
+          />
+        )}
+      </td>
+      {(onQuickDelete || onQuickValidate || onQuickExport || onQuickArchive) && (
+        <td className="px-2 py-3 whitespace-nowrap">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onQuickValidate && (() => {
+              const isValidated = item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked);
+              return (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onQuickValidate(item); }}
+                  className={`p-1 rounded transition-colors ${
+                    isValidated
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600'
+                  }`}
+                  title={isValidated ? t.quickActions.unvalidate : t.quickActions.validate}
+                >
+                  <CheckCircleIcon className="w-4 h-4" />
+                </button>
+              );
+            })()}
+            {onQuickExport && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onQuickExport(item); }}
+                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 transition-colors"
+                title={t.quickActions.export}
+              >
+                <CopyIcon className="w-4 h-4" />
+              </button>
+            )}
+            {onQuickArchive && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onQuickArchive(item); }}
+                className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 transition-colors"
+                title={t.quickActions.archive}
+              >
+                <ArchiveIcon className="w-4 h-4" />
+              </button>
+            )}
+            {onQuickDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onQuickDelete(item); }}
+                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 transition-colors"
+                title={t.quickActions.delete}
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </td>
+      )}
+    </tr>
+  );
+});
+
+// ============================================================
+// ListView — virtualized main component
+// ============================================================
+
 export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, onInlineUpdate, isSelected, onSelectionClick, onQuickDelete, onQuickValidate, onQuickExport, onQuickArchive }: ListViewProps) {
   const { t } = useTranslation();
   const [sortField, setSortField] = useState<SortField>('id');
@@ -73,7 +323,7 @@ export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, on
   // Check if AI analysis is available
   const hasAIAnalysis = !!getItemScore;
 
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = useMemo(() => [...items].sort((a, b) => {
     let comparison = 0;
 
     switch (sortField) {
@@ -116,7 +366,7 @@ export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, on
     }
 
     return sortDirection === 'asc' ? comparison : -comparison;
-  });
+  }), [items, sortField, sortDirection, getItemScore]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -135,6 +385,26 @@ export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, on
     }
     onItemClick(item);
   };
+
+  // Scroll container ref for virtualizer
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: sortedItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52, // Estimated row height in px (~52px per row with badges)
+    overscan: 10, // Render 10 extra rows above/below viewport for smooth scrolling
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // Padding-based virtualization spacers
+  // Spacer rows push visible rows to the correct scroll position without position:absolute
+  // (which browser table layout engines ignore on <tr> elements)
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0
+    ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+    : 0;
 
   const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
@@ -161,7 +431,7 @@ export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, on
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div ref={parentRef} className="flex-1 overflow-auto">
       <table className="min-w-full divide-y divide-outline">
         <thead className="bg-surface-alt sticky top-0">
           <tr>
@@ -188,229 +458,45 @@ export function ListView({ items, onItemClick, getItemScore, getBlockingInfo, on
             )}
           </tr>
         </thead>
-        <AnimatePresence mode="popLayout">
-          <tbody className="bg-surface divide-y divide-outline">
-            {sortedItems.map(item => {
-              // Extract AI data once per item to avoid multiple callback invocations
-              const aiScore = getItemScore?.(item.id);
-              const blockingInfo = getBlockingInfo?.(item.id);
-              const itemIsSelected = isSelected?.(item.id) ?? false;
+        <tbody className="bg-surface divide-y divide-outline">
+          {/* Top spacer row — creates empty space for items above the viewport */}
+          {paddingTop > 0 && (
+            <tr><td style={{ height: `${paddingTop}px` }} colSpan={999} /></tr>
+          )}
 
-              return (
-                <motion.tr
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: 30 }}
-                  transition={SPRING_PRESETS.quick}
-                  layout
-                  onClick={(e) => handleRowClick(item, e)}
-                  className={`group hover:bg-surface-alt cursor-pointer transition-colors ${
-                    itemIsSelected ? 'bg-accent/10' : ''
-                  }`}
-                >
-                {/* Selection checkbox cell */}
-                {onSelectionClick && (
-                  <td className="px-2 py-3 whitespace-nowrap">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mx-auto ${
-                      itemIsSelected
-                        ? 'bg-accent border-accent text-white'
-                        : 'bg-surface border-outline'
-                    }`}>
-                      {itemIsSelected && <CheckIcon className="w-3 h-3" />}
-                    </div>
-                  </td>
-                )}
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono text-on-surface">{item.id}</span>
-                    {blockingInfo && (
-                      <AIBlockingBadge
-                        blocksCount={blockingInfo.blocksCount}
-                        severity={blockingInfo.severity}
-                      />
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <ItemBadge type={item.type} />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {item.emoji && <span>{item.emoji}</span>}
-                    {/* Phase 11: Inline title editing */}
-                    <InlineEditField
-                      value={item.title}
-                      onSave={(newTitle) => onInlineUpdate?.(item.id, { title: newTitle })}
-                      className="text-sm text-on-surface line-clamp-1"
-                      disabled={!onInlineUpdate}
-                    />
-                    {item.screenshots && item.screenshots.length > 0 && (
-                      <span className="text-on-surface-faint flex-shrink-0" title={`${item.screenshots.length} capture(s)`}>
-                        <CameraIcon />
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {item.priority && (
-                    onInlineUpdate ? (
-                      <InlineSelect<Priority>
-                        value={item.priority}
-                        options={PRIORITY_OPTIONS}
-                        onSelect={(priority) => onInlineUpdate(item.id, { priority })}
-                        allowClear={false}
-                        renderTrigger={({ onClick: triggerClick }) => (
-                          <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                            item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
-                            item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {PRIORITY_LABELS[item.priority!]}
-                          </span>
-                        )}
-                      />
-                    ) : (
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${
-                        item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
-                        item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {PRIORITY_LABELS[item.priority]}
-                      </span>
-                    )
-                  )}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {item.effort && (
-                    onInlineUpdate ? (
-                      <InlineSelect<Effort>
-                        value={item.effort}
-                        options={EFFORT_OPTIONS}
-                        onSelect={(effort) => onInlineUpdate(item.id, { effort })}
-                        allowClear={false}
-                        renderTrigger={({ onClick: triggerClick }) => (
-                          <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                            item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
-                            item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {item.effort}
-                          </span>
-                        )}
-                      />
-                    ) : (
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${
-                        item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
-                        item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {item.effort}
-                      </span>
-                    )
-                  )}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {item.severity && (
-                    onInlineUpdate ? (
-                      <InlineSelect<Severity>
-                        value={item.severity}
-                        options={severityOptions}
-                        onSelect={(severity) => onInlineUpdate(item.id, { severity })}
-                        allowClear={false}
-                        renderTrigger={({ onClick: triggerClick }) => (
-                          <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                            item.severity === 'P0' ? 'bg-red-100 text-red-700' :
-                            item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
-                            item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {item.severity}
-                          </span>
-                        )}
-                      />
-                    ) : (
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${
-                        item.severity === 'P0' ? 'bg-red-100 text-red-700' :
-                        item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
-                        item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {item.severity}
-                      </span>
-                    )
-                  )}
-                </td>
-                {hasAIAnalysis && (
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {aiScore && (
-                      <ScoreBadgeInline score={aiScore.score} />
-                    )}
-                  </td>
-                )}
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {item.criteria && item.criteria.length > 0 && (
-                    <CriteriaProgress
-                      completed={item.criteria.filter(c => c.checked).length}
-                      total={item.criteria.length}
-                      size="sm"
-                    />
-                  )}
-                </td>
-                {(onQuickDelete || onQuickValidate || onQuickExport || onQuickArchive) && (
-                  <td className="px-2 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {onQuickValidate && (() => {
-                        const isValidated = item.criteria && item.criteria.length > 0 && item.criteria.every(c => c.checked);
-                        return (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onQuickValidate(item); }}
-                            className={`p-1 rounded transition-colors ${
-                              isValidated
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600'
-                            }`}
-                            title={isValidated ? t.quickActions.unvalidate : t.quickActions.validate}
-                          >
-                            <CheckCircleIcon className="w-4 h-4" />
-                          </button>
-                        );
-                      })()}
-                      {onQuickExport && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onQuickExport(item); }}
-                          className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 transition-colors"
-                          title={t.quickActions.export}
-                        >
-                          <CopyIcon className="w-4 h-4" />
-                        </button>
-                      )}
-                      {onQuickArchive && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onQuickArchive(item); }}
-                          className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 transition-colors"
-                          title={t.quickActions.archive}
-                        >
-                          <ArchiveIcon className="w-4 h-4" />
-                        </button>
-                      )}
-                      {onQuickDelete && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onQuickDelete(item); }}
-                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 transition-colors"
-                          title={t.quickActions.delete}
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                )}
-              </motion.tr>
-              );
-            })}
-          </tbody>
-        </AnimatePresence>
+          {/* Visible rows only — virtualized */}
+          {virtualItems.map(virtualRow => {
+            const item = sortedItems[virtualRow.index];
+            const aiScore = getItemScore?.(item.id);
+            const blockingInfo = getBlockingInfo?.(item.id);
+            const itemIsSelected = isSelected?.(item.id) ?? false;
+
+            return (
+              <ListViewRow
+                key={item.id}
+                item={item}
+                aiScore={aiScore}
+                blockingInfo={blockingInfo}
+                isSelected={itemIsSelected}
+                hasAIAnalysis={hasAIAnalysis}
+                severityOptions={severityOptions}
+                onRowClick={handleRowClick}
+                onInlineUpdate={onInlineUpdate}
+                onSelectionClick={onSelectionClick}
+                onQuickDelete={onQuickDelete}
+                onQuickValidate={onQuickValidate}
+                onQuickExport={onQuickExport}
+                onQuickArchive={onQuickArchive}
+                t={t}
+              />
+            );
+          })}
+
+          {/* Bottom spacer row — creates empty space for items below the viewport */}
+          {paddingBottom > 0 && (
+            <tr><td style={{ height: `${paddingBottom}px` }} colSpan={999} /></tr>
+          )}
+        </tbody>
       </table>
     </div>
   );
