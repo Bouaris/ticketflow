@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** Phase 35: Architecture Performance — memo, virtualization, and smell resolution
+**Current focus:** Phase 36: Security, Dependencies, Cleanup — CI hardening, cargo update, dependency pruning
 
 ## Current Position
 
-Phase: 35 of 35 (Architecture Performance) — In Progress
-Plan: 4 of 4 in current phase — COMPLETE
-Status: Phase 35 plan 04 complete — React.memo on KanbanCard, virtualized ListView with @tanstack/react-virtual
-Last activity: 2026-02-19 — Completed 35-04 (FIX-12: SMELL-012 KanbanCard memo + SMELL-013 ListView virtualization)
+Phase: 36 of 36 (Security, Dependencies, Cleanup) — In Progress
+Plan: 1 of 3 in current phase — COMPLETE
+Status: Phase 36 plan 01 complete — SHA-pinned CI actions, SECURITY.md accepted risks (SEC-D2, SEC-D10) and Cargo vulnerability tracking
+Last activity: 2026-02-19 — Completed 36-01 (FIX-14: CI supply chain hardening + security risk documentation)
 
 Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
@@ -39,6 +39,7 @@ Progress: [███████████████████████
 | Phase 34-dead-code-sweep P01 | 12 | 2 tasks | 9 files |
 | Phase 35-architecture-performance P03 | 4 | 2 tasks | 3 files |
 | Phase 35-architecture-performance P04 | 25 | 2 tasks | 3 files |
+| Phase 36 P01 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting v2.2.1:
 - [Phase 35]: SMELL-005 resolved: useWorkspaceTypeSync documents all eslint-disable-line rationale — stable useRef identity, stable projectPath per mount, stable initializeWithTypes reference
 - [Phase 35-architecture-performance]: SMELL-006 resolved: ai.ts split from 2235 to 487 lines across 6 modules (ai-client, ai-config, ai-maintenance, ai-analysis, ai-prompts, ai). Leaf module pattern prevents circular deps. All existing import paths preserved via re-exports.
 - [Phase 35-architecture-performance]: generateCompletion exported (not private) from ai-client.ts — maintenance/analysis modules call it directly without retry wrapping, which is correct for format analysis flows
+- [Phase 36]: SHA-pinned pnpm/action-setup to v2.4.1 (latest v2.x) — the floating v2 major tag returned 404 on GitHub API; dereferenced annotated tag SHA for commit pin
+- [Phase 36]: SEC-D2 (IPC api_key pass-through) accepted risk: exploiting requires bypassing Tauri CSP (already full compromise); documented in SECURITY.md
+- [Phase 36]: SEC-D10 (devtools always enabled) accepted risk: local-first BYOK desktop app, user is sole operator; no meaningful security benefit from disabling; documented in SECURITY.md
 
 ### Pending Todos
 
@@ -110,9 +114,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 35-04-PLAN.md — React.memo on KanbanCard + virtualized ListView with @tanstack/react-virtual
-Resume file: .planning/phases/34-dead-code-sweep/34-01-SUMMARY.md
-Next action: Phase 34 complete — v2.2.2 dead code sweep milestone done, ready for next milestone
+Stopped at: Completed 36-01-PLAN.md — SHA-pinned CI actions, SECURITY.md accepted risks and Cargo vulnerability tracking
+Resume file: .planning/phases/36-security-dependencies-cleanup/36-01-SUMMARY.md
+Next action: Execute 36-02 (cargo update + cargo audit for Rust dependency security)
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 34-01 completion (Phase 34 complete — dead code sweep fully done)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 36-01 completion (Phase 36 plan 01 — CI supply chain hardening and security documentation)*
