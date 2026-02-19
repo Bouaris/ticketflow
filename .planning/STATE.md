@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** Phase 36: Security, Dependencies, Cleanup — CI hardening, cargo update, dependency pruning
+**Current focus:** Phase 36 COMPLETE — Security, Dependencies, Cleanup — all 3 plans done
 
 ## Current Position
 
-Phase: 36 of 36 (Security, Dependencies, Cleanup) — In Progress
-Plan: 1 of 3 in current phase — COMPLETE
-Status: Phase 36 plan 01 complete — SHA-pinned CI actions, SECURITY.md accepted risks (SEC-D2, SEC-D10) and Cargo vulnerability tracking
-Last activity: 2026-02-19 — Completed 36-01 (FIX-14: CI supply chain hardening + security risk documentation)
+Phase: 36 of 36 (Security, Dependencies, Cleanup) — COMPLETE
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Phase 36 complete — CI hardening, Cargo/npm dependency updates, README gallery restoration, final build verification (FIX-14, FIX-15, FIX-17 all resolved)
+Last activity: 2026-02-19 — Completed 36-03 (FIX-17: README gallery 3x2 restoration + Phase 36 final build verification)
 
-Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
+Progress: [█████████████████████████] 100% (all phases v1.0–v2.2 + v2.2.1 phase 33-36 complete)
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [███████████████████████
 | Phase 35-architecture-performance P04 | 25 | 2 tasks | 3 files |
 | Phase 36 P01 | 15 | 2 tasks | 2 files |
 | Phase 36-security-dependencies-cleanup P02 | 18 | 2 tasks | 4 files |
+| Phase 36-security-dependencies-cleanup P03 | 4 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 36-02]: eslint 9.x->10.x deferred: major rewrite with flat config migration needed, defer to next milestone
 - [Phase 36-02]: jsdom 25->28 deferred: dev-only, test env risk; react-dropzone 14->15 deferred: production dep with breaking API in BulkImportWizard
 - [Phase 36-02]: Cargo.toml tauri pin changed from '2.9.5' to '2.10' semver range to allow future patch auto-updates; bytes and time CVEs resolved by cargo update
+- [Phase 36-03]: README gallery restored to 3x2 (was 2x2): gallery-bulkimport.png and screenshot-dark.png added as previously orphaned assets
+- [Phase 36-03]: pnpm tauri build signing error (TAURI_SIGNING_PRIVATE_KEY missing) is expected for local builds — bundles are produced, signing only in CI
 
 ### Pending Todos
 
@@ -118,9 +121,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 36-01-PLAN.md — SHA-pinned CI actions, SECURITY.md accepted risks and Cargo vulnerability tracking
-Resume file: .planning/phases/36-security-dependencies-cleanup/36-01-SUMMARY.md
-Next action: Execute 36-02 (cargo update + cargo audit for Rust dependency security)
+Stopped at: Completed 36-03-PLAN.md — README gallery 3x2 restoration and Phase 36 final build verification (Phase 36 COMPLETE)
+Resume file: .planning/phases/36-security-dependencies-cleanup/36-03-SUMMARY.md
+Next action: All phases complete — no pending plans
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 36-01 completion (Phase 36 plan 01 — CI supply chain hardening and security documentation)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 36-03 completion (Phase 36 fully complete — Security, Dependencies, Cleanup)*

@@ -87,7 +87,7 @@
 - [x] **Phase 33: Type Safety & Critical Bug Fixes** - Fix all P2 correctness issues: type casts, telemetry idempotency bug, useEffect deps, storage key centralization (gap closure) (completed 2026-02-19)
 - [x] **Phase 34: Dead Code Sweep & Code Quality** - Remove all 11 dead code findings, clean orphaned exports, improve telemetry code quality (gap closure) (completed 2026-02-19)
 - [x] **Phase 35: Architecture Refactoring & Performance** - Split god files, extract hooks, add React.memo and virtualization (gap closure) (completed 2026-02-19)
-- [ ] **Phase 36: Security, Dependencies & Cleanup** - SHA-pin CI, harden IPC, update all dependencies, restore README gallery (gap closure)
+- [x] **Phase 36: Security, Dependencies & Cleanup** - SHA-pin CI, harden IPC, update all dependencies, restore README gallery (gap closure) (completed 2026-02-19)
 
 ## Phase Details
 
@@ -227,7 +227,7 @@ Plans:
 | 33. Type Safety & Critical Bug Fixes | 2/2 | Complete    | 2026-02-19 | - |
 | 34. Dead Code Sweep & Code Quality | 2/2 | Complete    | 2026-02-19 | - |
 | 35. Architecture Refactoring & Performance | 4/4 | Complete    | 2026-02-19 | - |
-| 36. Security, Dependencies & Cleanup | 2/3 | In Progress|  | - |
+| 36. Security, Dependencies & Cleanup | 3/3 | Complete   | 2026-02-19 | - |
 
 ---
 *Roadmap created: 2026-02-05 | Updated: 2026-02-19 (gap closure phases 33-36 added from milestone audit)*
