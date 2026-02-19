@@ -25,6 +25,7 @@ import { useQuickCapture } from '../../hooks/useQuickCapture';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useFeatureTooltips } from '../../hooks/useFeatureTooltips';
 import { SHORTCUTS } from '../../constants/shortcuts';
+import { STORAGE_KEYS } from '../../constants/storage';
 import { useTranslation } from '../../i18n';
 import { Header } from '../layout/Header';
 import { FilterBar } from '../filter/FilterBar';
@@ -159,7 +160,7 @@ export function ProjectWorkspace({
     projectPath,
     projectId: backlog.projectId ?? null,
     items: backlog.allItems,
-    locale: (localStorage.getItem('ticketflow-locale') as 'fr' | 'en') || 'fr',
+    locale: (localStorage.getItem(STORAGE_KEYS.LOCALE) as 'fr' | 'en') || 'fr',
     onUpdateItem: handleUpdateItem,
     onOpenItem: handleChatOpenItemById,
     onAddRelation: handleChatAddRelation,

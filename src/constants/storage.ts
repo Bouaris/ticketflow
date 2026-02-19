@@ -41,6 +41,12 @@ export const STORAGE_KEYS = {
   // Onboarding
   ONBOARDING_COMPLETE: 'ticketflow-onboarding-complete',
 
+  // AI Questioning Mode
+  QUESTIONING_MODE: 'ticketflow-questioning-mode',
+
+  // User Locale Preference
+  LOCALE: 'ticketflow-locale',
+
   // Custom AI Providers
   CUSTOM_AI_PROVIDERS: 'custom-ai-providers',
   CUSTOM_PROVIDER_API_KEY_PREFIX: 'custom-provider-api-key',

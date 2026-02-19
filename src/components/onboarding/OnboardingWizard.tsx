@@ -24,6 +24,7 @@ import { useTheme } from '../../theme';
 import type { Theme } from '../../theme';
 import type { Locale } from '../../i18n';
 import { SHORTCUTS, formatKeyCombo } from '../../constants/shortcuts';
+import { STORAGE_KEYS } from '../../constants/storage';
 import { OnboardingStep } from './OnboardingStep';
 import { LogoIcon } from '../ui/Icons';
 import { AISetupStep } from './AISetupStep';
@@ -189,7 +190,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   key={loc.code}
                   onClick={() => {
                     setLocale(loc.code as Locale);
-                    localStorage.setItem('ticketflow-locale', loc.code);
+                    localStorage.setItem(STORAGE_KEYS.LOCALE, loc.code);
                   }}
                   className={`
                     flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-colors

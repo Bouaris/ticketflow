@@ -21,12 +21,7 @@ import {
   buildFinalPrompt,
 } from '../lib/ai-questioning';
 import { useTranslation } from '../i18n';
-
-// ============================================================
-// CONSTANTS
-// ============================================================
-
-const QUESTIONING_STORAGE_KEY = 'ticketflow-questioning-mode';
+import { STORAGE_KEYS } from '../constants/storage';
 
 // ============================================================
 // TYPES
@@ -71,7 +66,7 @@ export function useAIQuestioning(projectPath?: string): UseAIQuestioningReturn {
 
   // Read enabled state from localStorage (defaults to true if not set)
   const isEnabled = (() => {
-    const stored = localStorage.getItem(QUESTIONING_STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.QUESTIONING_MODE);
     return stored === null ? true : stored === 'true';
   })();
 
