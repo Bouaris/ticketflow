@@ -6,8 +6,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { BUILT_IN_PROVIDERS } from '../../lib/ai-provider-registry';
+import { BUILT_IN_PROVIDERS, isBuiltInProvider } from '../../lib/ai-provider-registry';
 import { getProvider, setProvider } from '../../lib/ai';
+import { STORAGE_KEYS } from '../../constants/storage';
 import { ProviderCard } from './ProviderCard';
 import { CustomProviderList } from './CustomProviderList';
 import { getFeedbackStats, type FeedbackStats } from '../../lib/ai-feedback';
@@ -30,7 +31,7 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
 
   // AI Questioning mode toggle
   const [questioningEnabled, setQuestioningEnabled] = useState(
-    localStorage.getItem('ticketflow-questioning-mode') !== 'false'
+    localStorage.getItem(STORAGE_KEYS.QUESTIONING_MODE) !== 'false'
   );
 
   // Load feedback stats when modal opens and projectPath exists
@@ -54,12 +55,13 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
   const handleQuestioningToggle = () => {
     const newValue = !questioningEnabled;
     setQuestioningEnabled(newValue);
-    localStorage.setItem('ticketflow-questioning-mode', String(newValue));
+    localStorage.setItem(STORAGE_KEYS.QUESTIONING_MODE, String(newValue));
   };
 
   const handleProviderSelect = (providerId: string) => {
-    setSelectedProvider(providerId as any);
-    setProvider(providerId as any);
+    if (!isBuiltInProvider(providerId)) return; // guard narrows to BuiltInProviderId
+    setSelectedProvider(providerId);
+    setProvider(providerId);
   };
 
   return (

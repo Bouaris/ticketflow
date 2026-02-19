@@ -151,8 +151,9 @@ export function getBuiltInProvider(id: BuiltInProviderId): ProviderConfig {
 
 /**
  * Check if a provider ID belongs to a built-in provider.
+ * Type predicate: narrows `id` to `BuiltInProviderId` after the guard check.
  */
-export function isBuiltInProvider(id: string): boolean {
+export function isBuiltInProvider(id: string): id is BuiltInProviderId {
   return BUILT_IN_PROVIDERS.some((p) => p.id === id);
 }
 

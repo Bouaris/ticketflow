@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { ProviderConfig } from '../../types/aiProvider';
+import type { ProviderConfig, BuiltInProviderId } from '../../types/aiProvider';
 import { hasApiKey, getApiKey, setApiKey, clearApiKey, resetClient, getSelectedModel, setSelectedModel } from '../../lib/ai';
 import { GroqIcon, GeminiIcon, OpenAIIcon, CheckIcon } from '../ui/Icons';
 import { Spinner } from '../ui/Spinner';
@@ -19,6 +19,13 @@ interface ProviderCardProps {
   isActive: boolean;
   onSelect: () => void;
 }
+
+// Module-scope typed color map — avoids re-creating on every render
+const PROVIDER_COLORS: Record<BuiltInProviderId, { border: string; bg: string; text: string; icon: string }> = {
+  groq: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600' },
+  gemini: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600' },
+  openai: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-600' },
+};
 
 export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps) {
   const { t } = useTranslation();
@@ -49,12 +56,11 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
     }
   }, [isActive, provider.id, provider.defaultModel]);
 
-  // Provider-specific colors
-  const colors = {
-    groq: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600' },
-    gemini: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600' },
-    openai: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-600' },
-  }[provider.id] || { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-600' };
+  // Provider-specific colors — typed lookup with explicit fallback for custom providers
+  const fallbackColors = { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-600' };
+  const colors = (provider.id in PROVIDER_COLORS)
+    ? PROVIDER_COLORS[provider.id as BuiltInProviderId]
+    : fallbackColors;
 
   // Provider-specific URLs (for built-in providers)
   const providerUrls: Record<string, string> = {
