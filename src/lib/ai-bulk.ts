@@ -9,7 +9,7 @@
 
 import type { AIProvider, ImageData, AIOptions } from './ai';
 import { getEffectiveAIConfig, buildTypeClassificationSection, buildTypeEnum, generateCompletionWithRetry, resolveModelForProvider } from './ai';
-import { BulkGenerateResponseSchema } from '../types/ai';
+import { BulkGenerateResponseSchema, type BulkGenerateResponse } from '../types/ai';
 import { buildPromptWithContext } from './ai-context';
 import { gatherDynamicContext, buildEnhancedPrompt } from './ai-context-dynamic';
 import { recordTelemetry } from './ai-telemetry';
@@ -667,7 +667,8 @@ async function generateBulkItemsSingleRequest(
     }
 
     // TRANSFORM: AI response to BulkProposal[]
-    const proposals: BulkProposal[] = result.data.tickets.map((ticket: any, index: number) => ({
+    type BulkTicket = BulkGenerateResponse['tickets'][number];
+    const proposals: BulkProposal[] = result.data.tickets.map((ticket: BulkTicket, index: number) => ({
       tempId: `TEMP-${String(index + 1).padStart(3, '0')}`,
       title: ticket.title,
       description: ticket.description || undefined,
