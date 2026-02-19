@@ -27,6 +27,9 @@ const DEVICE_ID_KEY = 'ticketflow-telemetry-device-id';
 /** EU PostHog endpoint — GDPR compliance (TELE-07) */
 const POSTHOG_HOST = 'https://eu.i.posthog.com';
 
+/** Maximum characters captured from error messages (privacy: limit PII exposure per PRIVACY.md) */
+const MAX_ERROR_MESSAGE_CHARS = 200;
+
 /** PostHog project key — read from env at module load time.
  *  If undefined, all telemetry is a graceful no-op. */
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
@@ -104,7 +107,8 @@ export function incrementDismissCount(): void {
  */
 export function shouldPromptConsent(): boolean {
   if (getConsentState() !== null) return false; // already decided
-  return getDismissCount() <= 1;
+  const hasBeenDismissedTooManyTimes = getDismissCount() > 1;
+  return !hasBeenDismissedTooManyTimes;
 }
 
 // ============================================================
@@ -203,10 +207,19 @@ export function track(event: string, properties: Record<string, unknown> = {}): 
 // ============================================================
 
 /**
+ * Error severity policy:
+ * - console.error: User-visible failures that degrade functionality (e.g., screenshot failed, file save failed)
+ * - console.warn: Best-effort background operations where silent failure is acceptable (e.g., telemetry flush, analytics)
+ *
+ * Telemetry operations intentionally use console.warn — telemetry is non-critical
+ * and must never block or alarm users. See PRIVACY.md for data handling details.
+ */
+
+/**
  * Register global error handlers to capture anonymous unhandled errors.
  * Called from initTelemetry(). Handlers check consent before firing track().
  *
- * Privacy: Only the first 200 chars of the error message are captured.
+ * Privacy: Only the first MAX_ERROR_MESSAGE_CHARS chars of the error message are captured.
  * No stack traces (could contain file paths or PII).
  */
 function setupErrorTracking(): void {
@@ -217,15 +230,15 @@ function setupErrorTracking(): void {
     if (getConsentState() !== 'granted') return;
     const message =
       event.reason instanceof Error
-        ? event.reason.message.slice(0, 200)
-        : String(event.reason).slice(0, 200);
+        ? event.reason.message.slice(0, MAX_ERROR_MESSAGE_CHARS)
+        : String(event.reason).slice(0, MAX_ERROR_MESSAGE_CHARS);
     track('error_unhandled', { error_message: message });
   });
 
   window.addEventListener('error', (event) => {
     if (getConsentState() !== 'granted') return;
     track('error_unhandled', {
-      error_message: event.message?.slice(0, 200) ?? 'unknown',
+      error_message: event.message?.slice(0, MAX_ERROR_MESSAGE_CHARS) ?? 'unknown',
     });
   });
 }
@@ -250,32 +263,6 @@ export function initTelemetry(): void {
   setupErrorTracking();
 }
 
-/**
- * Shutdown telemetry cleanly (e.g., on app quit).
- * Clears the flush timer and fires any remaining events synchronously
- * (best-effort — the Rust relay handles persistence if events are lost here).
- */
-export function shutdownTelemetry(): void {
-  if (flushTimer !== null) {
-    clearTimeout(flushTimer);
-    flushTimer = null;
-  }
-
-  // Flush remaining events immediately (best-effort)
-  if (pendingEvents.length > 0 && POSTHOG_KEY) {
-    const batch = pendingEvents.splice(0);
-
-    if (isTauri()) {
-      invoke('ph_send_batch', {
-        events: batch,
-        apiKey: POSTHOG_KEY,
-      }).catch(console.warn);
-    } else {
-      fetch(`${POSTHOG_HOST}/batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: POSTHOG_KEY, batch }),
-      }).catch(console.warn);
-    }
-  }
-}
+// shutdownTelemetry removed (DEAD-004): Rust-side WAL persistence in telemetry.rs
+// ensures events survive app quit without explicit JS-side shutdown. If needed in
+// the future, wire to window 'beforeunload' or Tauri 'close-requested' event.
