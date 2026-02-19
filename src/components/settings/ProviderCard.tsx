@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import type { ProviderConfig, BuiltInProviderId } from '../../types/aiProvider';
 import { hasApiKey, getApiKey, setApiKey, clearApiKey, resetClient, getSelectedModel, setSelectedModel } from '../../lib/ai';
-import { GroqIcon, GeminiIcon, OpenAIIcon, CheckIcon } from '../ui/Icons';
+import { GroqIcon, GeminiIcon, OpenAIIcon, CheckIcon, InfoIcon } from '../ui/Icons';
 import { Spinner } from '../ui/Spinner';
 import { useTranslation } from '../../i18n';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
@@ -25,6 +25,13 @@ const PROVIDER_COLORS: Record<BuiltInProviderId, { border: string; bg: string; t
   groq: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600' },
   gemini: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600' },
   openai: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-600' },
+};
+
+// Module-scope provider URLs — avoids re-creating on every render
+const PROVIDER_URLS: Record<string, string> = {
+  groq: 'https://console.groq.com/keys',
+  gemini: 'https://makersuite.google.com/app/apikey',
+  openai: 'https://platform.openai.com/api-keys',
 };
 
 export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps) {
@@ -62,15 +69,6 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
     ? PROVIDER_COLORS[provider.id as BuiltInProviderId]
     : fallbackColors;
 
-  // Provider-specific URLs (for built-in providers)
-  const providerUrls: Record<string, string> = {
-    groq: 'https://console.groq.com/keys',
-    gemini: 'https://makersuite.google.com/app/apikey',
-    openai: 'https://platform.openai.com/api-keys',
-  };
-
-  const providerUrl = providerUrls[provider.id] || '';
-
   const handleSave = () => {
     if (apiKeyInput.trim()) {
       setApiKey(apiKeyInput.trim(), provider.id);
@@ -88,6 +86,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
   };
 
   const handleGetKey = () => {
+    const providerUrl = PROVIDER_URLS[provider.id];
     if (providerUrl) {
       if (isTauri()) {
         openExternalUrl(providerUrl).catch(() => {});
@@ -161,10 +160,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
               {t.settings.geminiRecommended}
             </span>
             <span className="ml-1 relative group/tooltip inline-flex items-center">
-              <svg className="w-3.5 h-3.5 text-blue-500 cursor-help" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="7" cy="7" r="6.5" stroke="currentColor" strokeWidth="1" />
-                <text x="7" y="10.5" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">i</text>
-              </svg>
+              <InfoIcon className="w-3.5 h-3.5 text-blue-500 cursor-help" />
               <span className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 text-xs bg-surface-alt text-on-surface-secondary rounded-lg shadow-lg border border-outline z-50 whitespace-normal">
                 {t.settings.geminiFreeTierTooltip}
               </span>
@@ -181,7 +177,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
             <label className="block text-sm font-medium text-on-surface-secondary mb-2">
               {t.settings.apiKey}
             </label>
-            {providerUrl && (
+            {PROVIDER_URLS[provider.id] && (
               <p className="text-xs text-on-surface-muted mb-2">
                 {t.settings.getKeyAt}{' '}
                 <button
