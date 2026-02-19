@@ -116,7 +116,17 @@ TicketFlow requests broad file system access (`path: "**"`) because:
 - Known exceptions are documented with risk assessment
 
 **Current exceptions:**
+
+**npm:**
 - **esbuild 0.21.5 CORS vulnerability (GHSA-67mh-4wv8-2f99)** — Moderate severity, dev-only dependency. TicketFlow does not use esbuild's `serve` feature. Vite has its own dev server. No impact on production users or normal development. Will auto-resolve when vitest/vite updates to esbuild 0.25.0+.
+
+**Cargo (Rust — all transitive via Tauri, no direct fix available):**
+- **bytes** (affected: <1.11.1) — Denial-of-service via out-of-bounds read in `Bytes::copy_from_slice`. Transitive dependency via Tauri's HTTP stack. Status: tracked; resolution depends on upstream Tauri updating their dependency tree. Run `cargo update` after each Tauri release to pull in patched versions.
+- **time** (affected: <0.3.41) — Potential panic via integer overflow in date arithmetic. Transitive via Tauri's `time`-dependent crates. Status: tracked; same upstream resolution path as `bytes`.
+- **rkyv 0.7.x** — Unsound memory handling in deserialization; crate is unmaintained at 0.7.x. Transitive via Tauri serialization internals. Status: no 0.7.x patch exists. Tauri team is tracking migration to rkyv 0.8.x. No action available until upstream Tauri migrates.
+- **rsa 0.9.x** — Potential timing side-channel in RSA decryption. Transitive via Tauri's TLS stack (rustls). Status: no 0.9.x patch released; fix is in a future breaking version. No action available until upstream resolves.
+
+All four Cargo vulnerabilities are transitive — TicketFlow does not directly import these crates. They will resolve when Tauri releases updated versions. Tracked in AUDIT-REPORT.md (DEP-001).
 
 ## Signed Releases
 
@@ -132,16 +142,31 @@ RWQoscFilxftXNhV9NpjOOL0SuxZr69lFv+f579+tdopDK+xhh+r4gcw
 
 ## Security Audits
 
-**Last audit:** 2026-02-14 (Phase 18 — pre-public-release audit)
+**Most recent audit:** 2026-02-18 (Phase 31 — v2.2 code audit & security review)
 
-**Results:**
+**Phase 31 results:**
+- ✅ Zero P1 (Critical) findings — no exploitable security vulnerabilities or data loss risks
+- ✅ OWASP Desktop Top 10 reviewed: 8/10 categories PASS; 2 NEEDS ATTENTION (IPC api_key surface and CI tag-pinning — both documented as accepted risks)
+- ✅ No secrets found in source code
+- 7 P2 (High) findings documented in AUDIT-REPORT.md — addressed in Phases 33–36
+- 4 Cargo crate vulnerabilities tracked (all transitive via Tauri; documented above)
+
+**Phase 36 hardening (2026-02-19):**
+- SHA-pinned all GitHub Actions in `.github/workflows/ci.yml` (eliminates CI supply chain tag-mutation risk)
+- Formal accepted risk documentation for IPC api_key pass-through (SEC-D2) and devtools always enabled (SEC-D10)
+
+**Audit artifacts available in:** `.planning/phases/18-security-audit-code-polish/audit-results/` (Phase 18) and `AUDIT-REPORT.md` (Phase 31)
+
+---
+
+**Previous audit:** 2026-02-14 (Phase 18 — pre-public-release audit)
+
+**Phase 18 results:**
 - ✅ Zero secrets found in source code (gitleaks scan)
 - ✅ Zero high/critical dependency vulnerabilities (pnpm audit)
 - ✅ Production CSP enforced (no unsafe-eval, whitelisted AI domains only)
 - ✅ All Tauri permissions documented and justified
 - ✅ OWASP Desktop Top 10 compliance verified
-
-**Audit artifacts available in:** `.planning/phases/18-security-audit-code-polish/audit-results/`
 
 ## Secure Development Practices
 
@@ -152,8 +177,46 @@ RWQoscFilxftXNhV9NpjOOL0SuxZr69lFv+f579+tdopDK+xhh+r4gcw
 - React automatic prop sanitization
 - TypeScript strict mode enabled
 
+## Accepted Risks
+
+The following findings were reviewed in the Phase 31 audit and formally accepted as low-risk given TicketFlow's threat model (local-first desktop BYOK application).
+
+### SEC-D2 — IPC api_key Pass-Through in ph_send_batch
+
+**Finding:** The `ph_send_batch` Rust IPC command accepts `api_key: String` from the frontend WebView without validating it against the compile-time `POSTHOG_API_KEY` constant baked into the binary.
+
+**Risk:** A malicious script executing inside the WebView could invoke `ph_send_batch` with an arbitrary PostHog project key, redirecting telemetry events to an attacker-controlled PostHog project.
+
+**Mitigations:**
+- Tauri's Content Security Policy (`script-src 'self'`) prevents external script injection into the WebView
+- Telemetry is opt-in and disabled by default; the IPC command is only reachable after explicit user consent
+- The PostHog `api_key` is write-only — it is a project identifier, not a credential granting data read access
+- The WebView is a trusted execution context in Tauri's security model (same-origin enforcement)
+
+**Accepted because:** Exploiting this requires first bypassing Tauri CSP to inject arbitrary JavaScript into the WebView — which is already a complete application compromise. Validating the runtime `api_key` against the compiled-in constant would add code complexity without meaningfully reducing the attack surface, since an attacker who can run code in the WebView can already exfiltrate data through other channels.
+
+**Reference:** AUDIT-REPORT.md SEC-D2 (Phase 31, 2026-02-18)
+
 ---
 
-**Version:** 2.2
-**Last updated:** 2026-02-18
+### SEC-D10 — DevTools Always Enabled in Production Builds
+
+**Finding:** `"devtools": true` in `src-tauri/tauri.conf.json` enables the browser DevTools panel in all build modes, including production `.exe` releases.
+
+**Risk:** Users (or anyone with physical access to the machine) can open DevTools and inspect `localStorage`, where XOR-obfuscated API keys are stored.
+
+**Mitigations:**
+- The BYOK model means users own their API keys and already possess them; inspecting localStorage reveals data the user already has
+- XOR + base64 obfuscation prevents plaintext keys from appearing in DevTools Storage tab without additional tooling
+- TicketFlow runs on the user's own machine where they already have full disk access, administrative rights, and can read the SQLite database directly
+- Disabling DevTools would hinder legitimate debugging for advanced users and does not prevent OS-level inspection
+
+**Accepted because:** TicketFlow is a local-first desktop application where the user is the sole operator of their own machine. The threat model does not include adversarial access to an already-running, logged-in session — an attacker with physical access to an unlocked machine already has complete access to all data. Disabling DevTools provides no meaningful security benefit against this threat model, while removing a useful diagnostic tool for power users.
+
+**Reference:** AUDIT-REPORT.md SEC-D10 (Phase 31, 2026-02-18)
+
+---
+
+**Version:** 2.2.1
+**Last updated:** 2026-02-19
 **Contact:** See [GitHub Security Advisories](https://github.com/Bouaris/ticketflow/security/advisories)
