@@ -37,6 +37,7 @@ Progress: [███████████████████████
 | v2.2.2 (dead-code) | 2+ | 1 | 9+ | In Progress 2026-02-19 |
 | **Total** | **94+** | **34** | **200+** | |
 | Phase 34-dead-code-sweep P01 | 12 | 2 tasks | 9 files |
+| Phase 35-architecture-performance P03 | 4 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 34-dead-code-sweep]: shutdownTelemetry removed (DEAD-004): Rust WAL persistence in telemetry.rs makes JS-side shutdown redundant; documented as comment for future re-wiring
 - [Phase 34-dead-code-sweep]: DynamicBadge kept in Badge.tsx but removed from barrel — test imports directly, barrel export was dead
 - [Phase 34-dead-code-sweep]: Use import.meta.env.DEV to guard debug console.log; console.warn for real errors stays unguarded
+- [Phase 35-architecture-performance]: useAIFeedbackStats follows useAIFeedback pattern with isOpen gate to prevent premature DB access from settings modal
+- [Phase 35-architecture-performance]: PROVIDER_URLS and PROVIDER_COLORS kept as module-scope constants in ProviderCard (resolves SMELL-014/015); InfoIcon replaces inline SVG
 
 ### Pending Todos
 
