@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 34 of 34 (Dead Code Sweep) — In Progress
+Phase: 34 of 34 (Dead Code Sweep) — COMPLETE
 Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 34 plan 02 complete — FIX-06/07 resolved, DEAD-004/010/SMELL-011/016/017/018 closed
-Last activity: 2026-02-19 — Completed 34-02 (getEffectiveAIConfig parameter removal, telemetry quality improvements)
+Status: Phase 34 fully complete — all DEAD/FIX/SMELL findings closed, dead code sweep done
+Last activity: 2026-02-19 — Completed 34-01 (DEAD-001/002/003/005/006/007/009/011 + FIX-08) + 34-02 (DEAD-004/010 + FIX-06/07 + SMELL-011/016/017/018)
 
 Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
@@ -36,6 +36,7 @@ Progress: [███████████████████████
 | v2.2.1 | 3 | 3 | 18/18 | Complete 2026-02-19 |
 | v2.2.2 (dead-code) | 2+ | 1 | 9+ | In Progress 2026-02-19 |
 | **Total** | **94+** | **34** | **200+** | |
+| Phase 34-dead-code-sweep P01 | 12 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 33-01]: Storage key centralization: STORAGE_KEYS.QUESTIONING_MODE replaces hardcoded string in AISettingsModal
 - [Phase 34-dead-code-sweep]: getEffectiveAIConfig() parameter removed — projectPath in options types left untouched as they serve other purposes (DB access, context loading)
 - [Phase 34-dead-code-sweep]: shutdownTelemetry removed (DEAD-004): Rust WAL persistence in telemetry.rs makes JS-side shutdown redundant; documented as comment for future re-wiring
+- [Phase 34-dead-code-sweep]: DynamicBadge kept in Badge.tsx but removed from barrel — test imports directly, barrel export was dead
+- [Phase 34-dead-code-sweep]: Use import.meta.env.DEV to guard debug console.log; console.warn for real errors stays unguarded
 
 ### Pending Todos
 
@@ -97,9 +100,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 34-02-PLAN.md — AI config parameter cleanup + telemetry quality improvements
-Resume file: .planning/phases/34-dead-code-sweep/34-02-SUMMARY.md
-Next action: Phase 34 plan 02 complete — proceed to plan 03 if it exists, otherwise phase closure
+Stopped at: Completed 34-01-PLAN.md — Phase 34 fully complete, all DEAD/FIX/SMELL findings closed
+Resume file: .planning/phases/34-dead-code-sweep/34-01-SUMMARY.md
+Next action: Phase 34 complete — v2.2.2 dead code sweep milestone done, ready for next milestone
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 34-02 completion (AI config cleanup + telemetry quality)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 34-01 completion (Phase 34 complete — dead code sweep fully done)*

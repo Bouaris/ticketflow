@@ -46,10 +46,10 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 ### Gap Closure — Dead Code & Code Quality (Phase 34)
 
-- [ ] **FIX-05**: All 11 DEAD-xxx findings removed (DEAD-001 through DEAD-011)
-- [ ] **FIX-06**: `_projectPath` parameter removed from `getEffectiveAIConfig` and all 16+ call sites (DEAD-010, SMELL-018)
-- [ ] **FIX-07**: Telemetry code quality: magic number extracted, consent boolean simplified, error policy documented (SMELL-011, SMELL-016, SMELL-017)
-- [ ] **FIX-08**: `mockIpcWithState` orphaned export removed from stress-helpers.ts
+- [x] **FIX-05**: All 11 DEAD-xxx findings removed (DEAD-001 through DEAD-011)
+- [x] **FIX-06**: `_projectPath` parameter removed from `getEffectiveAIConfig` and all 16+ call sites (DEAD-010, SMELL-018)
+- [x] **FIX-07**: Telemetry code quality: magic number extracted, consent boolean simplified, error policy documented (SMELL-011, SMELL-016, SMELL-017)
+- [x] **FIX-08**: `mockIpcWithState` orphaned export removed from stress-helpers.ts
 
 ### Gap Closure — Architecture & Performance (Phase 35)
 
@@ -116,10 +116,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-02 | Phase 33 | Complete |
 | FIX-03 | Phase 33 | Complete |
 | FIX-04 | Phase 33 | Complete |
-| FIX-05 | Phase 34 | Pending |
-| FIX-06 | Phase 34 | Pending |
-| FIX-07 | Phase 34 | Pending |
-| FIX-08 | Phase 34 | Pending |
+| FIX-05 | Phase 34 | Complete |
+| FIX-06 | Phase 34 | Complete |
+| FIX-07 | Phase 34 | Complete |
+| FIX-08 | Phase 34 | Complete |
 | FIX-09 | Phase 35 | Pending |
 | FIX-10 | Phase 35 | Pending |
 | FIX-11 | Phase 35 | Pending |
