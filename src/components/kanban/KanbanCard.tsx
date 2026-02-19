@@ -3,8 +3,10 @@
  * Supports drag & drop for cross-column movement.
  * Phase 11: Supports inline editing of title and badges.
  * Phase 13: Hover scale animation via nested motion.div (avoids dnd-kit transform conflicts).
+ * Phase 35: Wrapped in React.memo to prevent re-renders when sibling items change.
  */
 
+import { memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { motion, useReducedMotion } from 'motion/react';
@@ -62,7 +64,7 @@ interface KanbanCardProps {
   onQuickArchive?: (item: BacklogItem) => void;
 }
 
-export function KanbanCard({
+function KanbanCardInner({
   item,
   onClick,
   columnType,
@@ -330,3 +332,5 @@ export function KanbanCard({
     </div>
   );
 }
+
+export const KanbanCard = memo(KanbanCardInner);
