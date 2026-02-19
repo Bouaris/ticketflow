@@ -34,8 +34,37 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 - [x] **SHOW-01**: README updated with light mode screenshot alongside existing dark mode
 - [x] **SHOW-02**: At least 3 animated GIFs demonstrating key workflows (AI generation, bulk import, command palette)
-- [ ] **SHOW-03**: README includes "Built with GSD" section linking to github.com/gsd-build/get-shit-done
+- [x] **SHOW-03**: README includes "Built with GSD" section linking to github.com/gsd-build/get-shit-done
 - [x] **SHOW-04**: README media gallery refreshed with multiple app views (editor, AI chat, settings)
+
+### Gap Closure — Type Safety & Critical Bugs (Phase 33)
+
+- [ ] **FIX-01**: All `as any` casts in AI provider selection replaced with proper type guards (SMELL-001, SMELL-002, SMELL-003)
+- [ ] **FIX-02**: `initTelemetry()` is idempotent — duplicate calls do not stack event listeners (SMELL-010)
+- [ ] **FIX-03**: `chatPanel.loadHistory` added to useEffect dependency array with stabilized callback (SMELL-004)
+- [ ] **FIX-04**: `ticketflow-questioning-mode` and `ticketflow-locale` centralized in STORAGE_KEYS (DEAD-008, SMELL-009)
+
+### Gap Closure — Dead Code & Code Quality (Phase 34)
+
+- [ ] **FIX-05**: All 11 DEAD-xxx findings removed (DEAD-001 through DEAD-011)
+- [ ] **FIX-06**: `_projectPath` parameter removed from `getEffectiveAIConfig` and all 16+ call sites (DEAD-010, SMELL-018)
+- [ ] **FIX-07**: Telemetry code quality: magic number extracted, consent boolean simplified, error policy documented (SMELL-011, SMELL-016, SMELL-017)
+- [ ] **FIX-08**: `mockIpcWithState` orphaned export removed from stress-helpers.ts
+
+### Gap Closure — Architecture & Performance (Phase 35)
+
+- [ ] **FIX-09**: `ai.ts` split into focused modules — no single file exceeds 800 lines (SMELL-006)
+- [ ] **FIX-10**: `ProjectWorkspace.tsx` reduced to under 600 lines via 4+ extracted hooks (SMELL-007)
+- [ ] **FIX-11**: Business logic extracted from AISettingsModal + TypeConfig sync deps fixed (SMELL-008, SMELL-005)
+- [ ] **FIX-12**: KanbanCard/ListView wrapped in React.memo + ListView virtualized (SMELL-012, SMELL-013)
+- [ ] **FIX-13**: ProviderCard static objects moved to module scope + inline SVG replaced (SMELL-014, SMELL-015)
+
+### Gap Closure — Security & Dependencies (Phase 36)
+
+- [ ] **FIX-14**: Security findings hardened: IPC key validation, SHA-pinned CI, devtools conditional (SEC-D2, SEC-D8, SEC-D10)
+- [ ] **FIX-15**: Cargo dependencies updated where fixes available; unfixable tracked in SECURITY.md (DEP-001)
+- [ ] **FIX-16**: All npm dependencies updated (patch + minor + major) with build verification (DEP-002, DEP-003, DEP-004)
+- [ ] **FIX-17**: README gallery restored to 3x2 or orphaned assets cleaned from repository
 
 ## Future Requirements
 
@@ -53,7 +82,7 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Automated fix application | This milestone identifies issues, does not fix them |
+| Automated fix application | ~~This milestone identifies issues, does not fix them~~ — Now addressed by gap closure phases 33-36 |
 | 100% test coverage | 70% enforced on critical modules; full coverage deferred |
 | Playwright E2E | Deferred to v2.3+ (XCOV-03) |
 | Load testing with real AI providers | Rate limits and costs make this impractical for automated testing |
@@ -81,14 +110,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIT-05 | Phase 31 | Complete |
 | SHOW-01 | Phase 32 | Complete |
 | SHOW-02 | Phase 32 | Complete |
-| SHOW-03 | Phase 32 | Pending |
+| SHOW-03 | Phase 32 | Complete |
 | SHOW-04 | Phase 32 | Complete |
+| FIX-01 | Phase 33 | Pending |
+| FIX-02 | Phase 33 | Pending |
+| FIX-03 | Phase 33 | Pending |
+| FIX-04 | Phase 33 | Pending |
+| FIX-05 | Phase 34 | Pending |
+| FIX-06 | Phase 34 | Pending |
+| FIX-07 | Phase 34 | Pending |
+| FIX-08 | Phase 34 | Pending |
+| FIX-09 | Phase 35 | Pending |
+| FIX-10 | Phase 35 | Pending |
+| FIX-11 | Phase 35 | Pending |
+| FIX-12 | Phase 35 | Pending |
+| FIX-13 | Phase 35 | Pending |
+| FIX-14 | Phase 36 | Pending |
+| FIX-15 | Phase 36 | Pending |
+| FIX-16 | Phase 36 | Pending |
+| FIX-17 | Phase 36 | Pending |
 
 **Coverage:**
-- v2.2.1 requirements: 18 total
-- Mapped to phases: 18
+- v2.2.1 requirements: 35 total (18 original + 17 gap closure)
+- Mapped to phases: 35
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after roadmap creation (phases 30-32 assigned)*
+*Last updated: 2026-02-19 after gap closure phases 33-36 added (17 FIX-xx requirements)*

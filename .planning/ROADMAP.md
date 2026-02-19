@@ -8,7 +8,7 @@
 - ✅ **v2.0 Fresh Start** — Phases 18-21 (shipped 2026-02-16)
 - ✅ **v2.1 AI Refresh** — Phases 22-25 (shipped 2026-02-17)
 - ✅ **v2.2 Quality & Insights** — Phases 26-29 (shipped 2026-02-18)
-- 🚧 **v2.2.1 Battle-Ready** — Phases 30-32 (in progress)
+- 🚧 **v2.2.1 Battle-Ready** — Phases 30-36 (in progress)
 
 ## Phases
 
@@ -84,6 +84,10 @@
 - [x] **Phase 30: Stress Testing & Performance** - Prove the database and UI hold up under 1000+ ticket load with documented latency and memory profiles (completed 2026-02-18)
 - [x] **Phase 31: Code Audit & Security Review** - Sweep the codebase for dead code, anti-patterns, and security drift since v2.0; compile prioritized findings (completed 2026-02-18)
 - [x] **Phase 32: README Showcase** - Publish light mode screenshot, animated workflow GIFs, and GSD attribution to the public repo (completed 2026-02-18)
+- [ ] **Phase 33: Type Safety & Critical Bug Fixes** - Fix all P2 correctness issues: type casts, telemetry idempotency bug, useEffect deps, storage key centralization (gap closure)
+- [ ] **Phase 34: Dead Code Sweep & Code Quality** - Remove all 11 dead code findings, clean orphaned exports, improve telemetry code quality (gap closure)
+- [ ] **Phase 35: Architecture Refactoring & Performance** - Split god files, extract hooks, add React.memo and virtualization (gap closure)
+- [ ] **Phase 36: Security, Dependencies & Cleanup** - SHA-pin CI, harden IPC, update all dependencies, restore README gallery (gap closure)
 
 ## Phase Details
 
@@ -133,6 +137,68 @@ Plans:
 - [ ] 32-01-PLAN.md — GSD attribution (badge + section) and media asset capture
 - [ ] 32-02-PLAN.md — README restructure with hero, GIF section, and media gallery
 
+### Phase 33: Type Safety & Critical Bug Fixes
+**Goal**: All P2 type safety and correctness issues from AUDIT-REPORT.md are resolved — zero `as any` casts, idempotent telemetry init, correct useEffect deps, centralized storage keys
+**Depends on**: Phase 31 (audit findings identified)
+**Requirements**: FIX-01, FIX-02, FIX-03, FIX-04
+**Gap Closure**: Closes SMELL-001, SMELL-002, SMELL-003, SMELL-004, SMELL-010, DEAD-008, SMELL-009
+**Success Criteria** (what must be TRUE):
+  1. `initTelemetry()` is idempotent — calling it twice does NOT duplicate `window.addEventListener` registrations (module-level guard)
+  2. Zero `as any` casts remain in AISettingsModal provider selection — proper type guard validates provider ID
+  3. `ticket: any` in ai-bulk.ts replaced with Zod-inferred type — TypeScript catches property typos at compile time
+  4. ProviderCard color lookup is type-safe — uses typed Map or exhaustive switch, not string index with silent fallback
+  5. `chatPanel.loadHistory` is in the useEffect dependency array in ProjectWorkspace — no stale closure on project switch
+  6. `ticketflow-questioning-mode` and `ticketflow-locale` are defined in STORAGE_KEYS and imported from constants in all 4+ usage sites
+**Plans**: 2 plans
+Plans:
+- [ ] 33-01-PLAN.md — Type-safe provider selection, bulk ticket type, ProviderCard colors (FIX-01)
+- [ ] 33-02-PLAN.md — Telemetry idempotency, useEffect deps, storage key centralization (FIX-02, FIX-03, FIX-04)
+
+### Phase 34: Dead Code Sweep & Code Quality
+**Goal**: Every dead code finding from AUDIT-REPORT.md is removed and telemetry code quality items are resolved
+**Depends on**: Phase 33 (storage key centralization in Phase 33 affects DEAD-008 overlap)
+**Requirements**: FIX-05, FIX-06, FIX-07, FIX-08
+**Gap Closure**: Closes DEAD-001 through DEAD-011, SMELL-018, SMELL-011, SMELL-016, SMELL-017, orphaned mockIpcWithState
+**Success Criteria** (what must be TRUE):
+  1. All 11 DEAD-xxx findings are resolved: no unused exports, stale imports, local icon duplicates, or unguarded console.log remain
+  2. `getEffectiveAIConfig` no longer accepts `_projectPath` parameter — all 16+ call sites updated
+  3. `mockIpcWithState` removed from stress-helpers.ts exports (or has a consumer)
+  4. Telemetry code quality: magic number 200 extracted to named constant, consent boolean simplified, error severity policy documented
+  5. `pnpm build` passes with zero TypeScript errors after all removals
+**Plans**: 2 plans
+
+### Phase 35: Architecture Refactoring & Performance
+**Goal**: God files are split into focused modules, React rendering is optimized with memo and virtualization, and remaining architectural smells are resolved
+**Depends on**: Phase 34 (dead code removed first to reduce merge conflicts in god files)
+**Requirements**: FIX-09, FIX-10, FIX-11, FIX-12, FIX-13
+**Gap Closure**: Closes SMELL-005, SMELL-006, SMELL-007, SMELL-008, SMELL-012, SMELL-013, SMELL-014, SMELL-015
+**Success Criteria** (what must be TRUE):
+  1. `ai.ts` is split into 3+ focused modules (ai-client.ts, ai-config.ts, ai-maintenance.ts) — no single file exceeds 800 lines
+  2. `ProjectWorkspace.tsx` has 4+ extracted hooks (useWorkspaceBulkOps, useWorkspaceTypeSync, useWorkspaceItemActions, useWorkspaceModals) — main component under 600 lines
+  3. AISettingsModal does not directly call database query functions — `useAIFeedbackStats` hook extracted
+  4. KanbanCard and ListView row components are wrapped in `React.memo`
+  5. ListView uses `@tanstack/react-virtual` for windowed rendering
+  6. ProviderCard static objects moved to module scope; inline SVG replaced with InfoIcon import
+  7. TypeConfig sync effect dependencies documented or fixed
+  8. `pnpm build` passes; existing test suite remains green
+**Plans**: 4 plans
+
+### Phase 36: Security, Dependencies & Cleanup
+**Goal**: All security findings hardened, all dependencies updated to latest compatible versions, README gallery restored, orphaned assets cleaned
+**Depends on**: Phase 35 (architecture changes may affect dependency imports)
+**Requirements**: FIX-14, FIX-15, FIX-16, FIX-17
+**Gap Closure**: Closes SEC-D2, SEC-D8, SEC-D10, DEP-001, DEP-002, DEP-003, DEP-004, README orphaned assets
+**Success Criteria** (what must be TRUE):
+  1. `ph_send_batch` Rust command validates api_key against compiled-in key or documents accepted risk in SECURITY.md
+  2. All CI actions in ci.yml are SHA-pinned (not tag-pinned)
+  3. DevTools conditionally disabled in production builds (or documented as accepted risk in SECURITY.md)
+  4. `bytes` and `time` Cargo crates updated to fixed versions; `rkyv` and `rsa` documented as tracked upstream
+  5. All 10 npm patch updates applied; all 10 minor updates applied; 5 major updates applied or explicitly deferred with rationale
+  6. Tauri ecosystem updated to 2.10.x (coordinated Cargo.toml + package.json)
+  7. README gallery restored to 3x2 with all 6 assets, or orphaned files cleaned from assets/
+  8. `pnpm build` and `pnpm tauri build` pass after all dependency changes
+**Plans**: 3 plans
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -146,7 +212,11 @@ Plans:
 | 30. Stress Testing & Performance | 3/3 | Complete    | 2026-02-18 | - |
 | 31. Code Audit & Security Review | 3/3 | Complete    | 2026-02-18 | - |
 | 32. README Showcase | 2/2 | Complete    | 2026-02-18 | - |
+| 33. Type Safety & Critical Bug Fixes | 0/2 | Pending | - | - |
+| 34. Dead Code Sweep & Code Quality | 0/2 | Pending | - | - |
+| 35. Architecture Refactoring & Performance | 0/4 | Pending | - | - |
+| 36. Security, Dependencies & Cleanup | 0/3 | Pending | - | - |
 
 ---
-*Roadmap created: 2026-02-05 | Updated: 2026-02-18 (31-01 complete: dead code + anti-pattern audit, 29 findings)*
+*Roadmap created: 2026-02-05 | Updated: 2026-02-19 (gap closure phases 33-36 added from milestone audit)*
 *Full milestone details: .planning/milestones/*
