@@ -4,6 +4,63 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.2.1] - 2026-02-19
+
+> **"Battle-Ready"** — Stress-tested, audited, refactored, and hardened for production.
+
+### Added — Stress Testing & Performance
+
+- **23+ stress tests** validating CRUD at 1000+ ticket scale, bulk import endurance (50x20 rounds), FTS5 search <100ms, concurrent operations
+- **PERF-REPORT.md** with concrete benchmarks: INSERT 7.48ms/1000, SELECT ALL 0.31ms, memory 5.82MB peak
+- **ListView virtualization** with `@tanstack/react-virtual` — padding-based spacer rows for 500+ items
+- **React.memo** on KanbanCard preventing sibling re-renders during drag & sort
+
+### Added — Codebase Audit & Gap Closure
+
+- **AUDIT-REPORT.md** consolidating 44 prioritized findings (0 critical, 7 high, 24 medium, 13 low)
+- **OWASP Desktop Top 10 delta review** covering v2.1 and v2.2 changes
+- **4 gap closure phases** (33-36) resolving all 44 audit findings
+
+### Added — README Showcase
+
+- **Hero light mode screenshot** as README header image
+- **3 animated GIFs** demonstrating AI generation, bulk import, and command palette workflows
+- **3x2 media gallery** with 6 app screenshots
+- **"Built with GSD"** attribution (badge, section, footer)
+
+### Changed — Architecture Refactoring
+
+- **ai.ts** split from 2235→487 lines into 6 focused modules (ai-client, ai-config, ai-maintenance, ai-analysis, ai-prompts, ai)
+- **ProjectWorkspace.tsx** decomposed from 1569→555 lines into 5 hooks + WorkspaceDialogs component
+- **useAIFeedbackStats** hook extracted from AISettingsModal (database queries no longer called from UI component)
+- **ProviderCard** static objects moved to module scope, inline SVG replaced with InfoIcon
+
+### Fixed — Type Safety & Critical Bugs
+
+- **initTelemetry()** now idempotent — duplicate calls no longer stack event listeners (SMELL-010)
+- **Type-safe provider selection** via `isBuiltInProvider` type predicate (eliminates all `as any` casts)
+- **Zod-inferred BulkTicket type** replaces `ticket: any` in ai-bulk.ts
+- **chatPanel.loadHistory** added to useEffect dependency array (no stale closure on project switch)
+- **STORAGE_KEYS centralized** — `ticketflow-questioning-mode` and `ticketflow-locale` imported from constants
+
+### Fixed — Dead Code & Dependencies
+
+- **11 DEAD-xxx findings removed** — MaintenanceModal.tsx deleted, 5 unused exports purged, 3 icon duplicates merged
+- **`_projectPath` parameter removed** from `getEffectiveAIConfig` and all 16+ call sites
+- **SHA-pinned CI actions** in ci.yml (eliminates tag-mutation supply chain risk)
+- **Tauri ecosystem updated** to 2.10.x, all npm patch/minor updates applied
+- **bytes/time Cargo CVEs resolved** via cargo update
+
+### Removed
+
+- Dead code: MaintenanceModal, clearTelemetry, getRecentTelemetry, getBuiltInProvider, getDefaultModelForProvider, getProjectAIConfigKey, shutdownTelemetry, mockIpcWithState
+
+### Security
+
+- SHA-pinned all GitHub Actions (no more tag-pinned supply chain risk)
+- IPC api_key pass-through and devtools-always-enabled documented as accepted risks in SECURITY.md
+- Tracked Cargo CVEs: rsa 0.9.x and rkyv 0.7.x (no upstream fix, documented)
+
 ## [2.2.0] - 2026-02-18
 
 > **"Quality & Insights"** — Test infrastructure, telemetry, and CI pipeline.

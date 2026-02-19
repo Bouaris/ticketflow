@@ -12,7 +12,7 @@ A local-first desktop app that turns your chaotic brain dumps into organized, AI
 ![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
@@ -142,13 +142,14 @@ Due to a security requirement (signing key rotation), users on v1.6.0 or earlier
 
 Future updates (v2.0.0 and later) will auto-update normally.
 
-## What's New in v2.2.0
+## What's New in v2.2.1
 
-- **AI Provider Registry** — Add custom OpenAI-compatible providers (Ollama, LM Studio, etc.)
-- **Provider Health Check** — Verify API keys before generating
-- **Telemetry** — Optional anonymous usage analytics with GDPR consent (off by default)
-- **490+ Tests** — Parser, serializer, and AI modules at 70%+ coverage
-- **CI Pipeline** — Automated tests on every push via GitHub Actions
+- **Stress-tested at 1000+ tickets** — CRUD, bulk import, FTS5 search, and concurrency validated
+- **Full codebase audit** — 44 findings identified, classified, and all resolved
+- **Architecture refactored** — ai.ts split into 6 modules, ProjectWorkspace into 5 hooks
+- **Performance optimized** — React.memo on KanbanCard, ListView virtualization
+- **Security hardened** — SHA-pinned CI, dependencies updated to latest, Tauri 2.10.x
+- **README showcase** — Hero screenshot, workflow GIFs, 3x2 gallery
 
 ## Quick Start
 
