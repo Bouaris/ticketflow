@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2.1 "Battle-Ready" — Phase 33: Type Safety & Critical Bug Fixes
+**Current focus:** v2.2.1 "Battle-Ready" — Phase 33: Type Safety & Critical Bug Fixes — COMPLETE
 
 ## Current Position
 
-Phase: 33 of 33 (Type Safety & Critical Bug Fixes) — IN PROGRESS
+Phase: 33 of 33 (Type Safety & Critical Bug Fixes) — COMPLETE
 Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 33 plan 02 complete — telemetry idempotency, useEffect dep fix, storage key centralization
-Last activity: 2026-02-19 — Completed 33-02 (initTelemetry guard, chatPanel.loadHistory dep, STORAGE_KEYS.QUESTIONING_MODE + LOCALE)
+Status: Phase 33 fully complete — all SMELL-001/002/003 findings closed, v2.2.1 milestone done
+Last activity: 2026-02-19 — Completed 33-01 (isBuiltInProvider type predicate, AISettingsModal as any removal, ProviderCard typed colors, ai-bulk BulkTicket type)
 
 Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
@@ -33,8 +33,8 @@ Progress: [███████████████████████
 | v2.0 | 8 | 4 | 23/23 | Shipped 2026-02-16 |
 | v2.1 | 11 | 4 | 18/18 | Shipped 2026-02-17 |
 | v2.2 | 10 | 4 | 17/17 | Shipped 2026-02-18 |
-| v2.2.1 | 3 | 3 | 18/18 | In progress |
-| **Total** | **89+** | **32** | **200+** | |
+| v2.2.1 | 3 | 3 | 18/18 | Complete 2026-02-19 |
+| **Total** | **92+** | **33** | **200+** | |
 
 ## Accumulated Context
 
@@ -66,6 +66,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 32-02]: Light mode screenshot as hero image, dark mode screenshot placed in gallery section bottom-right
 - [Phase 33-02]: errorTrackingSetUp guard is module-level (persists across initTelemetry() calls in same module lifetime)
 - [Phase 33-02]: AISettingsModal.tsx questioning-mode key replacements left for plan 33-01 (file ownership boundary)
+- [Phase 33-01]: Type predicate for isBuiltInProvider eliminates downstream as any casts at all call sites
+- [Phase 33-01]: Storage key centralization: STORAGE_KEYS.QUESTIONING_MODE replaces hardcoded string in AISettingsModal
 
 ### Pending Todos
 
@@ -93,9 +95,9 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed plan 33-02 (telemetry idempotency, useEffect dep, storage key centralization)
-Resume file: .planning/phases/33-type-safety-critical-fixes/33-02-SUMMARY.md
-Next action: Phase 33 complete — run plan 33-01 if not yet done; create v2.2.1 release tag when all phases complete
+Stopped at: Completed 33-01-PLAN.md — Phase 33 fully complete, all SMELL fixes closed
+Resume file: .planning/phases/33-type-safety-critical-fixes/33-01-SUMMARY.md
+Next action: v2.2.1 milestone complete — create release tag when ready
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 33-02 completion (Phase 33 plan 02 complete)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 33-01 completion (Phase 33 complete — v2.2.1 done)*

@@ -39,10 +39,10 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 ### Gap Closure — Type Safety & Critical Bugs (Phase 33)
 
-- [ ] **FIX-01**: All `as any` casts in AI provider selection replaced with proper type guards (SMELL-001, SMELL-002, SMELL-003)
-- [ ] **FIX-02**: `initTelemetry()` is idempotent — duplicate calls do not stack event listeners (SMELL-010)
-- [ ] **FIX-03**: `chatPanel.loadHistory` added to useEffect dependency array with stabilized callback (SMELL-004)
-- [ ] **FIX-04**: `ticketflow-questioning-mode` and `ticketflow-locale` centralized in STORAGE_KEYS (DEAD-008, SMELL-009)
+- [x] **FIX-01**: All `as any` casts in AI provider selection replaced with proper type guards (SMELL-001, SMELL-002, SMELL-003)
+- [x] **FIX-02**: `initTelemetry()` is idempotent — duplicate calls do not stack event listeners (SMELL-010)
+- [x] **FIX-03**: `chatPanel.loadHistory` added to useEffect dependency array with stabilized callback (SMELL-004)
+- [x] **FIX-04**: `ticketflow-questioning-mode` and `ticketflow-locale` centralized in STORAGE_KEYS (DEAD-008, SMELL-009)
 
 ### Gap Closure — Dead Code & Code Quality (Phase 34)
 
@@ -112,10 +112,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHOW-02 | Phase 32 | Complete |
 | SHOW-03 | Phase 32 | Complete |
 | SHOW-04 | Phase 32 | Complete |
-| FIX-01 | Phase 33 | Pending |
-| FIX-02 | Phase 33 | Pending |
-| FIX-03 | Phase 33 | Pending |
-| FIX-04 | Phase 33 | Pending |
+| FIX-01 | Phase 33 | Complete |
+| FIX-02 | Phase 33 | Complete |
+| FIX-03 | Phase 33 | Complete |
+| FIX-04 | Phase 33 | Complete |
 | FIX-05 | Phase 34 | Pending |
 | FIX-06 | Phase 34 | Pending |
 | FIX-07 | Phase 34 | Pending |
