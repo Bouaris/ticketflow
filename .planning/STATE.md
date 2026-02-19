@@ -80,6 +80,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 35-architecture-performance]: PROVIDER_URLS and PROVIDER_COLORS kept as module-scope constants in ProviderCard (resolves SMELL-014/015); InfoIcon replaces inline SVG
 - [Phase 35-architecture-performance]: Padding-based virtualization for HTML tables: spacer <tr> rows instead of position:absolute (which table layout engines ignore on <tr>)
 - [Phase 35-architecture-performance]: memo with named inner function pattern for DevTools: function KanbanCardInner + export const KanbanCard = memo(KanbanCardInner)
+- [Phase 35]: SMELL-007 resolved: ProjectWorkspace extracted into 5 focused hooks + WorkspaceDialogs component — reduced from 1569 to 555 lines (65%)
+- [Phase 35]: SMELL-005 resolved: useWorkspaceTypeSync documents all eslint-disable-line rationale — stable useRef identity, stable projectPath per mount, stable initializeWithTypes reference
 
 ### Pending Todos
 

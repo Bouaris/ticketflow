@@ -54,7 +54,7 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 ### Gap Closure — Architecture & Performance (Phase 35)
 
 - [ ] **FIX-09**: `ai.ts` split into focused modules — no single file exceeds 800 lines (SMELL-006)
-- [ ] **FIX-10**: `ProjectWorkspace.tsx` reduced to under 600 lines via 4+ extracted hooks (SMELL-007)
+- [x] **FIX-10**: `ProjectWorkspace.tsx` reduced to under 600 lines via 4+ extracted hooks (SMELL-007)
 - [x] **FIX-11**: Business logic extracted from AISettingsModal + TypeConfig sync deps fixed (SMELL-008, SMELL-005)
 - [x] **FIX-12**: KanbanCard/ListView wrapped in React.memo + ListView virtualized (SMELL-012, SMELL-013)
 - [x] **FIX-13**: ProviderCard static objects moved to module scope + inline SVG replaced (SMELL-014, SMELL-015)
@@ -121,7 +121,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-07 | Phase 34 | Complete |
 | FIX-08 | Phase 34 | Complete |
 | FIX-09 | Phase 35 | Pending |
-| FIX-10 | Phase 35 | Pending |
+| FIX-10 | Phase 35 | Complete |
 | FIX-11 | Phase 35 | Complete |
 | FIX-12 | Phase 35 | Complete |
 | FIX-13 | Phase 35 | Complete |
