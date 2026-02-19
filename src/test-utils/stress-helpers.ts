@@ -384,34 +384,3 @@ export async function measureMs(fn: () => Promise<void>): Promise<number> {
   return performance.now() - start;
 }
 
-// ============================================================
-// IPC MOCK WIRING
-// ============================================================
-
-/**
- * Wire a stateful mock to the Tauri IPC layer.
- *
- * This is the lower-level alternative to setupTauriMocks() for stress tests
- * that need full control over SQL handlers. Call this in your own beforeAll
- * instead of relying on the global setup.
- *
- * Note: Since setup.ts registers a global beforeAll/afterEach via setupTauriMocks(),
- * this function should be used in tests that mock the database module directly
- * (vi.mock('../db/database')) rather than intercepting Tauri IPC.
- * The function is exported for completeness but the recommended stress test
- * pattern is to mock getDatabase via vi.mock.
- *
- * @param mock - The stateful mock from createStatefulSqlMock()
- * @returns Object with select and execute vi.fn() that delegate to mock handlers
- */
-export function mockIpcWithState(mock: StatefulSqlMock): {
-  select: (query: string, values?: unknown[]) => Promise<unknown[]>;
-  execute: (query: string, values?: unknown[]) => Promise<{ lastInsertId: number; rowsAffected: number }>;
-} {
-  return {
-    select: (query: string, values: unknown[] = []) =>
-      Promise.resolve(mock.selectHandler(query, values)),
-    execute: (query: string, values: unknown[] = []) =>
-      Promise.resolve(mock.executeHandler(query, values)),
-  };
-}

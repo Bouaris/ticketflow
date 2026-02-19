@@ -382,7 +382,7 @@ export async function loadProjectContext(projectPath: string): Promise<ProjectCo
   contextCache.set(dirPath, context);
 
   // Log status
-  if (files.length > 0) {
+  if (import.meta.env.DEV && files.length > 0) {
     const status = files.map(f => `${f.filename} (${f.content.length} chars)`);
     console.log(`[AI Context] Loaded: ${status.join(', ')}`);
   }
@@ -484,14 +484,18 @@ export async function buildPromptWithContext(
     const contextBlock = formatContextBlock(context);
 
     if (!contextBlock) {
-      console.log('[AI Context] No context files found, using base prompt');
+      if (import.meta.env.DEV) {
+        console.log('[AI Context] No context files found, using base prompt');
+      }
       return basePrompt;
     }
 
-    console.log('[AI Context] Injecting context into prompt:', {
-      files: context.files.map(f => f.filename),
-      totalChars: context.files.reduce((sum, f) => sum + f.content.length, 0),
-    });
+    if (import.meta.env.DEV) {
+      console.log('[AI Context] Injecting context into prompt:', {
+        files: context.files.map(f => f.filename),
+        totalChars: context.files.reduce((sum, f) => sum + f.content.length, 0),
+      });
+    }
 
     return contextBlock + basePrompt;
   } catch (error) {
