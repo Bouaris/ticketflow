@@ -470,7 +470,7 @@ export async function generateBulkItems(
   const t = getTranslations();
 
   // Get effective AI config (project-specific or global)
-  const { provider } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider || provider;
   const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -612,7 +612,7 @@ async function generateBulkItemsSingleRequest(
   const t = getTranslations();
 
   // Get effective AI config
-  const { provider } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider || provider;
   const modelId = resolveModelForProvider(effectiveProvider);
 

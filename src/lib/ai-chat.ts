@@ -189,7 +189,7 @@ export async function sendChatMessage(
   await insertChatMessage(projectPath, projectId, 'user', userMessage);
 
   // 5. Get effective AI config
-  const { provider } = getEffectiveAIConfig(projectPath);
+  const { provider } = getEffectiveAIConfig();
   const modelId = resolveModelForProvider(provider);
 
   // Check abort before AI call

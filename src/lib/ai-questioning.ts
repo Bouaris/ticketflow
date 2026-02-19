@@ -210,7 +210,7 @@ export async function startQuestioningFlow(
   userDescription: string,
   options?: QuestioningOptions
 ): Promise<QuestioningState> {
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider, modelId } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider ?? provider;
   const effectiveModel = options?.modelId ?? modelId;
 
@@ -275,7 +275,7 @@ export async function continueConversation(
   userAnswer: string,
   options?: QuestioningOptions
 ): Promise<QuestioningState> {
-  const { provider, modelId } = getEffectiveAIConfig(options?.projectPath);
+  const { provider, modelId } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider ?? provider;
   const effectiveModel = options?.modelId ?? modelId;
 

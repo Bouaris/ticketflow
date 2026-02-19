@@ -91,7 +91,7 @@ export function useAIFeedback(
   ) => {
     if (!projectId) return;
 
-    const { provider, modelId } = getEffectiveAIConfig(projectPath);
+    const { provider, modelId } = getEffectiveAIConfig();
 
     const operation: FeedbackOperation = 'generate';
 

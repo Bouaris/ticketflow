@@ -192,7 +192,7 @@ export async function detectDependencies(
     }
 
     // Stage 2: AI classification
-    const { provider } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig();
     const effectiveProvider = options?.provider || provider;
     const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -243,7 +243,7 @@ export async function detectDependencies(
 
     // Record failure telemetry
     if (options?.projectId) {
-      const { provider } = getEffectiveAIConfig(options?.projectPath);
+      const { provider } = getEffectiveAIConfig();
       const effectiveProvider = options?.provider || provider;
       const modelId = resolveModelForProvider(effectiveProvider);
       try {

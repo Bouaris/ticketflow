@@ -256,11 +256,9 @@ export function setSelectedModel(providerId: string, modelId: string): void {
 
 /**
  * Get effective AI configuration.
- * Uses global settings only (project-level config removed per v2.1 decision).
- *
- * @param _projectPath - Ignored parameter, kept for backward compatibility
+ * Uses global settings only (project-level config removed in v2.1).
  */
-export function getEffectiveAIConfig(_projectPath?: string): {
+export function getEffectiveAIConfig(): {
   provider: AIProvider;
   modelId: string;
 } {
@@ -845,7 +843,7 @@ function getRefinePrompt(): string {
 
 export async function refineItem(item: BacklogItem, options?: RefineOptions): Promise<RefinementResult> {
   const startTime = Date.now();
-  const { provider } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider || provider;
   const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -1226,7 +1224,7 @@ function getGenerateItemPrompt(): string {
 
 export async function generateItemFromDescription(description: string, options?: AIOptions): Promise<GenerateItemResult> {
   const startTime = Date.now();
-  const { provider } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider || provider;
   const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -1401,7 +1399,7 @@ function getBulkSuggestPrompt(): string {
 
 export async function suggestImprovements(items: BacklogItem[], options?: AIOptions): Promise<RefinementResult> {
   const startTime = Date.now();
-  const { provider } = getEffectiveAIConfig(options?.projectPath);
+  const { provider } = getEffectiveAIConfig();
   const effectiveProvider = options?.provider || provider;
   const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -1701,7 +1699,7 @@ export async function analyzeBacklogFormat(
 ): Promise<BacklogMaintenanceResult> {
   try {
     // Get effective AI config for this project
-    const { provider } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig();
     const effectiveProvider = options?.provider || provider;
     const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -1754,7 +1752,7 @@ export async function correctBacklogFormat(
     }
 
     // Get effective AI config for this project
-    const { provider } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig();
     const effectiveProvider = options?.provider || provider;
     const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -2072,7 +2070,7 @@ export async function analyzeBacklog(
     }
 
     // Get effective AI config for this project
-    const { provider } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig();
     const effectiveProvider = options?.provider || provider;
     const modelId = resolveModelForProvider(effectiveProvider);
 
@@ -2201,7 +2199,7 @@ export async function analyzeBacklog(
     };
   } catch (error) {
     // Record telemetry for exception
-    const { provider } = getEffectiveAIConfig(options?.projectPath);
+    const { provider } = getEffectiveAIConfig();
     const effectiveProvider = options?.provider || provider;
     const modelId = resolveModelForProvider(effectiveProvider);
     if (options?.projectId) {
