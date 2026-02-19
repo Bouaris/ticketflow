@@ -121,8 +121,8 @@ TicketFlow requests broad file system access (`path: "**"`) because:
 - **esbuild 0.21.5 CORS vulnerability (GHSA-67mh-4wv8-2f99)** — Moderate severity, dev-only dependency. TicketFlow does not use esbuild's `serve` feature. Vite has its own dev server. No impact on production users or normal development. Will auto-resolve when vitest/vite updates to esbuild 0.25.0+.
 
 **Cargo (Rust — all transitive via Tauri, no direct fix available):**
-- **bytes** (affected: <1.11.1) — Denial-of-service via out-of-bounds read in `Bytes::copy_from_slice`. Transitive dependency via Tauri's HTTP stack. Status: tracked; resolution depends on upstream Tauri updating their dependency tree. Run `cargo update` after each Tauri release to pull in patched versions.
-- **time** (affected: <0.3.41) — Potential panic via integer overflow in date arithmetic. Transitive via Tauri's `time`-dependent crates. Status: tracked; same upstream resolution path as `bytes`.
+- **bytes** (affected: <1.11.1) — Denial-of-service via out-of-bounds read in `Bytes::copy_from_slice`. Transitive dependency via Tauri's HTTP stack. Status: **resolved** via `cargo update` (2026-02-19) — updated to >=1.11.1.
+- **time** (affected: <0.3.41) — Potential panic via integer overflow in date arithmetic. Transitive via Tauri's `time`-dependent crates. Status: **resolved** via `cargo update` (2026-02-19) — updated to >=0.3.47.
 - **rkyv 0.7.x** — Unsound memory handling in deserialization; crate is unmaintained at 0.7.x. Transitive via Tauri serialization internals. Status: no 0.7.x patch exists. Tauri team is tracking migration to rkyv 0.8.x. No action available until upstream Tauri migrates.
 - **rsa 0.9.x** — Potential timing side-channel in RSA decryption. Transitive via Tauri's TLS stack (rustls). Status: no 0.9.x patch released; fix is in a future breaking version. No action available until upstream resolves.
 
