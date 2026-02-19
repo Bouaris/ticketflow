@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** v2.2.1 "Battle-Ready" — Phase 32: Release Preparation (next)
+**Current focus:** v2.2.1 "Battle-Ready" — Phase 33: Type Safety & Critical Bug Fixes
 
 ## Current Position
 
-Phase: 32 of 32 (README Showcase) — IN PROGRESS
+Phase: 33 of 33 (Type Safety & Critical Bug Fixes) — IN PROGRESS
 Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 32 plan 02 complete — hero image, GIF section, media gallery added to README
-Last activity: 2026-02-18 — Completed 32-02 (README restructured: hero screenshot, 3 GIFs, 3x2 gallery; Phase 32 complete)
+Status: Phase 33 plan 02 complete — telemetry idempotency, useEffect dep fix, storage key centralization
+Last activity: 2026-02-19 — Completed 33-02 (initTelemetry guard, chatPanel.loadHistory dep, STORAGE_KEYS.QUESTIONING_MODE + LOCALE)
 
-Progress: [██████████████████████░░░] 85% (milestones v1.0–v2.2 complete)
+Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
 ## Performance Metrics
 
@@ -64,6 +64,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 31]: AUDIT-REPORT.md at project root consolidates 44 prioritized findings: 7 P2 (immediate), 24 P3 (next sprint/backlog), 13 P4 (low)
 - [Phase 32-02]: 3x2 gallery table used instead of planned 2x2 — all 6 available assets included; gallery-ai-chat.png does not exist, replaced by gallery-bulkimport.png and gallery-gsd-integration.png
 - [Phase 32-02]: Light mode screenshot as hero image, dark mode screenshot placed in gallery section bottom-right
+- [Phase 33-02]: errorTrackingSetUp guard is module-level (persists across initTelemetry() calls in same module lifetime)
+- [Phase 33-02]: AISettingsModal.tsx questioning-mode key replacements left for plan 33-01 (file ownership boundary)
 
 ### Pending Todos
 
@@ -90,10 +92,10 @@ Recent decisions affecting v2.2.1:
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Completed plan 32-02 (README visual showcase — hero, GIFs, gallery; Phase 32 complete)
-Resume file: .planning/phases/32-readme-showcase/32-02-SUMMARY.md
-Next action: Create v2.2.1 release tag (all phases complete)
+Last session: 2026-02-19
+Stopped at: Completed plan 33-02 (telemetry idempotency, useEffect dep, storage key centralization)
+Resume file: .planning/phases/33-type-safety-critical-fixes/33-02-SUMMARY.md
+Next action: Phase 33 complete — run plan 33-01 if not yet done; create v2.2.1 release tag when all phases complete
 
 ---
-*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-18 after plan 31-03 completion (Phase 31 complete)*
+*STATE.md initialized: 2026-02-05 | Last updated: 2026-02-19 after plan 33-02 completion (Phase 33 plan 02 complete)*
