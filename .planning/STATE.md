@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Application desktop polished et productive — experience comparable a Linear pour projets personnels
-**Current focus:** Phase 34: Dead Code Sweep — AI config parameter cleanup + telemetry quality
+**Current focus:** Phase 35: Architecture Performance — memo, virtualization, and smell resolution
 
 ## Current Position
 
-Phase: 34 of 34 (Dead Code Sweep) — COMPLETE
-Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 34 fully complete — all DEAD/FIX/SMELL findings closed, dead code sweep done
-Last activity: 2026-02-19 — Completed 34-01 (DEAD-001/002/003/005/006/007/009/011 + FIX-08) + 34-02 (DEAD-004/010 + FIX-06/07 + SMELL-011/016/017/018)
+Phase: 35 of 35 (Architecture Performance) — In Progress
+Plan: 4 of 4 in current phase — COMPLETE
+Status: Phase 35 plan 04 complete — React.memo on KanbanCard, virtualized ListView with @tanstack/react-virtual
+Last activity: 2026-02-19 — Completed 35-04 (FIX-12: SMELL-012 KanbanCard memo + SMELL-013 ListView virtualization)
 
 Progress: [███████████████████████░░] 88% (milestones v1.0–v2.2 + v2.2.1 phase 33 complete)
 
@@ -38,6 +38,7 @@ Progress: [███████████████████████
 | **Total** | **94+** | **34** | **200+** | |
 | Phase 34-dead-code-sweep P01 | 12 | 2 tasks | 9 files |
 | Phase 35-architecture-performance P03 | 4 | 2 tasks | 3 files |
+| Phase 35-architecture-performance P04 | 25 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting v2.2.1:
 - [Phase 34-dead-code-sweep]: Use import.meta.env.DEV to guard debug console.log; console.warn for real errors stays unguarded
 - [Phase 35-architecture-performance]: useAIFeedbackStats follows useAIFeedback pattern with isOpen gate to prevent premature DB access from settings modal
 - [Phase 35-architecture-performance]: PROVIDER_URLS and PROVIDER_COLORS kept as module-scope constants in ProviderCard (resolves SMELL-014/015); InfoIcon replaces inline SVG
+- [Phase 35-architecture-performance]: Padding-based virtualization for HTML tables: spacer <tr> rows instead of position:absolute (which table layout engines ignore on <tr>)
+- [Phase 35-architecture-performance]: memo with named inner function pattern for DevTools: function KanbanCardInner + export const KanbanCard = memo(KanbanCardInner)
 
 ### Pending Todos
 
@@ -103,7 +106,7 @@ Recent decisions affecting v2.2.1:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 34-01-PLAN.md — Phase 34 fully complete, all DEAD/FIX/SMELL findings closed
+Stopped at: Completed 35-04-PLAN.md — React.memo on KanbanCard + virtualized ListView with @tanstack/react-virtual
 Resume file: .planning/phases/34-dead-code-sweep/34-01-SUMMARY.md
 Next action: Phase 34 complete — v2.2.2 dead code sweep milestone done, ready for next milestone
 

@@ -55,9 +55,9 @@ Requirements for milestone v2.2.1 "Battle-Ready". Each maps to roadmap phases.
 
 - [ ] **FIX-09**: `ai.ts` split into focused modules — no single file exceeds 800 lines (SMELL-006)
 - [ ] **FIX-10**: `ProjectWorkspace.tsx` reduced to under 600 lines via 4+ extracted hooks (SMELL-007)
-- [ ] **FIX-11**: Business logic extracted from AISettingsModal + TypeConfig sync deps fixed (SMELL-008, SMELL-005)
-- [ ] **FIX-12**: KanbanCard/ListView wrapped in React.memo + ListView virtualized (SMELL-012, SMELL-013)
-- [ ] **FIX-13**: ProviderCard static objects moved to module scope + inline SVG replaced (SMELL-014, SMELL-015)
+- [x] **FIX-11**: Business logic extracted from AISettingsModal + TypeConfig sync deps fixed (SMELL-008, SMELL-005)
+- [x] **FIX-12**: KanbanCard/ListView wrapped in React.memo + ListView virtualized (SMELL-012, SMELL-013)
+- [x] **FIX-13**: ProviderCard static objects moved to module scope + inline SVG replaced (SMELL-014, SMELL-015)
 
 ### Gap Closure — Security & Dependencies (Phase 36)
 
@@ -122,9 +122,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-08 | Phase 34 | Complete |
 | FIX-09 | Phase 35 | Pending |
 | FIX-10 | Phase 35 | Pending |
-| FIX-11 | Phase 35 | Pending |
-| FIX-12 | Phase 35 | Pending |
-| FIX-13 | Phase 35 | Pending |
+| FIX-11 | Phase 35 | Complete |
+| FIX-12 | Phase 35 | Complete |
+| FIX-13 | Phase 35 | Complete |
 | FIX-14 | Phase 36 | Pending |
 | FIX-15 | Phase 36 | Pending |
 | FIX-16 | Phase 36 | Pending |
