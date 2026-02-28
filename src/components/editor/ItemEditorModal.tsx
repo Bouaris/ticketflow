@@ -227,6 +227,8 @@ export function ItemEditorModal({
   const pendingGenerationRef = useRef(false);
   // AbortController for cancelling AI generation
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Ref guard to prevent re-entry into handleGenerateFromAI before React re-renders
+  const isGeneratingRef = useRef(false);
 
   // Ref to track latest screenshots for async generation (avoids stale closure)
   const screenshotsRef = useRef(form.screenshots);
@@ -284,6 +286,7 @@ export function ItemEditorModal({
       abortControllerRef.current?.abort();
       questioning.reset();
       pendingGenerationRef.current = false;
+      isGeneratingRef.current = false;
       setDependencySuggestions([]);
       setIsDetectingDeps(false);
       setShowFeedbackWidget(false);
@@ -555,6 +558,10 @@ export function ItemEditorModal({
 
   // Generate item from AI description (entry point from Generate button)
   const handleGenerateFromAI = async () => {
+    // Re-entry guard: prevents duplicate API calls from rapid clicks before React
+    // re-renders disable the button. isGeneratingRef is synchronously set unlike state.
+    if (isGeneratingRef.current) return;
+
     if (!hasApiKey(selectedProvider)) {
       alert(`${t.error.apiConfigMissing} (${getProviderLabel(selectedProvider)})`);
       return;
@@ -565,13 +572,28 @@ export function ItemEditorModal({
       return;
     }
 
+    // Mark as in-progress immediately (synchronous, no re-render delay)
+    isGeneratingRef.current = true;
+    // Also set React state to disable button and show spinner in UI
+    setIsGenerating(true);
+
     // If questioning is enabled and not yet started, start the questioning flow
     if (questioning.isEnabled && questioning.state.phase === 'idle') {
-      await questioning.start(aiPrompt);
+      try {
+        await questioning.start(aiPrompt);
+      } finally {
+        // Reset loading state after questioning.start() completes:
+        // the questioning UI takes over visibility, hiding the Generate button.
+        isGeneratingRef.current = false;
+        setIsGenerating(false);
+      }
       return; // Wait for questioning to complete
     }
 
-    // If questioning completed or was skipped, generate with enriched prompt
+    // If questioning completed or was skipped, generate with enriched prompt.
+    // executeGeneration manages isGenerating internally, so reset the ref now.
+    isGeneratingRef.current = false;
+
     if (questioning.state.phase === 'ready' || questioning.state.phase === 'recap' || questioning.state.phase === 'skipped') {
       const enrichedPrompt = questioning.getEnrichedPrompt();
       await executeGeneration(enrichedPrompt);

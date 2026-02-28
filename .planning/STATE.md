@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 Phase: 36 of 36 — All milestones complete (v1.0 through v2.2.1)
 Plan: N/A — between milestones
 Status: v2.2.1 "Battle-Ready" shipped 2026-02-19
-Last activity: 2026-02-28 - Completed quick task 17: Ajouter modeles Pro/Flash et monitoring des quotas Gemini
+Last activity: 2026-02-28 - Completed quick task 18: Fix "No section found for type" error on first tick
 
 Progress: [█████████████████████████] 100% (all phases v1.0–v2.2.1 complete)
 
@@ -63,11 +63,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | 15 | Update AI model lists (Llama 4, Gemini 2.5, GPT-4.1) + Gemini free tier tooltip | 2026-02-17 | c870626 | | [15-recherche-mod-les-ia](./quick/15-recherche-mod-les-ia-tooltip-recommandat/) |
 | 16 | Update all documentation to v2.2.0: version bumps, CHANGELOG v2.0/v2.1/v2.2, README badge + features, SECURITY.md telemetry/CSP | 2026-02-18 | d64d29a | | [16-mise-jour-de-toute-la-documentation-vers](./quick/16-mise-jour-de-toute-la-documentation-vers/) |
 | 17 | Ajouter modeles Pro/Flash et monitoring des quotas Gemini | 2026-02-28 | a9336a0 | Verified | [17-ajouter-modeles-pro-flash-et-monitoring-](./quick/17-ajouter-modeles-pro-flash-et-monitoring-/) |
+| 18 | Fix "No section found for type" error on first tick — auto-create sections + db-repair service + Repair button | 2026-02-28 | 46b7269 | Verified | [18-fix-no-section-found-error-on-first-tick](./quick/18-fix-no-section-found-error-on-first-tick/) |
 
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Quick Task 17 — Gemini 3.1 Pro model + quota tracker + QuotaGauge component
+Stopped at: Quick Task 18 — Fix "No section found for type" error + db-repair service + Repair button in Settings
 Resume file: N/A — between milestones
 Next action: `/gsd:new-milestone` to start next milestone
 
