@@ -126,7 +126,7 @@ export function AIQuestionFlow({
             // User answers (skip the first user message which is the original description)
             return (
               <div key={index} className="flex justify-end">
-                <div className="max-w-[80%] bg-gray-800 text-white rounded-lg rounded-br-sm px-3 py-2 text-sm">
+                <div className="max-w-[80%] bg-accent text-white rounded-lg rounded-br-sm px-3 py-2 text-sm">
                   {msg.content}
                 </div>
               </div>
@@ -181,7 +181,7 @@ export function AIQuestionFlow({
         {/* Current recap */}
         {phase === 'recap' && recap && !isProcessing && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] bg-success-soft border border-green-200 text-green-900 rounded-lg rounded-bl-sm px-3 py-2.5 text-sm">
+            <div className="max-w-[85%] bg-success-soft border border-green-200 dark:border-green-500/30 text-green-900 dark:text-green-200 rounded-lg rounded-bl-sm px-3 py-2.5 text-sm">
               <div className="flex items-center gap-1.5 mb-2">
                 <CheckCircleIcon className="w-3.5 h-3.5 text-success-text" />
                 <span className="text-xs font-medium text-success-text">Resume</span>

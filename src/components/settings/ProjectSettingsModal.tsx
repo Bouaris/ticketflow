@@ -82,11 +82,11 @@ export function ProjectSettingsModal({
                 >
                   <div className="flex items-center gap-2">
                     <FileIcon className="w-4 h-4 text-accent-text" />
-                    <span className="text-sm text-blue-800">{file}</span>
+                    <span className="text-sm text-accent-text">{file}</span>
                   </div>
                   <button
                     onClick={() => removeFile(file)}
-                    className="p-1 text-blue-400 hover:text-accent-text transition-colors"
+                    className="p-1 text-accent-text/60 hover:text-accent-text transition-colors"
                     title="Retirer"
                   >
                     <CloseIcon className="w-4 h-4" />

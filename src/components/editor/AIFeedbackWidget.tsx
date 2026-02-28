@@ -67,7 +67,7 @@ export function AIFeedbackWidget({ visible, onSubmit, hasSubmitted }: AIFeedback
   // Thank you state
   if (showThankYou || hasSubmitted) {
     return (
-      <div className="mt-4 rounded-lg border border-green-200 bg-success-soft p-3 flex items-center gap-2 transition-opacity duration-500">
+      <div className="mt-4 rounded-lg border border-green-200 dark:border-green-500/30 bg-success-soft p-3 flex items-center gap-2 transition-opacity duration-500">
         <CheckCircleIcon className="w-5 h-5 text-success-text flex-shrink-0" />
         <span className="text-sm text-success-text">{t.aiFeedback.thankYou}</span>
         <div className="flex gap-0.5 ml-auto">

@@ -94,7 +94,7 @@ interface PriorityBadgeProps {
 
 const PRIORITY_COLORS: Record<Priority, string> = {
   Haute: 'bg-danger-soft text-danger-text',
-  Moyenne: 'bg-amber-100 text-amber-700',
+  Moyenne: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   Faible: 'bg-surface-alt text-on-surface-secondary',
 };
 
@@ -122,9 +122,9 @@ interface EffortBadgeProps {
 
 const EFFORT_COLORS: Record<Effort, string> = {
   XS: 'bg-success-soft text-success-text',
-  S: 'bg-lime-100 text-lime-700',
-  M: 'bg-amber-100 text-amber-700',
-  L: 'bg-orange-100 text-orange-700',
+  S: 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300',
+  M: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  L: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
   XL: 'bg-danger-soft text-danger-text',
 };
 

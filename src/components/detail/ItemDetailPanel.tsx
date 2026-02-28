@@ -103,7 +103,7 @@ export function ItemDetailPanel({
         {onArchive && (
           <button
             onClick={() => onArchive(item)}
-            className="py-2.5 px-4 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-all flex items-center justify-center gap-2"
+            className="py-2.5 px-4 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-medium rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all flex items-center justify-center gap-2"
             title={t.detail.archiveButton}
             aria-label={t.detail.archiveButton}
           >
@@ -119,7 +119,7 @@ export function ItemDetailPanel({
                 onDelete(item);
               }
             }}
-            className="py-2.5 px-4 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-all flex items-center justify-center gap-2"
+            className="py-2.5 px-4 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300 font-medium rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-all flex items-center justify-center gap-2"
             title={t.detail.deleteButton}
             aria-label={t.detail.deleteButton}
           >
@@ -145,7 +145,7 @@ export function ItemDetailPanel({
         <button
           onClick={() => onExport(item)}
           aria-label={t.detail.exportTicket}
-          className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 font-medium rounded-lg hover:bg-teal-200 transition-all flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 font-medium rounded-lg hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all flex items-center justify-center gap-2"
         >
           <ExportIcon className="w-4 h-4" />
           {t.detail.exportTicket}

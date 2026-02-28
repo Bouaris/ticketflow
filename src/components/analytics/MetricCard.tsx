@@ -27,10 +27,10 @@ interface MetricCardProps {
 
 const colorMap: Record<NonNullable<MetricCardProps['color']>, { bg: string; border: string; text: string }> = {
   blue:   { bg: 'bg-accent-soft',   border: 'border-accent/30',   text: 'text-accent-text' },
-  green:  { bg: 'bg-success-soft',  border: 'border-green-200',  text: 'text-success-text' },
+  green:  { bg: 'bg-success-soft',  border: 'border-green-200 dark:border-green-500/30',  text: 'text-success-text' },
   red:    { bg: 'bg-danger-soft',    border: 'border-danger',    text: 'text-danger-text' },
-  purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-  amber:  { bg: 'bg-warning-soft',  border: 'border-warning-text/30',  text: 'text-amber-700' },
+  purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', border: 'border-purple-200 dark:border-purple-500/30', text: 'text-purple-700 dark:text-purple-300' },
+  amber:  { bg: 'bg-warning-soft',  border: 'border-warning-text/30',  text: 'text-amber-700 dark:text-amber-300' },
   gray:   { bg: 'bg-surface-alt',   border: 'border-outline',   text: 'text-on-surface-secondary' },
 };
 

@@ -73,7 +73,7 @@ export function AIBlockingBadge({
       className={`
         inline-flex items-center gap-1 px-1.5 py-0.5
         text-[10px] font-medium rounded
-        bg-red-100 text-red-700 border border-red-200
+        bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-500/30
         ${className}
       `}
       title={`Bug bloquant ${severity || ''} - ${blocksCount} item(s) dépendant(s)`}
@@ -81,7 +81,7 @@ export function AIBlockingBadge({
       <WarningIcon className="w-3 h-3" />
       <span>Bloquant</span>
       {blocksCount > 0 && (
-        <span className="px-1 py-0.5 bg-red-200 rounded text-red-800">
+        <span className="px-1 py-0.5 bg-red-200 dark:bg-red-800/50 rounded text-red-800 dark:text-red-200">
           {blocksCount}
         </span>
       )}

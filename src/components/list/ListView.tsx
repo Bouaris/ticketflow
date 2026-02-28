@@ -154,9 +154,9 @@ const ListViewRow = memo(function ListViewRow({
               allowClear={false}
               renderTrigger={({ onClick: triggerClick }) => (
                 <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                  item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
-                  item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
-                  'bg-gray-100 text-gray-700'
+                  item.priority === 'Haute' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                  item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                 }`}>
                   {PRIORITY_LABELS[item.priority!]}
                 </span>
@@ -164,9 +164,9 @@ const ListViewRow = memo(function ListViewRow({
             />
           ) : (
             <span className={`text-xs font-medium px-2 py-1 rounded ${
-              item.priority === 'Haute' ? 'bg-red-100 text-red-700' :
-              item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700' :
-              'bg-gray-100 text-gray-700'
+              item.priority === 'Haute' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+              item.priority === 'Moyenne' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+              'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
             }`}>
               {PRIORITY_LABELS[item.priority]}
             </span>
@@ -183,9 +183,9 @@ const ListViewRow = memo(function ListViewRow({
               allowClear={false}
               renderTrigger={({ onClick: triggerClick }) => (
                 <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                  item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
-                  item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
-                  'bg-red-100 text-red-700'
+                  item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                  item.effort === 'M' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                 }`}>
                   {item.effort}
                 </span>
@@ -193,9 +193,9 @@ const ListViewRow = memo(function ListViewRow({
             />
           ) : (
             <span className={`text-xs font-medium px-2 py-1 rounded ${
-              item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700' :
-              item.effort === 'M' ? 'bg-amber-100 text-amber-700' :
-              'bg-red-100 text-red-700'
+              item.effort === 'XS' || item.effort === 'S' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+              item.effort === 'M' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+              'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
             }`}>
               {item.effort}
             </span>
@@ -212,10 +212,10 @@ const ListViewRow = memo(function ListViewRow({
               allowClear={false}
               renderTrigger={({ onClick: triggerClick }) => (
                 <span onClick={triggerClick} className={`cursor-pointer text-xs font-medium px-2 py-1 rounded ${
-                  item.severity === 'P0' ? 'bg-red-100 text-red-700' :
-                  item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
-                  item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
-                  'bg-gray-100 text-gray-700'
+                  item.severity === 'P0' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                  item.severity === 'P1' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                  item.severity === 'P2' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                 }`}>
                   {item.severity}
                 </span>
@@ -223,10 +223,10 @@ const ListViewRow = memo(function ListViewRow({
             />
           ) : (
             <span className={`text-xs font-medium px-2 py-1 rounded ${
-              item.severity === 'P0' ? 'bg-red-100 text-red-700' :
-              item.severity === 'P1' ? 'bg-orange-100 text-orange-700' :
-              item.severity === 'P2' ? 'bg-amber-100 text-amber-700' :
-              'bg-gray-100 text-gray-700'
+              item.severity === 'P0' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+              item.severity === 'P1' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+              item.severity === 'P2' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+              'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
             }`}>
               {item.severity}
             </span>
@@ -259,8 +259,8 @@ const ListViewRow = memo(function ListViewRow({
                   onClick={(e) => { e.stopPropagation(); onQuickValidate(item); }}
                   className={`p-1 rounded transition-colors ${
                     isValidated
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200 dark:hover:bg-green-900/50'
-                      : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600 dark:hover:text-green-400'
                   }`}
                   title={isValidated ? t.quickActions.unvalidate : t.quickActions.validate}
                 >
@@ -271,7 +271,7 @@ const ListViewRow = memo(function ListViewRow({
             {onQuickExport && (
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickExport(item); }}
-                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 transition-colors"
+                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 title={t.quickActions.export}
               >
                 <CopyIcon className="w-4 h-4" />
@@ -280,7 +280,7 @@ const ListViewRow = memo(function ListViewRow({
             {onQuickArchive && (
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickArchive(item); }}
-                className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 transition-colors"
+                className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                 title={t.quickActions.archive}
               >
                 <ArchiveIcon className="w-4 h-4" />
@@ -289,7 +289,7 @@ const ListViewRow = memo(function ListViewRow({
             {onQuickDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickDelete(item); }}
-                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 transition-colors"
+                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 title={t.quickActions.delete}
               >
                 <TrashIcon className="w-4 h-4" />

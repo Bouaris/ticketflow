@@ -23,9 +23,9 @@ interface ProviderCardProps {
 
 // Module-scope typed color map — avoids re-creating on every render
 const PROVIDER_COLORS: Record<BuiltInProviderId, { border: string; bg: string; text: string; icon: string }> = {
-  groq: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600' },
-  gemini: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600' },
-  openai: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-600' },
+  groq: { border: 'border-orange-500 dark:border-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/30', text: 'text-orange-700 dark:text-orange-300', icon: 'text-orange-600 dark:text-orange-400' },
+  gemini: { border: 'border-blue-500 dark:border-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-700 dark:text-blue-300', icon: 'text-blue-600 dark:text-blue-400' },
+  openai: { border: 'border-emerald-500 dark:border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-700 dark:text-emerald-300', icon: 'text-emerald-600 dark:text-emerald-400' },
 };
 
 // Module-scope provider URLs — avoids re-creating on every render
@@ -65,7 +65,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
   }, [isActive, provider.id, provider.defaultModel]);
 
   // Provider-specific colors — typed lookup with explicit fallback for custom providers
-  const fallbackColors = { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-600' };
+  const fallbackColors = { border: 'border-purple-500 dark:border-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-700 dark:text-purple-300', icon: 'text-purple-600 dark:text-purple-400' };
   const colors = (provider.id in PROVIDER_COLORS)
     ? PROVIDER_COLORS[provider.id as BuiltInProviderId]
     : fallbackColors;
@@ -161,7 +161,7 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
               {t.settings.geminiRecommended}
             </span>
             <span className="ml-1 relative group/tooltip inline-flex items-center">
-              <InfoIcon className="w-3.5 h-3.5 text-blue-500 cursor-help" />
+              <InfoIcon className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 cursor-help" />
               <span className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 text-xs bg-surface-alt text-on-surface-secondary rounded-lg shadow-lg border border-outline z-50 whitespace-normal">
                 {t.settings.geminiFreeTierTooltip}
               </span>
@@ -269,8 +269,8 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
             {healthCheck.result && (
               <div className={`mt-2 px-3 py-2 rounded-lg text-xs ${
                 healthCheck.result.success
-                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                  : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                  ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
               }`}>
                 {healthCheck.result.success ? (
                   <span>{t.settings.connectionSuccess} ({healthCheck.result.latencyMs}ms)</span>

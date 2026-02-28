@@ -228,14 +228,14 @@ export function ScreenshotEditor({
     return (
       <div className="p-4 bg-warning-soft border border-warning-text/30 rounded-xl">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-amber-100 rounded-lg">
+          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
             <FolderIcon className="w-5 h-5 text-warning-text" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-amber-900">
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
               {t.screenshot.permissionRequired}
             </p>
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
               {t.screenshot.permissionDesc}
             </p>
             <button

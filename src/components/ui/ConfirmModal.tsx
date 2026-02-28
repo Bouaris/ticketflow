@@ -34,7 +34,7 @@ export function ConfirmModal({
   const resolvedCancelLabel = cancelLabel ?? t.action.cancel;
   const iconColors = {
     primary: 'text-accent-text bg-accent-soft',
-    warning: 'text-amber-500 bg-amber-100',
+    warning: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400',
     danger: 'text-danger-text bg-danger-soft',
   };
 

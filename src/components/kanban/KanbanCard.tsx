@@ -156,8 +156,8 @@ function KanbanCardInner({
                   onMouseDown={(e) => e.stopPropagation()}
                   className={`p-1 rounded shadow-sm transition-colors ${
                     isValidated
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200 dark:hover:bg-green-900/50'
-                      : 'bg-surface/90 hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      : 'bg-surface/90 hover:bg-green-100 dark:hover:bg-green-900/30 text-on-surface-muted hover:text-green-600 dark:hover:text-green-400'
                   }`}
                   title={isValidated ? t.quickActions.unvalidate : t.quickActions.validate}
                 >
@@ -169,7 +169,7 @@ function KanbanCardInner({
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickExport(item); }}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="p-1 rounded bg-surface/90 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 transition-colors shadow-sm"
+                className="p-1 rounded bg-surface/90 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-on-surface-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm"
                 title={t.quickActions.export}
               >
                 <CopyIcon className="w-3.5 h-3.5" />
@@ -179,7 +179,7 @@ function KanbanCardInner({
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickArchive(item); }}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="p-1 rounded bg-surface/90 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 transition-colors shadow-sm"
+                className="p-1 rounded bg-surface/90 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-on-surface-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors shadow-sm"
                 title={t.quickActions.archive}
               >
                 <ArchiveIcon className="w-3.5 h-3.5" />
@@ -189,7 +189,7 @@ function KanbanCardInner({
               <button
                 onClick={(e) => { e.stopPropagation(); onQuickDelete(item); }}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="p-1 rounded bg-surface/90 hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 transition-colors shadow-sm"
+                className="p-1 rounded bg-surface/90 hover:bg-red-100 dark:hover:bg-red-900/30 text-on-surface-muted hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-sm"
                 title={t.quickActions.delete}
               >
                 <TrashIcon className="w-3.5 h-3.5" />

@@ -37,15 +37,15 @@ const sizeClasses = {
 
 const colorClasses = {
   primary: 'bg-accent',
-  success: 'bg-green-600',
-  warning: 'bg-amber-500',
+  success: 'bg-green-600 dark:bg-green-500',
+  warning: 'bg-amber-500 dark:bg-amber-400',
   danger: 'bg-danger',
 };
 
 const trackClasses = {
   primary: 'bg-accent-soft',
   success: 'bg-success-soft',
-  warning: 'bg-amber-100',
+  warning: 'bg-amber-100 dark:bg-amber-900/30',
   danger: 'bg-danger-soft',
 };
 

@@ -177,8 +177,8 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-alt">
                       {feedbackStats.trend === 'improving' && (
                         <>
-                          <TrendUpIcon className="w-4 h-4 text-green-600" />
-                          <span className="text-sm text-green-700">{t.settings.improving}</span>
+                          <TrendUpIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          <span className="text-sm text-green-700 dark:text-green-400">{t.settings.improving}</span>
                         </>
                       )}
                       {feedbackStats.trend === 'stable' && (
@@ -189,8 +189,8 @@ export function AISettingsModal({ isOpen, onClose, projectPath }: AISettingsModa
                       )}
                       {feedbackStats.trend === 'declining' && (
                         <>
-                          <TrendDownIcon className="w-4 h-4 text-red-500" />
-                          <span className="text-sm text-red-600">{t.settings.declining}</span>
+                          <TrendDownIcon className="w-4 h-4 text-red-500 dark:text-red-400" />
+                          <span className="text-sm text-red-500 dark:text-red-400">{t.settings.declining}</span>
                         </>
                       )}
                       {feedbackStats.trend === 'insufficient' && (
