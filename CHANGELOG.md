@@ -4,6 +4,19 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.2.3] - 2026-02-28
+
+### Added
+
+- **Repair button** in App Settings — detects and fixes missing sections in database (legacy .md migration issues)
+- **Project context injection** in AI questioning — reads CLAUDE.md and project docs to ask smarter clarification questions (3000 char budget, graceful degradation)
+
+### Fixed
+
+- **"No section found" error** on first ticket creation — `loadFromDB()` now auto-creates sections for all type configs when project is empty; `addItem()` retries gracefully instead of throwing
+- **Generate button rage-clicks** — immediate `useRef` guard + `isGenerating` state prevents duplicate API calls
+- **Dark mode contrast** across 15 components (~50 fixes) — Badge, ItemBadge, ProviderCard, AISettingsModal, AIQuestionFlow, ItemDetailPanel, ListView, KanbanCard, Progress, ConfirmModal, MetricCard, AIFeedbackWidget, ProjectSettingsModal, ScreenshotEditor, AIBlockingIndicator
+
 ## [2.2.2] - 2026-02-28
 
 ### Added
