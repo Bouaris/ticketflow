@@ -53,6 +53,9 @@ export const STORAGE_KEYS = {
 
   // AI Model Selection (per-provider persistence)
   AI_MODEL_PREFIX: 'ai-model',
+
+  // Quota Tracking (sliding-window RPM/RPD estimation)
+  QUOTA_TRACKER: 'ticketflow-quota-tracker',
 } as const;
 
 // ============================================================

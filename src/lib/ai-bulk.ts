@@ -38,6 +38,7 @@ const MODEL_TOKEN_LIMITS: Record<string, number> = {
   'gemini-2.5-flash-lite': 1000000,
   'gemini-2.5-pro': 1000000,
   // Gemini - Preview
+  'gemini-3.1-pro-preview': 1000000,
   'gemini-3-flash-preview': 1000000,
   'gemini-3-pro-preview': 1000000,
   // OpenAI - GPT-5

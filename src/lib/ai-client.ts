@@ -22,6 +22,7 @@ import { AI_CONFIG } from '../constants/config';
 import { setSecureItem, getSecureItem, removeSecureItem, migrateToSecureStorage } from './secure-storage';
 import { getProviderById } from './ai-provider-registry';
 import type { ProviderConfig } from '../types/aiProvider';
+import { recordRequest } from './quota-tracker';
 import {
   generateWithRetry,
   getStructuredOutputMode,
@@ -303,6 +304,7 @@ export async function generateCompletion(prompt: string, options?: CompletionOpt
       request,
       options?.signal ? { signal: options.signal } : undefined
     );
+    recordRequest(providerId);
     return response.choices[0]?.message?.content || '';
 
   } else if (providerType === 'gemini') {
@@ -331,6 +333,7 @@ export async function generateCompletion(prompt: string, options?: CompletionOpt
         model.generateContent({ contents: [{ role: 'user', parts }] }),
         options?.signal
       );
+      recordRequest(providerId);
       return result.response.text();
     }
 
@@ -338,6 +341,7 @@ export async function generateCompletion(prompt: string, options?: CompletionOpt
       model.generateContent(prompt),
       options?.signal
     );
+    recordRequest(providerId);
     return result.response.text();
 
   } else {
@@ -383,6 +387,7 @@ export async function generateCompletion(prompt: string, options?: CompletionOpt
       request,
       options?.signal ? { signal: options.signal } : undefined
     );
+    recordRequest(providerId);
     return response.choices[0]?.message?.content || '';
   }
 }
@@ -435,6 +440,7 @@ export async function generateChatCompletion(
       max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
       stream: false as const,
     }, options?.signal ? { signal: options.signal } : undefined);
+    recordRequest(providerId);
     return response.choices[0]?.message?.content || '';
 
   } else if (providerType === 'gemini') {
@@ -460,6 +466,7 @@ export async function generateChatCompletion(
         model.generateContent(lastContent),
         options?.signal
       );
+      recordRequest(providerId);
       return result.response.text();
     }
 
@@ -475,6 +482,7 @@ export async function generateChatCompletion(
       chat.sendMessage(lastMessage.content),
       options?.signal
     );
+    recordRequest(providerId);
     return result.response.text();
 
   } else {
@@ -490,6 +498,7 @@ export async function generateChatCompletion(
       max_tokens: options?.maxTokens ?? AI_CONFIG.MAX_TOKENS,
       stream: false as const,
     }, options?.signal ? { signal: options.signal } : undefined);
+    recordRequest(providerId);
     return response.choices[0]?.message?.content || '';
   }
 }
