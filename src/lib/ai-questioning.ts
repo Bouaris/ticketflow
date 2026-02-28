@@ -13,8 +13,18 @@
  */
 
 import { generateCompletionWithRetry, getEffectiveAIConfig } from './ai';
+import { loadProjectContext } from './ai-context';
 import { QuestioningResponseSchema, type QuestioningResponse } from '../types/ai';
 import { getCurrentLocale } from '../i18n';
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+/** Max characters of project context to inject into questioning system prompt.
+ * Deliberately smaller than ai-context.ts MAX_CONTEXT_LENGTH (4000) because the
+ * questioning phase sends multiple round-trips and must leave room for conversation history. */
+const MAX_QUESTIONING_CONTEXT = 3000;
 
 // ============================================================
 // TYPES
@@ -165,6 +175,22 @@ interface QuestioningOptions {
 }
 
 /**
+ * Truncate content to maxLength with a clean line break.
+ * Local helper — mirrors the private truncateContent in ai-context.ts.
+ */
+function truncateQuestioningContext(content: string, maxLength: number): string {
+  if (content.length <= maxLength) {
+    return content;
+  }
+  const truncated = content.substring(0, maxLength);
+  const lastLineBreak = truncated.lastIndexOf('\n');
+  if (lastLineBreak > maxLength * 0.8) {
+    return truncated.substring(0, lastLineBreak) + '\n\n[...truncated]';
+  }
+  return truncated + '\n\n[...truncated]';
+}
+
+/**
  * Build a single prompt string from conversation messages.
  *
  * Since generateCompletionWithRetry expects a single prompt string,
@@ -214,8 +240,35 @@ export async function startQuestioningFlow(
   const effectiveProvider = options?.provider ?? provider;
   const effectiveModel = options?.modelId ?? modelId;
 
+  // Build system prompt, optionally enriched with project context
+  let systemPromptContent = getQuestioningSystemPrompt();
+
+  if (options?.projectPath) {
+    try {
+      const context = await loadProjectContext(options.projectPath);
+      if (context.files.length > 0) {
+        // Allocate context budget across files proportionally, capped to MAX_QUESTIONING_CONTEXT total
+        const totalRaw = context.files.reduce((sum, f) => sum + f.content.length, 0);
+        const sections = context.files.map(({ filename, content }) => {
+          const budget = totalRaw > MAX_QUESTIONING_CONTEXT
+            ? Math.floor((content.length / totalRaw) * MAX_QUESTIONING_CONTEXT)
+            : content.length;
+          const truncated = truncateQuestioningContext(content, budget);
+          return `## ${filename}\n${truncated}`;
+        });
+
+        const contextBlock = `<project-context>\n${sections.join('\n\n')}\n</project-context>`;
+        const contextInstruction = `\nUse the project context above to ask more relevant, project-specific clarification questions. Reference actual technologies, patterns, and conventions from the project when relevant.`;
+
+        systemPromptContent = `${systemPromptContent}\n\n${contextBlock}${contextInstruction}`;
+      }
+    } catch {
+      // Graceful degradation: proceed with base prompt if context loading fails
+    }
+  }
+
   const messages: ConversationMessage[] = [
-    { role: 'system', content: getQuestioningSystemPrompt() },
+    { role: 'system', content: systemPromptContent },
     { role: 'user', content: userDescription },
   ];
 
