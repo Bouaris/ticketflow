@@ -31,6 +31,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Extract changelog
+        id: changelog
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract section between ## [VERSION] and the next ## [ header
+          BODY=$(awk "/^## \\[${VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)
+          # Write to file to preserve multiline content
+          echo "$BODY" > release_notes.md
+          echo "Generated release notes for v${VERSION}"
+
       - name: Build and release
         uses: tauri-apps/tauri-action@v0.6.1
         env:
@@ -41,14 +52,14 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'TicketFlow ${{ github.ref_name }}'
-          releaseBody: |
-            ## TicketFlow ${{ github.ref_name }}
-
-            See the [README](https://github.com/Bouaris/ticketflow#readme) for features and installation instructions.
-
-            ### Installation
-            Download the `.exe` installer below and run it.
+          releaseBody: 'Release in progress...'
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
+
+      - name: Update release notes from changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: gh release edit "${{ github.ref_name }}" --notes-file release_notes.md
