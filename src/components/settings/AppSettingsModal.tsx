@@ -12,7 +12,8 @@ import { exportDbToMarkdown } from '../../lib/markdown-export';
 import { getOrCreateProject } from '../../db/queries/projects';
 import { listBackups, restoreFromBackup, createBackup, type BackupInfo } from '../../db/backup';
 import type { useUpdater } from '../../hooks/useUpdater';
-import { RefreshIcon, SparklesIcon, DownloadIcon, SpinnerIcon } from '../ui/Icons';
+import { RefreshIcon, SparklesIcon, DownloadIcon, SpinnerIcon, WrenchIcon } from '../ui/Icons';
+import { repairDatabase } from '../../lib/db-repair';
 import { Modal } from '../ui/Modal';
 import { WhatsNewModal } from '../ui/WhatsNewModal';
 import { useTranslation, SUPPORTED_LOCALES } from '../../i18n';
@@ -43,6 +44,10 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreConfirm, setRestoreConfirm] = useState<BackupInfo | null>(null);
   const [backupMessage, setBackupMessage] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Repair state
+  const [isRepairing, setIsRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // i18n
   const { t, locale, setLocale } = useTranslation();
@@ -154,6 +159,33 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
       setIsExporting(false);
     }
   }, [projectPath, t.settings.exportSuccess, t.settings.exportFailed]);
+
+  const handleRepair = useCallback(async () => {
+    if (!projectPath) return;
+    setIsRepairing(true);
+    setRepairResult(null);
+    try {
+      const result = await repairDatabase(projectPath);
+      const totalFixes = result.sectionsCreated + result.orphanedSectionsCleaned;
+      if (totalFixes === 0) {
+        setRepairResult({ success: true, message: t.settings.repairNoIssues });
+      } else {
+        const details = result.issues.join(', ');
+        setRepairResult({
+          success: true,
+          message: t.settings.repairSuccess.replace('{details}', details),
+        });
+      }
+      setTimeout(() => setRepairResult(null), 5000);
+    } catch (error) {
+      setRepairResult({
+        success: false,
+        message: error instanceof Error ? error.message : t.settings.repairFailed,
+      });
+    } finally {
+      setIsRepairing(false);
+    }
+  }, [projectPath, t.settings]);
 
   if (!isOpen) return null;
 
@@ -442,6 +474,44 @@ export function AppSettingsModal({ isOpen, onClose, updater, projectPath }: AppS
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Repair section */}
+          {projectPath && (
+            <div className="pt-4 border-t border-outline">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-on-surface-secondary">{t.settings.repair}</h4>
+                  <p className="text-xs text-on-surface-muted">{t.settings.repairDesc}</p>
+                </div>
+                <button
+                  onClick={handleRepair}
+                  disabled={isRepairing}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-on-surface-secondary bg-surface-alt hover:bg-surface-alt rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isRepairing ? (
+                    <>
+                      <SpinnerIcon className="w-4 h-4" />
+                      {t.settings.repairing}
+                    </>
+                  ) : (
+                    <>
+                      <WrenchIcon className="w-4 h-4" />
+                      {t.settings.repairButton}
+                    </>
+                  )}
+                </button>
+              </div>
+              {repairResult && (
+                <p className={`mt-2 text-xs px-3 py-1.5 rounded ${
+                  repairResult.success
+                    ? 'text-success-text bg-success-soft'
+                    : 'text-danger-text bg-danger-soft'
+                }`}>
+                  {repairResult.message}
+                </p>
               )}
             </div>
           )}

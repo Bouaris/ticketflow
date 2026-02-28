@@ -128,6 +128,13 @@ export const en: Translations = {
     quotaRpm: 'Requests/min',
     quotaRpd: 'Requests/day',
     quotaEstimated: 'Based on local tracking (not real-time API data)',
+    repair: 'Repair',
+    repairDesc: 'Check and fix database consistency',
+    repairButton: 'Repair',
+    repairing: 'Repairing...',
+    repairSuccess: 'Repair complete: {details}',
+    repairNoIssues: 'No issues detected',
+    repairFailed: 'Repair failed',
   },
 
   // -- Severity Labels ----------------------------------------------

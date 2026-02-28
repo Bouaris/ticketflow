@@ -143,6 +143,14 @@ export interface Translations {
     quotaRpm: string;
     quotaRpd: string;
     quotaEstimated: string;
+    // Database repair
+    repair: string;
+    repairDesc: string;
+    repairButton: string;
+    repairing: string;
+    repairSuccess: string;
+    repairNoIssues: string;
+    repairFailed: string;
   };
 
   // -- Severity Labels ----------------------------------------------
