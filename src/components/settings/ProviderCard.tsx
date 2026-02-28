@@ -13,6 +13,7 @@ import { Spinner } from '../ui/Spinner';
 import { useTranslation } from '../../i18n';
 import { isTauri, openExternalUrl } from '../../lib/tauri-bridge';
 import { testProviderHealth, type HealthCheckResult } from '../../lib/ai-health';
+import { QuotaGauge } from './QuotaGauge';
 
 interface ProviderCardProps {
   provider: ProviderConfig;
@@ -285,6 +286,13 @@ export function ProviderCard({ provider, isActive, onSelect }: ProviderCardProps
               </div>
             )}
           </div>
+
+          {/* Quota Usage — only shown when provider has an API key configured */}
+          {isConfigured && (
+            <div className="pt-3 border-t border-outline">
+              <QuotaGauge providerId={provider.id} />
+            </div>
+          )}
         </div>
       )}
     </div>

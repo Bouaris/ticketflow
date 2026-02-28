@@ -138,6 +138,11 @@ export interface Translations {
     geminiRecommended: string;
     geminiFreeTierTooltip: string;
     modelLabel: string;
+    // Quota tracking
+    quotaUsage: string;
+    quotaRpm: string;
+    quotaRpd: string;
+    quotaEstimated: string;
   };
 
   // -- Severity Labels ----------------------------------------------

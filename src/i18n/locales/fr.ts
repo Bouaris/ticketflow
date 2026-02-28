@@ -124,6 +124,10 @@ export const fr: Translations = {
     geminiRecommended: 'Gratuit recommande',
     geminiFreeTierTooltip: 'Offre gratuite : 10 requetes/min, 250 requetes/jour. Necessite le niveau de facturation 1 (gratuit — il suffit d\'ajouter un moyen de paiement dans Google AI Studio).',
     modelLabel: 'Modele',
+    quotaUsage: 'Estimation d\'usage',
+    quotaRpm: 'Requetes/min',
+    quotaRpd: 'Requetes/jour',
+    quotaEstimated: 'Base sur le suivi local (pas de donnees API temps reel)',
   },
 
   // -- Severity Labels ----------------------------------------------

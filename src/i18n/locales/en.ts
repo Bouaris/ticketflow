@@ -124,6 +124,10 @@ export const en: Translations = {
     geminiRecommended: 'Recommended free tier',
     geminiFreeTierTooltip: 'Free tier: 10 requests/min, 250 requests/day. Requires Billing Level 1 (free — just add a payment method in Google AI Studio).',
     modelLabel: 'Model',
+    quotaUsage: 'Usage Estimate',
+    quotaRpm: 'Requests/min',
+    quotaRpd: 'Requests/day',
+    quotaEstimated: 'Based on local tracking (not real-time API data)',
   },
 
   // -- Severity Labels ----------------------------------------------
