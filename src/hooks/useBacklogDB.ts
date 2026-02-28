@@ -193,7 +193,19 @@ export function useBacklogDB(projectPath: string | null): UseBacklogDBReturn {
       setTypeConfigs(configs);
 
       // Load sections and items (grouped by section_id FK for correct association)
-      const dbSections = await getAllSections(projectPath, pid);
+      let dbSections = await getAllSections(projectPath, pid);
+
+      // Auto-create sections if none exist but type configs do (new empty project)
+      if (dbSections.length === 0 && configs.length > 0) {
+        for (const config of configs) {
+          const displayLabel = config.label.toUpperCase();
+          const rawHeader = `## ${config.order + 1}. ${displayLabel}`;
+          await insertSection(projectPath, pid, displayLabel, config.order, rawHeader);
+        }
+        // Re-fetch to get the auto-created sections with proper IDs
+        dbSections = await getAllSections(projectPath, pid);
+      }
+
       const itemsBySection = await getItemsGroupedBySection(projectPath, pid);
 
       // Build the Backlog object with items grouped by section_id
@@ -499,7 +511,33 @@ export function useBacklogDB(projectPath: string | null): UseBacklogDBReturn {
     const section = backlogRef.current.sections[targetSectionIndex];
 
     if (!section) {
-      throw new Error(`No section found for type "${newItem.type}". Available sections: ${backlogRef.current.sections.map(s => s.title).join(', ')}`);
+      // Auto-create missing section for this type and retry
+      const typeLabel = newItem.type.toUpperCase();
+      const sectionCount = backlogRef.current.sections.length;
+      const rawHeader = `## ${sectionCount + 1}. ${typeLabel}`;
+      await insertSection(projectPath, projectIdRef.current, typeLabel, sectionCount, rawHeader);
+      // Reload to get fresh state with the new section
+      await loadFromDB();
+      // Re-find the target section in the refreshed backlog
+      const retryIndex = findTargetSectionIndex(backlogRef.current!.sections, newItem.type);
+      const retrySection = backlogRef.current!.sections[retryIndex];
+      if (!retrySection) {
+        throw new Error(`Failed to create section for type "${newItem.type}"`);
+      }
+      const retrySectionId = parseInt(retrySection.id, 10);
+      await insertItem(projectPath, newItem, projectIdRef.current, retrySectionId);
+      // Update local state
+      setBacklog(prev => {
+        if (!prev) return prev;
+        const newSections = prev.sections.map((s, index) => {
+          if (index === retryIndex) {
+            return { ...s, items: [...s.items, newItem] };
+          }
+          return s;
+        });
+        return { ...prev, sections: newSections };
+      });
+      return; // Early return — item added via retry path
     }
 
     // Get section ID (numeric from DB)
