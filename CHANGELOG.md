@@ -4,6 +4,21 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [2.2.2] - 2026-02-28
+
+### Added
+
+- **Gemini 3.1 Pro (Preview)** model added to provider registry — latest Google model now selectable in AI Settings
+- **Local quota tracker** (`quota-tracker.ts`) — sliding-window estimation of API usage (RPM over 1 min, RPD over 24h) with localStorage persistence and auto-prune at 500 entries
+- **QuotaGauge component** in ProviderCard — color-coded progress bars (green/amber/red) for RPM and RPD, 5-second polling, info tooltip explaining local tracking
+- **Known free-tier limits** for Gemini (10 RPM / 250 RPD), Groq (30 / 14,400), and OpenAI-compatible (60 / 10,000)
+- **i18n support** (EN + FR) for all quota-related UI strings
+
+### Changed
+
+- `ai-client.ts` records every successful API call via `recordRequest()` (8 call sites across `generateCompletion` and `generateChatCompletion`) — health checks excluded
+- `ai-bulk.ts` and `ai-retry.ts` updated with `gemini-3.1-pro-preview` token limits and structured output support
+
 ## [2.2.1] - 2026-02-19
 
 > **"Battle-Ready"** — Stress-tested, audited, refactored, and hardened for production.

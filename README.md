@@ -12,7 +12,7 @@ A local-first desktop app that turns your chaotic brain dumps into organized, AI
 ![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.2-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Built with GSD](https://img.shields.io/badge/Built%20with-GSD-ff6b35.svg)](https://github.com/gsd-build/get-shit-done)
